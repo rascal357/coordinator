@@ -1,6 +1,5 @@
 # Coordinator System
 
-半導体製造工程における炉処理(Furnace Processing)の進捗管理、バッチ作成、WIP(Work In Progress) 情報の可視化を行うシステムです。
 
 ## 技術スタック
 
