@@ -27,6 +27,17 @@ public class WorkProgressModel : PageModel
 
     public async Task OnGetAsync()
     {
+        await LoadProgressData();
+    }
+
+    public async Task<IActionResult> OnGetRefreshAsync()
+    {
+        await LoadProgressData();
+        return new JsonResult(new { success = true, data = EquipmentsByType });
+    }
+
+    private async Task LoadProgressData()
+    {
         var query = _context.DcEqps.AsQueryable();
 
         if (TypeFilter != null && TypeFilter.Any())

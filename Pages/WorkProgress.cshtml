@@ -196,3 +196,141 @@
         </div>
     }
 </div>
+
+@section Scripts {
+<script>
+    // 自動更新機能 - 5分（300,000ミリ秒）ごとにデータを更新
+    const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5分
+    let autoRefreshTimer;
+
+    // 現在のフィルター設定を取得
+    function getCurrentFilters() {
+        const typeFilters = Array.from(document.querySelectorAll('input[name="TypeFilter"]:checked'))
+            .map(cb => cb.value);
+        const lineFilter = document.getElementById('lineFilter').value;
+
+        return {
+            typeFilters: typeFilters,
+            lineFilter: lineFilter
+        };
+    }
+
+    // データを更新
+    async function refreshData() {
+        try {
+            const filters = getCurrentFilters();
+
+            // クエリパラメータを構築
+            const params = new URLSearchParams();
+            filters.typeFilters.forEach(type => params.append('TypeFilter', type));
+            if (filters.lineFilter) {
+                params.append('LineFilter', filters.lineFilter);
+            }
+            params.append('handler', 'Refresh');
+
+            const response = await fetch(`/WorkProgress?${params.toString()}`);
+
+            if (!response.ok) {
+                console.error('データの取得に失敗しました:', response.statusText);
+                return;
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                updateUI(result.data);
+                console.log('データを更新しました:', new Date().toLocaleString('ja-JP'));
+            }
+        } catch (error) {
+            console.error('データ更新エラー:', error);
+        }
+    }
+
+    // UIを更新
+    function updateUI(equipmentsByType) {
+        for (const [typeKey, equipments] of Object.entries(equipmentsByType)) {
+            equipments.forEach((eqp, eqpIndex) => {
+                // 処理中データの更新
+                updateProcessItems('inprocess', typeKey, eqpIndex, eqp.InProcess);
+
+                // 処理待ちデータの更新
+                updateProcessItems('waiting', typeKey, eqpIndex, eqp.Waiting);
+
+                // 予約1-3データの更新
+                updateReservedItems('reserved1', typeKey, eqpIndex, eqp.Reserved1);
+                updateReservedItems('reserved2', typeKey, eqpIndex, eqp.Reserved2);
+                updateReservedItems('reserved3', typeKey, eqpIndex, eqp.Reserved3);
+            });
+        }
+    }
+
+    // 処理中/処理待ちアイテムを更新
+    function updateProcessItems(prefix, typeKey, eqpIndex, items) {
+        if (!items || items.length === 0) return;
+
+        items.forEach((item, idx) => {
+            updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.Carrier);
+            updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.Lot);
+            updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.Qty);
+            updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.PPID);
+            updateElement(`${prefix}-next-${typeKey}-${eqpIndex}-${idx}`, item.NextFurnace);
+            updateElement(`${prefix}-loc-${typeKey}-${eqpIndex}-${idx}`, item.Location);
+            updateElement(`${prefix}-time-${typeKey}-${eqpIndex}-${idx}`, item.EndTime);
+        });
+    }
+
+    // 予約アイテムを更新
+    function updateReservedItems(prefix, typeKey, eqpIndex, items) {
+        if (!items || items.length === 0) return;
+
+        items.forEach((item, idx) => {
+            updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.Carrier);
+            updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.Lot);
+            updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.Qty);
+            updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.PPID);
+            updateElement(`${prefix}-next-${typeKey}-${eqpIndex}-${idx}`, item.NextFurnace);
+            updateElement(`${prefix}-loc-${typeKey}-${eqpIndex}-${idx}`, item.Location);
+        });
+    }
+
+    // DOM要素の内容を更新
+    function updateElement(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value ?? '';
+        }
+    }
+
+    // 自動更新を開始
+    function startAutoRefresh() {
+        // 既存のタイマーをクリア
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+        }
+
+        // 新しいタイマーを設定
+        autoRefreshTimer = setInterval(refreshData, AUTO_REFRESH_INTERVAL);
+        console.log('自動更新を開始しました（5分間隔）');
+    }
+
+    // 自動更新を停止
+    function stopAutoRefresh() {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+            autoRefreshTimer = null;
+            console.log('自動更新を停止しました');
+        }
+    }
+
+    // ページロード時に自動更新を開始
+    document.addEventListener('DOMContentLoaded', function() {
+        startAutoRefresh();
+    });
+
+    // ページを離れる時に自動更新を停止
+    window.addEventListener('beforeunload', function() {
+        stopAutoRefresh();
+    });
+</script>
+}
+
