@@ -1,0 +1,145 @@
+
+Coordinatorシステム要件定義
+
+言語: C#
+
+フレームワーク: Razor
+
+データベース: sqlLite
+
+1. システム目的
+
+半導体製造工程における炉処理(Furnace Processing)の進捗管理、バッチ作成、WIP(Work In Progress) 情報の可視化を行う。
+
+装置、レシピ、キャリア情報を統合し、効率的な工程調整を支援。
+
+
+2. 画面機能
+
+Dashboard画面
+
+    装置の稼働状況を一覧表示。
+
+    以下のテーブルから装置情報を取得しTYPE毎に一覧表示する。表示項目はNAME, LINE。
+
+    TYPE, LINEでフィルターできる。
+
+    
+
+    例
+	テーブル：DC Eqps
+    ID NAME TYPE LINE
+    1 DVETC25 G_SIO A
+
+    LINEはAかBが入る
+
+    JSで動的に値を更新できるように項目にはそれぞれユニークなIdを付与する
+
+    装置名を押下するとWIP Lot List画面へ遷移する
+
+WIP Lot List画面
+
+    指定装置のWIPロット一覧表示。
+
+    以下のテーブルから指定装置とTargetEqpIdが一致しているものを一覧表示する
+
+    作成ボタンを押下すると選択したCarrier, LotId, Technology, Qtyの情報を次のCreateBatch画面に渡す
+
+    同じキャリアが選択された場合は、重複を排除する
+
+    キャリアを選択せずに作成ボタンを押下した場合は、キャリアを選択してくださいとメッセージを表示する
+
+    例
+    テーブル：DC_Wips
+    Priority Technology Carrier LotId Qty PartName CurrentStage CurrentStep TargetStage TargetStep TargetEqpId TargetPPID
+    5 T6-MV C22667 JM86146.1 25 WA0037-FN46-V-S-1 BL-AN DAN01 G-SIO FDP01 DVETC25 GSIO3F4
+
+Create Batch画面
+
+    複数キャリアに対して最大4ステップのレシピ、装置取得。
+
+    以下のテーブルから指定されたキャリアとCarrierが同じレコードを取得する。
+    
+    表示はキャリア、ステップ1のEqpId, PPID,ステップ2のEqpId, PPID, ステップ3のEqpId, PPID, ステップ4のEqpId, PPIDと横に並べて表示する。
+    
+    ステップについては1から4までの表示枠は必ず表示する。レコードがないステップは空になる
+    
+    表示は選択されたキャリア分の情報が表示される
+    
+    テーブル：DC CarrierSteps
+    
+    例
+    
+    Carreir Qty Step EqpId PPID
+    C22667 25 1 DVETC25 PPID1
+    C22667 25 2 DVETC26 PPID2
+    C22667 25 3 DVETC27 PPID3
+    C22667 25 4 DVETC28 PPID4
+    
+    作成ポタンを押下すると
+    
+    ユニークなBatchIdを作成し、DC Batchテーブルにこの画面で表示されたキャリアを同じBatchIdとして保存する
+    
+    CreatedAtはBatchIdで同じ日付にすること
+    
+    例
+    テーブル：DC Batch
+    Id(PK) BatchId Step CarrierId EqpId PPID IsProcessed CreatedAt
+    1 2.0251E+14 1 C22667 DVETC25 PPID1 2025/10/31 10:00
+    2 2.0251E+14 1 C22668 DVETC25 PPID1 2025/10/31 10:00
+    3 2.0251E+14 2 C22667 DVETC26 PPID2 2025/10/31 10:00
+    4 2.0251E+14 2 C22668 DVETC26 PPID2 2025/10/31 10:00
+    5 2.0251E+14 3 C22667 DVETC27 PPID3 2025/10/31 10:00
+    6 2.0251E+14 3 C22668 DVETC27 PPID3 2025/10/31 10:00
+    7 2.0251E+14 4 C22667 DVETC28 PPID4 2025/10/31 10:00
+    8 2.0251E+14 4 C22668 DVETC28 PPID4 2025/10/31 10:00
+    
+    併せてキャリアの LotId, Technology、Qtyの情報をBatchメンバーとして以下のテーブルに保存する
+    
+    例
+    テーブル：DC BatchMembers
+    Id(PK) BatchId CarrierId LotId Qty Technology
+    1 2.0251E+14 C22667 SY00020.1 25 T6-MV
+    2 2.0251E+14 C22668 SY00021.1 25 T6-MV
+    
+    
+    作成ボタンを押下するとWorkProgress画面へ遷移する
+    
+WorkProgress画面
+    
+    炉処理進捗ダッシュボード。
+    
+    DC_Eqpsのテーブルから装置情報を取得しTYPE毎に表形式で一覧表示する。表示項目はNAME, LINE。
+    
+    TYPE, LINEでフィルターできる。
+    
+    表示グループは、処理中、処理待ち、予約1、予約2、予約3とする。それぞれの項目は以下とする 
+    Carrier Lot Qty PPID NextFurnace Location End Time
+    JSで動的に値を更新できるように項目にはそれぞれユニークなIdを付与する
+    
+    予約1、予約2、予約3についてはDC_BatchからEqpIdが一致しているレコードを情報を表示する。その際にCreatedAtが小さい順に予約1,予約2、予約3として表示する。
+    
+    処理中、処理待ちについては以下のDC_ActlからEqpIdが一致しているレコードを表示する。
+    
+    その際に処理中、処理待ちの区別はTrackInTimeが+-5分のレコードを同じグループとして扱う。そのグループで、TrackInTimeが早いグループが処理中、遅い方が処理待ちとして表示する
+    
+    DC_BatchとDC_BatchMembersをBatchId、CarrierIdで結合し、指定されたEqpIdで絞ったレコードをFullBatchMembersとして、 処理中または処理待ちグループからそれぞれ一つのLotIdを抽出したものをFullBatchMembersから検索し、
+    
+    FullBatchMembersにそのLotIdが存在すれば、そのLotIdのBatchIdが同じレコードのIS_PROCESSINGをtrueにする IS_PROCESSINGがtrueのレコードは処理中として扱いになるので、予約1、予約2、予約3の対象から除外する
+    
+    テーブル: DC Actl
+    例
+    EqpId LotId LotType TrackInTime
+    DVETC38 SY79874.1 PS 2025/11/11 8:45
+    DVETC38 SY79872.1 PS 2025/11/11 8:45
+    DVETC38 SY79906.1 PS 2025/11/11 8:45
+    DVETC38 SY78841.1 PS 2025/11/11 8:45
+    DVETC38 SY79885.1 PS 2025/11/11 8:45
+    DVETC38 SY79903.1 PS 2025/11/11 8:45
+    DVETC38 SY78840.1 PS 2025/11/11 10:03
+    DVETC38 SY79506.1 PS 2025/11/11 10:03
+    DVETC38 SY78842.1 PS 2025/11/11 10:03
+    DVETC38 SY78360.1 PS 2025/11/11 10:03
+    DVETC38 SY79472.1 PS 2025/11/11 10:03
+    DVETC38 SY79509.1 PS 2025/11/11 10:03
+

@@ -1,0 +1,30 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+}
+
+.table-sm td, .table-sm th {
+  padding: 0.3rem;
+  font-size: 0.875rem;
+}
+
+.card-header h4, .card-header h5 {
+  margin: 0;
+}

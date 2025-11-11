@@ -1,0 +1,88 @@
+@page
+@model WipLotListModel
+@{
+    ViewData["Title"] = "WIP Lot List";
+}
+
+<div class="container mt-4">
+    <h1>WIP Lot List - @Model.EqpName</h1>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @Model.Message
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row mt-3 mb-3">
+        <div class="col-md-12">
+            <a href="/" class="btn btn-secondary">Dashboardに戻る</a>
+        </div>
+    </div>
+
+    @if (Model.WipLots.Any())
+    {
+        <form method="post">
+            <input type="hidden" name="EqpName" value="@Model.EqpName" />
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>選択</th>
+                            <th>Priority</th>
+                            <th>Technology</th>
+                            <th>Carrier</th>
+                            <th>LotId</th>
+                            <th>Qty</th>
+                            <th>PartName</th>
+                            <th>CurrentStage</th>
+                            <th>CurrentStep</th>
+                            <th>TargetStage</th>
+                            <th>TargetStep</th>
+                            <th>TargetPPID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var wip in Model.WipLots)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="checkbox"
+                                           name="selectedCarriers"
+                                           value="@wip.Carrier"
+                                           id="carrier-@wip.Id"
+                                           class="form-check-input" />
+                                </td>
+                                <td id="priority-@wip.Id">@wip.Priority</td>
+                                <td id="technology-@wip.Id">@wip.Technology</td>
+                                <td id="carrier-name-@wip.Id">@wip.Carrier</td>
+                                <td id="lotid-@wip.Id">@wip.LotId</td>
+                                <td id="qty-@wip.Id">@wip.Qty</td>
+                                <td id="partname-@wip.Id">@wip.PartName</td>
+                                <td id="currentstage-@wip.Id">@wip.CurrentStage</td>
+                                <td id="currentstep-@wip.Id">@wip.CurrentStep</td>
+                                <td id="targetstage-@wip.Id">@wip.TargetStage</td>
+                                <td id="targetstep-@wip.Id">@wip.TargetStep</td>
+                                <td id="targetppid-@wip.Id">@wip.TargetPPID</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">作成</button>
+                </div>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            指定された装置(@Model.EqpName)に対するWIPロットが見つかりません。
+        </div>
+    }
+</div>

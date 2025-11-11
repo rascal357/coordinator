@@ -1,0 +1,33 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Coordinator.Models;
+
+[Table("DC_Batch")]
+public class DcBatch
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(50)]
+    public string BatchId { get; set; } = string.Empty;
+
+    public int Step { get; set; }
+
+    [Required]
+    [StringLength(50)]
+    public string CarrierId { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(50)]
+    public string EqpId { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(50)]
+    public string PPID { get; set; } = string.Empty;
+
+    public bool IsProcessed { get; set; } = false;
+
+    public DateTime CreatedAt { get; set; }
+}

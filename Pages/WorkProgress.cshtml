@@ -1,0 +1,198 @@
+@page
+@model WorkProgressModel
+@{
+    ViewData["Title"] = "Work Progress";
+}
+
+<div class="container-fluid mt-4">
+    <h1>Work Progress - 炉処理進捗ダッシュボード</h1>
+
+    <!-- Filters -->
+    <div class="row mt-4 mb-3">
+        <div class="col-md-12">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-md-4">
+                    <label class="form-label">TYPE (複数選択可)</label>
+                    <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                        @foreach (var type in Model.Types)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       name="TypeFilter"
+                                       value="@type"
+                                       id="type-@type"
+                                       checked="@(Model.TypeFilter?.Contains(type) == true)"
+                                       onchange="document.getElementById('filterForm').submit()">
+                                <label class="form-check-label" for="type-@type">
+                                    @type
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="lineFilter" class="form-label">LINE</label>
+                    <select id="lineFilter" name="LineFilter" class="form-select" onchange="this.form.submit()">
+                        <option value="">すべて</option>
+                        @foreach (var line in Model.Lines)
+                        {
+                            <option value="@line" selected="@(Model.LineFilter == line)">@line</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <a href="/WorkProgress" class="btn btn-secondary me-2">フィルタークリア</a>
+                    <a href="/" class="btn btn-primary">Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Equipment Progress by Type -->
+    @foreach (var typeGroup in Model.EquipmentsByType)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4>TYPE: @typeGroup.Key</h4>
+            </div>
+            <div class="card-body">
+                @foreach (var (eqp, eqpIndex) in typeGroup.Value.Select((e, i) => (e, i)))
+                {
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2" id="eqp-@typeGroup.Key-@eqpIndex">@eqp.EqpName (LINE: @eqp.Line)</h5>
+
+                        <div class="row">
+                            <!-- In Process -->
+                            <div class="col-md-12 mb-3">
+                                <h6 class="text-success">処理中</h6>
+                                @if (eqp.InProcess.Any())
+                                {
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-success">
+                                            <tr>
+                                                <th>Carrier</th>
+                                                <th>Lot</th>
+                                                <th>Qty</th>
+                                                <th>PPID</th>
+                                                <th>NextFurnace</th>
+                                                <th>Location</th>
+                                                <th>End Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var (item, idx) in eqp.InProcess.Select((it, i) => (it, i)))
+                                            {
+                                                <tr>
+                                                    <td id="inprocess-carrier-@typeGroup.Key-@eqpIndex-@idx">@item.Carrier</td>
+                                                    <td id="inprocess-lot-@typeGroup.Key-@eqpIndex-@idx">@item.Lot</td>
+                                                    <td id="inprocess-qty-@typeGroup.Key-@eqpIndex-@idx">@item.Qty</td>
+                                                    <td id="inprocess-ppid-@typeGroup.Key-@eqpIndex-@idx">@item.PPID</td>
+                                                    <td id="inprocess-next-@typeGroup.Key-@eqpIndex-@idx">@item.NextFurnace</td>
+                                                    <td id="inprocess-loc-@typeGroup.Key-@eqpIndex-@idx">@item.Location</td>
+                                                    <td id="inprocess-time-@typeGroup.Key-@eqpIndex-@idx">@item.EndTime</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">なし</p>
+                                }
+                            </div>
+
+                            <!-- Waiting -->
+                            <div class="col-md-12 mb-3">
+                                <h6 class="text-warning">処理待ち</h6>
+                                @if (eqp.Waiting.Any())
+                                {
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="table-warning">
+                                            <tr>
+                                                <th>Carrier</th>
+                                                <th>Lot</th>
+                                                <th>Qty</th>
+                                                <th>PPID</th>
+                                                <th>NextFurnace</th>
+                                                <th>Location</th>
+                                                <th>End Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var (item, idx) in eqp.Waiting.Select((it, i) => (it, i)))
+                                            {
+                                                <tr>
+                                                    <td id="waiting-carrier-@typeGroup.Key-@eqpIndex-@idx">@item.Carrier</td>
+                                                    <td id="waiting-lot-@typeGroup.Key-@eqpIndex-@idx">@item.Lot</td>
+                                                    <td id="waiting-qty-@typeGroup.Key-@eqpIndex-@idx">@item.Qty</td>
+                                                    <td id="waiting-ppid-@typeGroup.Key-@eqpIndex-@idx">@item.PPID</td>
+                                                    <td id="waiting-next-@typeGroup.Key-@eqpIndex-@idx">@item.NextFurnace</td>
+                                                    <td id="waiting-loc-@typeGroup.Key-@eqpIndex-@idx">@item.Location</td>
+                                                    <td id="waiting-time-@typeGroup.Key-@eqpIndex-@idx">@item.EndTime</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                }
+                                else
+                                {
+                                    <p class="text-muted">なし</p>
+                                }
+                            </div>
+
+                            <!-- Reserved 1, 2, 3 -->
+                            @{
+                                var reservedSets = new[] {
+                                    (Items: eqp.Reserved1, Label: "予約1", Color: "info"),
+                                    (Items: eqp.Reserved2, Label: "予約2", Color: "info"),
+                                    (Items: eqp.Reserved3, Label: "予約3", Color: "info")
+                                };
+                            }
+
+                            @foreach (var (reserved, resIdx) in reservedSets.Select((r, i) => (r, i + 1)))
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <h6 class="text-@reserved.Color">@reserved.Label</h6>
+                                    @if (reserved.Items.Any())
+                                    {
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-@reserved.Color">
+                                                <tr>
+                                                    <th>Carrier</th>
+                                                    <th>Lot</th>
+                                                    <th>Qty</th>
+                                                    <th>PPID</th>
+                                                    <th>NextFurnace</th>
+                                                    <th>Location</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var (item, idx) in reserved.Items.Select((it, i) => (it, i)))
+                                                {
+                                                    <tr>
+                                                        <td id="reserved@(resIdx)-carrier-@typeGroup.Key-@eqpIndex-@idx">@item.Carrier</td>
+                                                        <td id="reserved@(resIdx)-lot-@typeGroup.Key-@eqpIndex-@idx">@item.Lot</td>
+                                                        <td id="reserved@(resIdx)-qty-@typeGroup.Key-@eqpIndex-@idx">@item.Qty</td>
+                                                        <td id="reserved@(resIdx)-ppid-@typeGroup.Key-@eqpIndex-@idx">@item.PPID</td>
+                                                        <td id="reserved@(resIdx)-next-@typeGroup.Key-@eqpIndex-@idx">@item.NextFurnace</td>
+                                                        <td id="reserved@(resIdx)-loc-@typeGroup.Key-@eqpIndex-@idx">@item.Location</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">なし</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <hr />
+                }
+            </div>
+        </div>
+    }
+</div>
