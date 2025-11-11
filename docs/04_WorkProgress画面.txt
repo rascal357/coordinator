@@ -1,0 +1,340 @@
+================================================================================
+  Work Progress（作業進捗ダッシュボード）画面
+================================================================================
+
+■ 画面概要
+炉処理の進捗状況をリアルタイムで監視するダッシュボード画面です。
+装置ごとに「処理中」「処理待ち」「予約1-3」の状態を表示し、
+5分間隔で自動的にデータを更新します。
+
+■ URL
+/WorkProgress
+
+■ 画面構成
+
+┌───────────────────────────────────────────────────────┐
+│ Work Progress - 炉処理進捗ダッシュボード                │
+├───────────────────────────────────────────────────────┤
+│ [フィルタ]                                             │
+│  TYPE (複数選択可):                                    │
+│  □ DIFF   □ PECVD   □ OXIDATION                      │
+│  LINE: [すべて ▼]                                     │
+│  [フィルタークリア] [Dashboard]                        │
+├───────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────┐     │
+│ │ TYPE: DIFF                                   │     │
+│ ├─────────────────────────────────────────────┤     │
+│ │ DIFF_01 (LINE: A)                            │     │
+│ │                                              │     │
+│ │ 処理中                                        │     │
+│ │ Carrier│Lot  │Qty│PPID │Next│Loc│End Time  │     │
+│ │ C001   │L001 │25 │PP001│... │...│2025/...  │     │
+│ │                                              │     │
+│ │ 処理待ち                                      │     │
+│ │ Carrier│Lot  │Qty│PPID │Next│Loc│End Time  │     │
+│ │ C002   │L002 │25 │PP002│... │...│2025/...  │     │
+│ │                                              │     │
+│ │ [予約1]        [予約2]         [予約3]        │     │
+│ │ Carrier│Lot   Carrier│Lot    Carrier│Lot    │     │
+│ │ C003 │L003   C004  │L004   なし             │     │
+│ ├─────────────────────────────────────────────┤     │
+│ │ DIFF_02 (LINE: B)                            │     │
+│ │ ...                                          │     │
+│ └─────────────────────────────────────────────┘     │
+└───────────────────────────────────────────────────────┘
+
+■ 機能詳細
+
+【フィルタ機能】
+1. TYPEフィルタ（複数選択可）
+   - チェックボックスで複数のTYPEを選択可能
+   - 変更時に自動的にフォームを送信して画面更新
+
+2. LINEフィルタ
+   - ドロップダウンで単一選択
+   - 変更時に自動的にフォームを送信して画面更新
+
+3. フィルタークリア
+   - すべてのフィルタをクリアしてデフォルト表示に戻る
+
+4. Dashboard
+   - Dashboard画面へ遷移
+
+【自動更新機能】
+- 5分（300,000ミリ秒）間隔で自動的にデータを更新
+- バックグラウンドでAJAXリクエストを送信
+- UIをリロードせずに表示内容のみ更新
+- コンソールに更新ログを出力
+- ページを離れる時に自動更新を停止
+
+【進捗状態の分類】
+
+1. 処理中（In Process）
+   - DC_Actl レコードの TrackInTime でグループ化
+   - ±5分以内のレコードを同じグループとみなす
+   - 最も早いグループを「処理中」として表示
+   - 表示項目: Carrier, Lot, Qty, PPID, NextFurnace, Location, End Time
+
+2. 処理待ち（Waiting）
+   - DC_Actl レコードの2番目の時間グループ
+   - 処理中の次に処理される予定のロット
+   - 表示項目: Carrier, Lot, Qty, PPID, NextFurnace, Location, End Time
+
+3. 予約1-3（Reserved 1-3）
+   - DC_Batch レコードで IS_PROCESSING=false のもの
+   - CreatedAt 順（古い順）で最大3グループを表示
+   - 表示項目: Carrier, Lot, Qty, PPID, NextFurnace, Location
+
+■ 表示項目
+
+【処理中 / 処理待ち】
+1. Carrier: キャリアID
+2. Lot: ロットID
+3. Qty: 数量
+4. PPID: プロセスプログラムID
+5. NextFurnace: 次の装置（次ステップの装置ID）
+6. Location: ロケーション
+7. End Time: 終了予定時刻（TrackInTime）
+
+【予約1-3】
+1. Carrier: キャリアID
+2. Lot: ロットID
+3. Qty: 数量
+4. PPID: プロセスプログラムID
+5. NextFurnace: 次の装置（次ステップの装置ID）
+6. Location: ロケーション
+
+■ データソース
+
+【使用テーブル】
+- DC_Eqps: 装置情報
+- DC_Actl: 実績処理レコード（処理中/処理待ち用）
+- DC_Batch: バッチレコード（予約用）
+- DC_BatchMembers: バッチメンバー情報
+- DC_Wips: WIP情報（キャリア、数量、PPID取得用）
+
+【データ取得ロジック】
+1. 装置リストの取得（フィルタ適用）
+2. 各装置について:
+   a. DC_Actl から該当装置のレコードを取得
+   b. TrackInTime で ±5分以内のグループに分類
+   c. 最初のグループ = 処理中
+   d. 2番目のグループ = 処理待ち
+   e. DC_Batch のLotIDと照合し、IS_PROCESSING=true を設定
+   f. IS_PROCESSING=false のバッチをCreatedAt順で取得（最大3件）
+   g. 予約1, 予約2, 予約3 として表示
+
+■ 実装ファイル
+- Pages/WorkProgress.cshtml
+- Pages/WorkProgress.cshtml.cs (WorkProgressModel)
+- Models/WorkProgressViewModel.cs
+
+■ コードロジック（WorkProgress.cshtml.cs）
+
+【OnGetAsync メソッド】
+```
+LoadProgressData() を呼び出して画面描画
+```
+
+【OnGetRefreshAsync メソッド】
+```
+AJAX自動更新用のエンドポイント
+LoadProgressData() を呼び出してJSON形式で返却
+```
+
+【LoadProgressData メソッド】
+```
+1. TypeFilter と LineFilter でDC_Eqpsをフィルタ
+2. 装置リストを TYPE、NAME 順で取得
+3. TYPEとLINEのリストを取得（フィルタ用）
+4. 装置をTYPEでグループ化
+5. 各装置について:
+   a. DC_Actl から処理レコードを取得（TrackInTime順）
+   b. GroupByTimeWindow() で時間グループ化
+   c. CreateProcessItemsFromActls() で ProcessItem に変換
+      - 処理中: timeGroups[0]
+      - 処理待ち: timeGroups[1]
+   d. MarkBatchesAsProcessed() でバッチの処理済みフラグを更新
+   e. DC_Batch から IS_PROCESSING=false のバッチを取得
+      - BatchId、CreatedAt でグループ化
+      - CreatedAt順で最大3件
+   f. CreateProcessItemsFromBatch() で ProcessItem に変換
+      - 予約1: reservedItems[0]
+      - 予約2: reservedItems[1]
+      - 予約3: reservedItems[2]
+```
+
+【GroupByTimeWindow メソッド】
+```
+DC_Actl レコードを TrackInTime で ±5分のグループに分類
+1. レコードがない場合は空リストを返す
+2. 最初のレコードで currentGroup を初期化
+3. 各レコードについて:
+   - 前のレコードとの時間差を計算
+   - 5分以内なら同じグループに追加
+   - 5分を超えたら新しいグループを開始
+4. グループのリストを返す
+```
+
+【CreateProcessItemsFromActls メソッド】
+```
+DC_Actl レコードから ProcessItem を作成
+1. 各レコードについて:
+   a. DC_Wips からキャリア、数量、PPIDを取得
+   b. ProcessItem を作成:
+      - Carrier, Lot, Qty, PPID
+      - EndTime = TrackInTime (yyyy/MM/dd HH:mm)
+2. ProcessItem のリストを返す
+```
+
+【CreateProcessItemsFromBatch メソッド】
+```
+DC_Batch レコードから ProcessItem を作成
+1. BatchId で DC_BatchMembers を取得
+2. 各メンバーについて:
+   a. 次ステップ（Step+1）の EqpId を取得
+   b. ProcessItem を作成:
+      - Carrier, Lot, Qty, PPID
+      - NextFurnace = 次ステップの EqpId (なければ"なし")
+3. ProcessItem のリストを返す
+```
+
+【MarkBatchesAsProcessed メソッド】
+```
+DC_Actl の LotId と照合してバッチの IS_PROCESSING を更新
+1. 全時間グループから LotId のリストを取得
+2. DC_Batch と DC_BatchMembers を JOIN
+3. 各 LotId について:
+   - DC_BatchMembers に一致する LotId があるか確認
+   - 一致する場合、その BatchId の全レコードを IS_PROCESSING=true に更新
+4. SaveChangesAsync() で保存
+```
+
+【重要なプロパティ】
+- EquipmentsByType: TYPEごとの装置進捗情報
+- Types: フィルタ用のTYPEリスト
+- Lines: フィルタ用のLINEリスト
+- TypeFilter: 選択されたTYPEのリスト
+- LineFilter: 選択されたLINE
+
+■ データモデル
+
+【EquipmentProgressViewModel】
+```
+- EqpName: string (装置名)
+- Line: string (ライン)
+- InProcess: List<ProcessItem> (処理中)
+- Waiting: List<ProcessItem> (処理待ち)
+- Reserved1: List<ProcessItem> (予約1)
+- Reserved2: List<ProcessItem> (予約2)
+- Reserved3: List<ProcessItem> (予約3)
+```
+
+【ProcessItem】
+```
+- Carrier: string
+- Lot: string
+- Qty: int
+- PPID: string
+- NextFurnace: string
+- Location: string
+- EndTime: string (yyyy/MM/dd HH:mm)
+```
+
+■ UI要素のID
+
+すべての動的要素には一意のIDが付与されています：
+
+【装置名】
+- eqp-{typeKey}-{eqpIndex}
+
+【処理中】
+- inprocess-carrier-{typeKey}-{eqpIndex}-{idx}
+- inprocess-lot-{typeKey}-{eqpIndex}-{idx}
+- inprocess-qty-{typeKey}-{eqpIndex}-{idx}
+- inprocess-ppid-{typeKey}-{eqpIndex}-{idx}
+- inprocess-next-{typeKey}-{eqpIndex}-{idx}
+- inprocess-loc-{typeKey}-{eqpIndex}-{idx}
+- inprocess-time-{typeKey}-{eqpIndex}-{idx}
+
+【処理待ち】
+- waiting-carrier-{typeKey}-{eqpIndex}-{idx}
+- waiting-lot-{typeKey}-{eqpIndex}-{idx}
+- waiting-qty-{typeKey}-{eqpIndex}-{idx}
+- waiting-ppid-{typeKey}-{eqpIndex}-{idx}
+- waiting-next-{typeKey}-{eqpIndex}-{idx}
+- waiting-loc-{typeKey}-{eqpIndex}-{idx}
+- waiting-time-{typeKey}-{eqpIndex}-{idx}
+
+【予約1-3】
+- reserved1-carrier-{typeKey}-{eqpIndex}-{idx}
+- reserved1-lot-{typeKey}-{eqpIndex}-{idx}
+- (以下同様に reserved2-, reserved3-)
+
+■ 自動更新機能の実装（JavaScript）
+
+【定数】
+```javascript
+const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5分（300,000ミリ秒）
+```
+
+【主要関数】
+
+1. getCurrentFilters()
+   - 現在のフィルタ設定（TYPE、LINE）を取得
+
+2. refreshData()
+   - AJAXでサーバーからデータを取得
+   - /WorkProgress?handler=Refresh にリクエスト
+   - フィルタパラメータを含める
+   - JSON形式でデータを受信
+   - updateUI() を呼び出して画面更新
+
+3. updateUI(equipmentsByType)
+   - 受信したデータで各UI要素を更新
+   - updateProcessItems() で処理中/処理待ちを更新
+   - updateReservedItems() で予約1-3を更新
+
+4. updateProcessItems(prefix, typeKey, eqpIndex, items)
+   - 処理中/処理待ちのアイテムを更新
+   - 各フィールドの要素IDを取得して textContent を更新
+
+5. updateReservedItems(prefix, typeKey, eqpIndex, items)
+   - 予約1-3のアイテムを更新
+   - 各フィールドの要素IDを取得して textContent を更新
+
+6. updateElement(elementId, value)
+   - 指定されたIDの要素の textContent を更新
+
+7. startAutoRefresh()
+   - setInterval() で自動更新タイマーを開始
+   - 5分間隔で refreshData() を実行
+
+8. stopAutoRefresh()
+   - clearInterval() で自動更新タイマーを停止
+
+【イベント】
+- DOMContentLoaded: ページロード時に startAutoRefresh() を実行
+- beforeunload: ページを離れる時に stopAutoRefresh() を実行
+
+■ パフォーマンス考慮
+
+1. 部分更新
+   - 全ページリロードではなく、必要な部分のみ更新
+   - AJAXでJSON形式のデータのみを取得
+
+2. 非同期処理
+   - すべてのデータベースクエリは async/await
+   - ユーザーインターフェースのブロックを回避
+
+3. フィルタリング
+   - サーバーサイドでフィルタを適用
+   - 必要なデータのみをクライアントに送信
+
+■ 遷移先
+
+1. Dashboard画面
+   - "Dashboard"ボタンをクリックしたとき
+   - URL: /
+
+================================================================================

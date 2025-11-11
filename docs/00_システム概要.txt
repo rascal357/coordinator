@@ -1,0 +1,105 @@
+================================================================================
+  Coordinator - 半導体製造炉処理管理システム
+================================================================================
+
+■ システム概要
+Coordinatorは、半導体製造工程における炉（Furnace）装置の処理管理システムです。
+製造ロットのWIP（Work-in-Progress）追跡、バッチ作成、および装置スケジューリング
+を管理します。
+
+■ 技術スタック
+- 開発言語: C#
+- フレームワーク: ASP.NET Core Razor Pages
+- データベース: SQLite
+- UI: Bootstrap 5
+
+■ 主要機能
+
+1. Dashboard（装置稼働状況）
+   - 装置一覧の表示
+   - TYPE / LINE によるフィルタリング
+   - 装置ごとのWIPロット確認への遷移
+
+2. WIP Lot List（WIPロット一覧）
+   - 特定装置に対する待機中ロット一覧
+   - キャリア選択機能
+   - バッチ作成への遷移
+
+3. Create Batch（バッチ作成）
+   - 選択されたキャリアのステップ確認（最大4ステップ）
+   - 一意のBatchIDによるバッチ登録
+   - DC_Batch および DC_BatchMembers への保存
+
+4. Work Progress（作業進捗ダッシュボード）
+   - 装置ごとの処理状況表示
+   - 処理中 / 処理待ち / 予約1-3 のグループ分け
+   - 5分間隔での自動データ更新
+
+■ アプリケーションフロー
+
+  [Dashboard]
+      ↓ 装置選択
+  [WIP Lot List]
+      ↓ キャリア選択・検証
+  [Create Batch]
+      ↓ バッチ作成
+  [Work Progress]
+      ← リアルタイム監視（5分間隔自動更新）
+
+■ ビジネスロジックの特徴
+
+【バッチ作成】
+- 全キャリアに対して一意のBatchIDを生成（yyyyMMddHHmmssfff形式）
+- 各ステップ（1-4）を個別レコードとしてDC_Batchに保存
+- 同一BatchIDのレコードは全て同じCreatedAtタイムスタンプを持つ
+- 重複キャリアは自動的に除外
+
+【作業進捗のグループ化】
+- "処理中" / "処理待ち": DC_ActlレコードをTrackInTimeの±5分でグループ化
+  - 早いグループ = 処理中
+  - 遅いグループ = 処理待ち
+- "予約1/2/3": DC_BatchレコードをCreatedAt順（古い順）で表示
+- DC_ActlとDC_BatchのLotIDをマッチングし、IS_PROCESSING=trueを設定して
+  予約表示から除外
+
+【UI要件】
+- 全動的要素に一意のIDを付与（JavaScript更新用）
+- Dashboard および Work Progress 画面でTYPE/LINEフィルタを提供
+- キャリア選択のバリデーション機能
+- ユーザーフレンドリーなメッセージ表示
+
+■ プロジェクト構成
+
+/Coordinator
+  ├── Models/              # データモデル
+  │   ├── DcEqp.cs         # 装置情報
+  │   ├── DcWip.cs         # WIPロット
+  │   ├── DcCarrierStep.cs # キャリアステップ
+  │   ├── DcBatch.cs       # バッチレコード
+  │   ├── DcBatchMember.cs # バッチメンバー
+  │   ├── DcActl.cs        # 実績処理レコード
+  │   └── WorkProgressViewModel.cs # 作業進捗用ViewModel
+  ├── Data/                # データベースコンテキスト
+  │   ├── CoordinatorDbContext.cs
+  │   └── DbInitializer.cs
+  ├── Pages/               # Razorページ
+  │   ├── Index.cshtml     # Dashboard
+  │   ├── WipLotList.cshtml
+  │   ├── CreateBatch.cshtml
+  │   └── WorkProgress.cshtml
+  └── coordinator.db       # SQLiteデータベース
+
+■ セキュリティとデータ整合性
+
+- Entity Framework Core によるパラメータ化クエリ（SQLインジェクション防止）
+- トランザクション管理によるデータ整合性の保証
+- 既にバッチに登録されたキャリアはWIPリストから除外
+- キャリア選択時の重複自動除去
+
+■ パフォーマンス
+
+- 非同期処理（async/await）による応答性の向上
+- Work Progress画面でのクライアントサイド自動更新（5分間隔）
+- インデックスとクエリ最適化によるデータベースアクセスの高速化
+
+================================================================================

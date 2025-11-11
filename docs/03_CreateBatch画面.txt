@@ -1,0 +1,209 @@
+================================================================================
+  Create Batch（バッチ作成）画面
+================================================================================
+
+■ 画面概要
+選択されたキャリアの処理ステップ（最大4ステップ）を確認し、バッチとして
+登録する画面です。各キャリアのステップごとの装置IDとプロセスプログラムID
+（PPID）が表示されます。
+
+■ URL
+/CreateBatch?carriers={carrier1},{carrier2},...
+
+例: /CreateBatch?carriers=C001,C002,C003
+
+■ 画面構成
+
+┌────────────────────────────────────────────────────────────┐
+│ Create Batch                                                │
+├────────────────────────────────────────────────────────────┤
+│ ┌────────┬────┬──────────────┬──────────────┬──────┐    │
+│ │Carrier │Qty │Step 1        │Step 2        │...   │    │
+│ │        │    │EqpId  │PPID  │EqpId  │PPID  │      │    │
+│ ├────────┼────┼───────┼──────┼───────┼──────┼──────┤    │
+│ │C001    │25  │DIFF_01│PP001 │PECVD01│PP002 │...   │    │
+│ │C002    │25  │DIFF_01│PP001 │PECVD02│PP003 │...   │    │
+│ │C003    │25  │DIFF_02│PP004 │      │      │...   │    │
+│ └────────┴────┴───────┴──────┴───────┴──────┴──────┘    │
+│                                                            │
+│ [作成]  [キャンセル]                                        │
+└────────────────────────────────────────────────────────────┘
+
+■ 機能詳細
+
+【ステップ表示】
+- 各キャリアについて最大4ステップの処理工程を表示
+- 各ステップには以下の情報が含まれる:
+  - EqpId: 装置ID（処理装置名）
+  - PPID: プロセスプログラムID（レシピ）
+
+【作成ボタン】
+- 一意のBatchIDを生成（yyyyMMddHHmmssfff形式のタイムスタンプ）
+- DC_Batchテーブルにステップごとのレコードを作成
+- DC_BatchMembersテーブルにキャリアごとのメンバー情報を作成
+- すべてのレコードに同じCreatedAtタイムスタンプを設定
+- 完了後、Work Progress画面へ遷移
+
+【キャンセルボタン】
+- WIP Lot List画面へ戻る
+
+【エラー表示】
+- キャリア情報が見つからない場合:
+  "キャリア情報が見つかりません。"
+  [Dashboardに戻る]ボタンを表示
+
+■ 表示項目
+
+1. Carrier: キャリアID
+2. Qty: 数量
+3. Step 1 - EqpId: ステップ1の装置ID
+4. Step 1 - PPID: ステップ1のプロセスプログラムID
+5. Step 2 - EqpId: ステップ2の装置ID
+6. Step 2 - PPID: ステップ2のプロセスプログラムID
+7. Step 3 - EqpId: ステップ3の装置ID
+8. Step 3 - PPID: ステップ3のプロセスプログラムID
+9. Step 4 - EqpId: ステップ4の装置ID
+10. Step 4 - PPID: ステップ4のプロセスプログラムID
+
+※ ステップが存在しない場合は空白表示
+
+■ データソース
+
+【使用テーブル】
+- DC_CarrierSteps: キャリアの処理ステップ情報
+- DC_Wips: WIPロット情報（LotId、Technology取得用）
+- DC_Batch: バッチレコード（書き込み）
+- DC_BatchMembers: バッチメンバー（書き込み）
+
+【取得データ】
+1. OnGetAsync
+   - carriers パラメータからキャリアリストを取得
+   - 各キャリアについて:
+     - DC_CarrierSteps からステップ情報を取得
+     - DC_Wips から LotId と Technology を取得
+   - CarrierStepViewModel に変換して表示
+
+2. OnPostAsync
+   - carriers パラメータからキャリアリストを取得
+   - 一意のBatchID生成: DateTime.Now.ToString("yyyyMMddHHmmssfff")
+   - 各キャリアについて:
+     - DC_CarrierSteps からステップ情報を取得
+     - DC_Wips から WIP情報を取得
+     - 各ステップを DC_Batch に保存
+     - キャリア情報を DC_BatchMembers に保存
+
+■ 実装ファイル
+- Pages/CreateBatch.cshtml
+- Pages/CreateBatch.cshtml.cs (CreateBatchModel)
+- Models/CarrierStepViewModel.cs
+
+■ コードロジック（CreateBatch.cshtml.cs）
+
+【OnGetAsync メソッド】
+```
+1. Carriers パラメータをカンマ区切りで分割
+2. 各キャリアについて:
+   a. DC_CarrierSteps から該当キャリアのステップを取得（Step順）
+   b. DC_Wips からキャリアのWIP情報を取得
+   c. CarrierStepViewModel を作成:
+      - Carrier, Qty, LotId, Technology をセット
+      - 各ステップ（1-4）の EqpId と PPID をセット
+   d. CarrierSteps リストに追加
+```
+
+【OnPostAsync メソッド】
+```
+1. Carriers パラメータをカンマ区切りで分割
+2. BatchID生成: DateTime.Now.ToString("yyyyMMddHHmmssfff")
+3. CreatedAt = DateTime.Now
+4. 各キャリアについて:
+   a. DC_CarrierSteps からステップ情報を取得
+   b. DC_Wips からWIP情報を取得
+   c. 各ステップについて:
+      - DcBatch オブジェクトを作成
+      - BatchId, Step, CarrierId, EqpId, PPID, IsProcessed=false, CreatedAt
+      - _context.DcBatches.Add(batch)
+   d. DcBatchMember オブジェクトを作成
+      - BatchId, CarrierId, LotId, Qty, Technology
+      - _context.DcBatchMembers.Add(batchMember)
+5. _context.SaveChangesAsync() で一括保存
+6. Work Progress画面へリダイレクト
+```
+
+【重要なプロパティ】
+- CarrierSteps: 表示するキャリアステップのリスト
+- Carriers: キャリアIDのカンマ区切り文字列
+
+■ データモデル
+
+【CarrierStepViewModel】
+```
+- Carrier: string
+- Qty: int
+- LotId: string
+- Technology: string
+- Step1: StepInfo (EqpId, PPID)
+- Step2: StepInfo (EqpId, PPID)
+- Step3: StepInfo (EqpId, PPID)
+- Step4: StepInfo (EqpId, PPID)
+```
+
+【StepInfo】
+```
+- EqpId: string
+- PPID: string
+```
+
+■ UI要素のID
+
+すべての動的要素には一意のIDが付与されています：
+- carrier-{index}: キャリア名表示
+- qty-{index}: 数量表示
+- step1-eqp-{index}: ステップ1の装置ID
+- step1-ppid-{index}: ステップ1のPPID
+- step2-eqp-{index}: ステップ2の装置ID
+- step2-ppid-{index}: ステップ2のPPID
+- step3-eqp-{index}: ステップ3の装置ID
+- step3-ppid-{index}: ステップ3のPPID
+- step4-eqp-{index}: ステップ4の装置ID
+- step4-ppid-{index}: ステップ4のPPID
+
+■ BatchID生成ロジック
+
+【形式】
+yyyyMMddHHmmssfff
+
+【例】
+20250112143052123 = 2025年1月12日 14:30:52.123
+
+【特性】
+- タイムスタンプベースで一意性を保証
+- ミリ秒まで含めることで同時実行時の衝突を回避
+- ソート可能（古いバッチほど小さい値）
+
+■ データ整合性
+
+【トランザクション】
+- 複数のDC_BatchレコードとDC_BatchMembersレコードを一括保存
+- SaveChangesAsync() による暗黙的トランザクション
+- エラー時は全てロールバック
+
+【同一BatchIDの保証】
+- 全てのキャリア、全てのステップに同じBatchIDを使用
+- 全てのレコードに同じCreatedAtを使用
+
+■ 遷移先
+
+1. Work Progress画面
+   - "作成"ボタンをクリックして保存完了後
+   - URL: /WorkProgress
+
+2. WIP Lot List画面
+   - "キャンセル"ボタンをクリックしたとき
+   - URL: /WipLotList
+
+3. Dashboard画面
+   - キャリア情報が見つからない場合の"Dashboardに戻る"ボタン
+   - URL: /
+
+================================================================================
