@@ -20,4 +20,7 @@ public class DcEqp
     [Required]
     [StringLength(1)]
     public string Line { get; set; } = string.Empty;
+
+    [StringLength(200)]
+    public string? Note { get; set; }
 }

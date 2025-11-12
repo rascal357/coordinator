@@ -67,6 +67,6 @@ public class WipLotListModel : PageModel
         // Serialize data to pass to CreateBatch page
         var carriersParam = string.Join(",", uniqueCarriers);
 
-        return RedirectToPage("CreateBatch", new { carriers = carriersParam });
+        return RedirectToPage("CreateBatch", new { carriers = carriersParam, eqpName = EqpName });
     }
 }

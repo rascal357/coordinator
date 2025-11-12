@@ -6,9 +6,37 @@ public static class DbInitializer
 {
     public static void Initialize(CoordinatorDbContext context)
     {
-        // Check if database already has data
+        // Update notes for existing equipment (test data)
         if (context.DcEqps.Any())
         {
+            var eqps = context.DcEqps.ToList();
+            var notesUpdated = false;
+
+            foreach (var eqp in eqps)
+            {
+                var newNote = eqp.Name switch
+                {
+                    "DVETC25" => "メンテナンス予定 12/1",
+                    "DVETC26" => "調整中",
+                    "DVETC27" => "正常稼働",
+                    "DVETC28" => "点検済み",
+                    "DVETC38" => "高優先度ロット処理中",
+                    "DVETC39" => "新レシピ適用済み",
+                    _ => null
+                };
+
+                if (eqp.Note != newNote)
+                {
+                    eqp.Note = newNote;
+                    notesUpdated = true;
+                }
+            }
+
+            if (notesUpdated)
+            {
+                context.SaveChanges();
+            }
+
             return; // DB has been seeded
         }
 

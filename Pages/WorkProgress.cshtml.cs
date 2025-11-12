@@ -36,6 +36,85 @@ public class WorkProgressModel : PageModel
         return new JsonResult(new { success = true, data = EquipmentsByType });
     }
 
+    public async Task<IActionResult> OnPostUpdateNoteAsync([FromForm] string eqpName, [FromForm] string note)
+    {
+        if (string.IsNullOrEmpty(eqpName))
+        {
+            return new JsonResult(new { success = false, message = "Equipment name is required" });
+        }
+
+        try
+        {
+            var equipment = await _context.DcEqps
+                .Where(e => e.Name == eqpName)
+                .FirstOrDefaultAsync();
+
+            if (equipment == null)
+            {
+                return new JsonResult(new { success = false, message = "Equipment not found" });
+            }
+
+            equipment.Note = string.IsNullOrWhiteSpace(note) ? null : note;
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = "Note updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = $"Error updating note: {ex.Message}" });
+        }
+    }
+
+    public async Task<IActionResult> OnPostDeleteBatchAsync(string batchId)
+    {
+        if (string.IsNullOrEmpty(batchId))
+        {
+            return new JsonResult(new { success = false, message = "BatchId is required" });
+        }
+
+        try
+        {
+            // Delete from DC_BatchMembers
+            var batchMembers = await _context.DcBatchMembers
+                .Where(bm => bm.BatchId == batchId)
+                .ToListAsync();
+            _context.DcBatchMembers.RemoveRange(batchMembers);
+
+            // Delete from DC_Batches
+            var batches = await _context.DcBatches
+                .Where(b => b.BatchId == batchId)
+                .ToListAsync();
+            _context.DcBatches.RemoveRange(batches);
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = "Batch deleted successfully" });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = $"Error deleting batch: {ex.Message}" });
+        }
+    }
+
+    public async Task<IActionResult> OnGetResetProcessedAsync()
+    {
+        try
+        {
+            var allBatches = await _context.DcBatches.ToListAsync();
+            foreach (var batch in allBatches)
+            {
+                batch.IsProcessed = false;
+            }
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = $"Reset {allBatches.Count} batches" });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = $"Error: {ex.Message}" });
+        }
+    }
+
     private async Task LoadProgressData()
     {
         var query = _context.DcEqps.AsQueryable();
@@ -68,7 +147,8 @@ public class WorkProgressModel : PageModel
                 var progressViewModel = new EquipmentProgressViewModel
                 {
                     EqpName = eqp.Name,
-                    Line = eqp.Line
+                    Line = eqp.Line,
+                    Note = eqp.Note
                 };
 
                 // Get actual processing data
@@ -110,9 +190,21 @@ public class WorkProgressModel : PageModel
                     reservedItems.Add(items);
                 }
 
-                if (reservedItems.Count > 0) progressViewModel.Reserved1 = reservedItems[0];
-                if (reservedItems.Count > 1) progressViewModel.Reserved2 = reservedItems[1];
-                if (reservedItems.Count > 2) progressViewModel.Reserved3 = reservedItems[2];
+                if (reservedItems.Count > 0)
+                {
+                    progressViewModel.Reserved1 = reservedItems[0];
+                    progressViewModel.Reserved1BatchId = reservedBatchIds[0].BatchId;
+                }
+                if (reservedItems.Count > 1)
+                {
+                    progressViewModel.Reserved2 = reservedItems[1];
+                    progressViewModel.Reserved2BatchId = reservedBatchIds[1].BatchId;
+                }
+                if (reservedItems.Count > 2)
+                {
+                    progressViewModel.Reserved3 = reservedItems[2];
+                    progressViewModel.Reserved3BatchId = reservedBatchIds[2].BatchId;
+                }
 
                 equipmentList.Add(progressViewModel);
             }

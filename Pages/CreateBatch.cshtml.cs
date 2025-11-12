@@ -20,6 +20,9 @@ public class CreateBatchModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Carriers { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? EqpName { get; set; }
+
     public async Task OnGetAsync()
     {
         if (!string.IsNullOrEmpty(Carriers))

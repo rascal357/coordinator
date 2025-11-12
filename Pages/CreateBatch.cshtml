@@ -4,71 +4,314 @@
     ViewData["Title"] = "Create Batch";
 }
 
+<style>
+    :root {
+        --primary-color: #0d6efd;
+        --success-color: #198754;
+        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        --transition-speed: 0.2s;
+    }
+
+    body {
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: #0d6efd;
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2rem;
+    }
+
+    .header-icon {
+        width: 45px;
+        height: 45px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        font-size: 0.95rem;
+        opacity: 0.95;
+        margin: 0.25rem 0 0 0;
+    }
+
+    .modern-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid #dee2e6;
+    }
+
+    .table-card-header {
+        background: #0d6efd;
+        color: white;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        padding: 0.75rem;
+        text-align: center;
+        border-bottom: 2px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .modern-table tbody tr {
+        transition: background-color var(--transition-speed);
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .modern-table tbody td {
+        padding: 0.75rem;
+        text-align: center;
+        border-top: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-modern {
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .btn-create {
+        background: #198754;
+        color: white;
+    }
+
+    .btn-create:hover {
+        background: #157347;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #5c636a;
+    }
+
+    .alert-modern {
+        padding: 1rem 1.5rem;
+        border-radius: 6px;
+        border: 1px solid;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: var(--card-shadow);
+    }
+
+    .alert-warning-modern {
+        background: #fff3cd;
+        border-color: #ffecb5;
+        color: #664d03;
+    }
+
+    .alert-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #6c757d;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #495057;
+    }
+</style>
+
 <div class="container mt-4">
-    <h1>Create Batch</h1>
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="header-icon me-3">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="page-title">Create Batch</h1>
+                    <p class="page-subtitle">バッチ作成</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if (Model.CarrierSteps.Any())
     {
         <form method="post">
             <input type="hidden" name="Carriers" value="@Model.Carriers" />
 
-            <div class="table-responsive mt-4">
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Carrier</th>
-                            <th>Qty</th>
-                            <th colspan="2">Step 1</th>
-                            <th colspan="2">Step 2</th>
-                            <th colspan="2">Step 3</th>
-                            <th colspan="2">Step 4</th>
-                        </tr>
-                        <tr>
-                            <th></th>
-                            <th></th>
-                            <th>EqpId</th>
-                            <th>PPID</th>
-                            <th>EqpId</th>
-                            <th>PPID</th>
-                            <th>EqpId</th>
-                            <th>PPID</th>
-                            <th>EqpId</th>
-                            <th>PPID</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var (carrierStep, index) in Model.CarrierSteps.Select((cs, i) => (cs, i)))
-                        {
+            <!-- Table Card -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                    </svg>
+                    キャリアステップ情報
+                </div>
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
                             <tr>
-                                <td id="carrier-@index">@carrierStep.Carrier</td>
-                                <td id="qty-@index">@carrierStep.Qty</td>
-                                <td id="step1-eqp-@index">@carrierStep.Step1.EqpId</td>
-                                <td id="step1-ppid-@index">@carrierStep.Step1.PPID</td>
-                                <td id="step2-eqp-@index">@carrierStep.Step2.EqpId</td>
-                                <td id="step2-ppid-@index">@carrierStep.Step2.PPID</td>
-                                <td id="step3-eqp-@index">@carrierStep.Step3.EqpId</td>
-                                <td id="step3-ppid-@index">@carrierStep.Step3.PPID</td>
-                                <td id="step4-eqp-@index">@carrierStep.Step4.EqpId</td>
-                                <td id="step4-ppid-@index">@carrierStep.Step4.PPID</td>
+                                <th rowspan="2">Carrier</th>
+                                <th rowspan="2">Qty</th>
+                                <th colspan="2">Step 1</th>
+                                <th colspan="2">Step 2</th>
+                                <th colspan="2">Step 3</th>
+                                <th colspan="2">Step 4</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                            <tr>
+                                <th>EqpId</th>
+                                <th>PPID</th>
+                                <th>EqpId</th>
+                                <th>PPID</th>
+                                <th>EqpId</th>
+                                <th>PPID</th>
+                                <th>EqpId</th>
+                                <th>PPID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var (carrierStep, index) in Model.CarrierSteps.Select((cs, i) => (cs, i)))
+                            {
+                                <tr>
+                                    <td id="carrier-@index"><strong>@carrierStep.Carrier</strong></td>
+                                    <td id="qty-@index">@carrierStep.Qty</td>
+                                    <td id="step1-eqp-@index">@carrierStep.Step1.EqpId</td>
+                                    <td id="step1-ppid-@index">@carrierStep.Step1.PPID</td>
+                                    <td id="step2-eqp-@index">@carrierStep.Step2.EqpId</td>
+                                    <td id="step2-ppid-@index">@carrierStep.Step2.PPID</td>
+                                    <td id="step3-eqp-@index">@carrierStep.Step3.EqpId</td>
+                                    <td id="step3-ppid-@index">@carrierStep.Step3.PPID</td>
+                                    <td id="step4-eqp-@index">@carrierStep.Step4.EqpId</td>
+                                    <td id="step4-ppid-@index">@carrierStep.Step4.PPID</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="row mt-3">
-                <div class="col-md-12">
-                    <button type="submit" class="btn btn-primary">作成</button>
-                    <a href="/WipLotList" class="btn btn-secondary">キャンセル</a>
-                </div>
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn-modern btn-create">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                    </svg>
+                    <span>作成</span>
+                </button>
+                <a href="/WipLotList?EqpName=@Uri.EscapeDataString(Model.EqpName ?? "")" class="btn-modern btn-cancel">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    <span>キャンセル</span>
+                </a>
             </div>
         </form>
     }
     else
     {
-        <div class="alert alert-warning mt-3">
-            キャリア情報が見つかりません。
+        <div class="alert-modern alert-warning-modern">
+            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div>
+                <strong>キャリア情報が見つかりません。</strong>
+                <div style="font-size: 0.9rem; margin-top: 0.25rem;">
+                    WIP Lot Listから適切なキャリアを選択してください。
+                </div>
+            </div>
         </div>
-        <a href="/" class="btn btn-secondary">Dashboardに戻る</a>
+        <a href="/" class="btn-modern btn-cancel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Dashboardに戻る</span>
+        </a>
     }
 </div>

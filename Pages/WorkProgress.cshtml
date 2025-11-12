@@ -4,16 +4,40 @@
     ViewData["Title"] = "Work Progress";
 }
 
-<div class="container-fluid mt-4">
-    <h1>Work Progress - 炉処理進捗ダッシュボード</h1>
+<div class="container-fluid px-4 py-3">
+    <!-- Modern Header -->
+    <div class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="header-icon me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="page-title mb-0">Work Progress</h1>
+                <p class="page-subtitle mb-0">炉処理進捗ダッシュボード</p>
+            </div>
+        </div>
+    </div>
 
-    <!-- Filters -->
-    <div class="row mt-4 mb-3">
-        <div class="col-md-12">
-            <form method="get" class="row g-3" id="filterForm">
+    <!-- Hidden form for CSRF token -->
+    <form id="csrfForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <!-- Filters Card -->
+    <div class="filter-card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end" id="filterForm">
                 <div class="col-md-4">
-                    <label class="form-label">TYPE (複数選択可)</label>
-                    <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                    <label class="form-label fw-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                            <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                        TYPE (複数選択可)
+                    </label>
+                    <div class="filter-type-box">
                         @foreach (var type in Model.Types)
                         {
                             <div class="form-check">
@@ -32,8 +56,13 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="lineFilter" class="form-label">LINE</label>
-                    <select id="lineFilter" name="LineFilter" class="form-select" onchange="this.form.submit()">
+                    <label for="lineFilter" class="form-label fw-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                            <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0 3a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0 3a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11z"/>
+                        </svg>
+                        LINE
+                    </label>
+                    <select id="lineFilter" name="LineFilter" class="form-select modern-select" onchange="this.form.submit()">
                         <option value="">すべて</option>
                         @foreach (var line in Model.Lines)
                         {
@@ -41,164 +70,853 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <a href="/WorkProgress" class="btn btn-secondary me-2">フィルタークリア</a>
-                    <a href="/" class="btn btn-primary">Dashboard</a>
+                <div class="col-md-5 d-flex align-items-end gap-2">
+                    <a href="/WorkProgress" class="btn btn-modern btn-secondary flex-fill">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                        </svg>
+                        クリア
+                    </a>
+                    <a href="/" class="btn btn-modern btn-primary flex-fill">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5V6a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4zM3.732 5.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707zM2 10a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 10zm9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5zm.754-4.246a.389.389 0 0 0-.527-.02L7.547 9.31a.91.91 0 1 0 1.302 1.258l3.434-4.297a.389.389 0 0 0-.029-.518z"/>
+                            <path fill-rule="evenodd" d="M0 10a8 8 0 1 1 15.547 2.661c-.442 1.253-1.845 1.602-2.932 1.25C11.309 13.488 9.475 13 8 13c-1.474 0-3.31.488-4.615.911-1.087.352-2.49.003-2.932-1.25A7.988 7.988 0 0 1 0 10zm8-7a7 7 0 0 0-6.603 9.329c.203.575.923.876 1.68.63C4.397 12.533 6.358 12 8 12s3.604.532 4.923.96c.757.245 1.477-.056 1.68-.631A7 7 0 0 0 8 3z"/>
+                        </svg>
+                        Dashboard
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Equipment Progress by Type -->
-    @foreach (var typeGroup in Model.EquipmentsByType)
-    {
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4>TYPE: @typeGroup.Key</h4>
+    <!-- Column Visibility Controls -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="btn-group shadow-sm" role="group">
+                <button type="button" class="btn btn-toggle btn-toggle-success" id="btn-inprocess" onclick="toggleColumns('inprocess')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16" id="icon-inprocess-svg">
+                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    <span id="icon-inprocess-text">処理中</span>
+                </button>
+                <button type="button" class="btn btn-toggle btn-toggle-warning" id="btn-waiting" onclick="toggleColumns('waiting')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16" id="icon-waiting-svg">
+                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    <span id="icon-waiting-text">処理待ち</span>
+                </button>
             </div>
-            <div class="card-body">
-                @foreach (var (eqp, eqpIndex) in typeGroup.Value.Select((e, i) => (e, i)))
-                {
-                    <div class="mb-4">
-                        <h5 class="border-bottom pb-2" id="eqp-@typeGroup.Key-@eqpIndex">@eqp.EqpName (LINE: @eqp.Line)</h5>
+        </div>
+    </div>
 
-                        <div class="row">
-                            <!-- In Process -->
-                            <div class="col-md-12 mb-3">
-                                <h6 class="text-success">処理中</h6>
-                                @if (eqp.InProcess.Any())
-                                {
-                                    <table class="table table-sm table-bordered">
-                                        <thead class="table-success">
-                                            <tr>
-                                                <th>Carrier</th>
-                                                <th>Lot</th>
-                                                <th>Qty</th>
-                                                <th>PPID</th>
-                                                <th>NextFurnace</th>
-                                                <th>Location</th>
-                                                <th>End Time</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var (item, idx) in eqp.InProcess.Select((it, i) => (it, i)))
-                                            {
-                                                <tr>
-                                                    <td id="inprocess-carrier-@typeGroup.Key-@eqpIndex-@idx">@item.Carrier</td>
-                                                    <td id="inprocess-lot-@typeGroup.Key-@eqpIndex-@idx">@item.Lot</td>
-                                                    <td id="inprocess-qty-@typeGroup.Key-@eqpIndex-@idx">@item.Qty</td>
-                                                    <td id="inprocess-ppid-@typeGroup.Key-@eqpIndex-@idx">@item.PPID</td>
-                                                    <td id="inprocess-next-@typeGroup.Key-@eqpIndex-@idx">@item.NextFurnace</td>
-                                                    <td id="inprocess-loc-@typeGroup.Key-@eqpIndex-@idx">@item.Location</td>
-                                                    <td id="inprocess-time-@typeGroup.Key-@eqpIndex-@idx">@item.EndTime</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                }
-                                else
-                                {
-                                    <p class="text-muted">なし</p>
-                                }
-                            </div>
-
-                            <!-- Waiting -->
-                            <div class="col-md-12 mb-3">
-                                <h6 class="text-warning">処理待ち</h6>
-                                @if (eqp.Waiting.Any())
-                                {
-                                    <table class="table table-sm table-bordered">
-                                        <thead class="table-warning">
-                                            <tr>
-                                                <th>Carrier</th>
-                                                <th>Lot</th>
-                                                <th>Qty</th>
-                                                <th>PPID</th>
-                                                <th>NextFurnace</th>
-                                                <th>Location</th>
-                                                <th>End Time</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var (item, idx) in eqp.Waiting.Select((it, i) => (it, i)))
-                                            {
-                                                <tr>
-                                                    <td id="waiting-carrier-@typeGroup.Key-@eqpIndex-@idx">@item.Carrier</td>
-                                                    <td id="waiting-lot-@typeGroup.Key-@eqpIndex-@idx">@item.Lot</td>
-                                                    <td id="waiting-qty-@typeGroup.Key-@eqpIndex-@idx">@item.Qty</td>
-                                                    <td id="waiting-ppid-@typeGroup.Key-@eqpIndex-@idx">@item.PPID</td>
-                                                    <td id="waiting-next-@typeGroup.Key-@eqpIndex-@idx">@item.NextFurnace</td>
-                                                    <td id="waiting-loc-@typeGroup.Key-@eqpIndex-@idx">@item.Location</td>
-                                                    <td id="waiting-time-@typeGroup.Key-@eqpIndex-@idx">@item.EndTime</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                }
-                                else
-                                {
-                                    <p class="text-muted">なし</p>
-                                }
-                            </div>
-
-                            <!-- Reserved 1, 2, 3 -->
-                            @{
-                                var reservedSets = new[] {
-                                    (Items: eqp.Reserved1, Label: "予約1", Color: "info"),
-                                    (Items: eqp.Reserved2, Label: "予約2", Color: "info"),
-                                    (Items: eqp.Reserved3, Label: "予約3", Color: "info")
-                                };
-                            }
-
-                            @foreach (var (reserved, resIdx) in reservedSets.Select((r, i) => (r, i + 1)))
+    <!-- Equipment Progress Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 80vh; overflow-y: auto;">
+                <table class="table table-bordered table-sm mb-0 compact-table">
+                    <thead class="table-light sticky-header">
+                        <tr>
+                            <th rowspan="2" class="align-middle">TYPE</th>
+                            <th rowspan="2" class="align-middle">装置名</th>
+                            <th colspan="7" class="table-success text-center col-inprocess-header">処理中</th>
+                            <th colspan="7" class="table-warning text-center col-waiting-header">処理待ち</th>
+                            <th colspan="7" class="table-info text-center">予約1</th>
+                            <th colspan="7" class="table-info text-center">予約2</th>
+                            <th colspan="7" class="table-info text-center">予約3</th>
+                        </tr>
+                        <tr>
+                            <!-- In Process sub-headers -->
+                            <th class="table-success col-inprocess">Carrier</th>
+                            <th class="table-success col-inprocess">Lot</th>
+                            <th class="table-success col-inprocess">Qty</th>
+                            <th class="table-success col-inprocess">PPID</th>
+                            <th class="table-success col-inprocess">Next</th>
+                            <th class="table-success col-inprocess">Loc</th>
+                            <th class="table-success col-inprocess">End</th>
+                            <!-- Waiting sub-headers -->
+                            <th class="table-warning col-waiting">Carrier</th>
+                            <th class="table-warning col-waiting">Lot</th>
+                            <th class="table-warning col-waiting">Qty</th>
+                            <th class="table-warning col-waiting">PPID</th>
+                            <th class="table-warning col-waiting">Next</th>
+                            <th class="table-warning col-waiting">Loc</th>
+                            <th class="table-warning col-waiting">End</th>
+                            <!-- Reserved 1 sub-headers -->
+                            <th class="table-info">Carrier</th>
+                            <th class="table-info">Lot</th>
+                            <th class="table-info">Qty</th>
+                            <th class="table-info">PPID</th>
+                            <th class="table-info">Next</th>
+                            <th class="table-info">Loc</th>
+                            <th class="table-info">End</th>
+                            <!-- Reserved 2 sub-headers -->
+                            <th class="table-info">Carrier</th>
+                            <th class="table-info">Lot</th>
+                            <th class="table-info">Qty</th>
+                            <th class="table-info">PPID</th>
+                            <th class="table-info">Next</th>
+                            <th class="table-info">Loc</th>
+                            <th class="table-info">End</th>
+                            <!-- Reserved 3 sub-headers -->
+                            <th class="table-info">Carrier</th>
+                            <th class="table-info">Lot</th>
+                            <th class="table-info">Qty</th>
+                            <th class="table-info">PPID</th>
+                            <th class="table-info">Next</th>
+                            <th class="table-info">Loc</th>
+                            <th class="table-info">End</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var typeGroup in Model.EquipmentsByType)
+                        {
+                            @foreach (var (eqp, eqpIndex) in typeGroup.Value.Select((e, i) => (e, i)))
                             {
-                                <div class="col-md-4 mb-3">
-                                    <h6 class="text-@reserved.Color">@reserved.Label</h6>
-                                    @if (reserved.Items.Any())
+                                <tr id="eqp-@typeGroup.Key-@eqpIndex">
+                                    <td class="fw-bold align-top">@typeGroup.Key</td>
+                                    <td class="fw-bold align-top">
+                                        <div>
+                                            <a href="/WipLotList?EqpName=@Uri.EscapeDataString(eqp.EqpName)" class="text-decoration-none text-primary fw-bold">
+                                                @eqp.EqpName
+                                            </a>
+                                        </div>
+                                        <div>
+                                            @if (!string.IsNullOrEmpty(eqp.Note))
+                                            {
+                                                <span class="text-secondary" id="note-@typeGroup.Key-@eqpIndex"><small>@eqp.Note</small></span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted" id="note-@typeGroup.Key-@eqpIndex"><small>(メモなし)</small></span>
+                                            }
+                                        </div>
+                                        <div class="text-muted"><small>LINE: @eqp.Line</small></div>
+                                        <div class="mt-2">
+                                            <button type="button" class="btn-edit-note" onclick="openEditNoteModal('@eqp.EqpName', '@Html.Raw(eqp.Note?.Replace("'", "\\'"))', '@typeGroup.Key', @eqpIndex)" title="メモ編集">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+
+                                    <!-- In Process -->
+                                    @if (eqp.InProcess.Any())
                                     {
-                                        <table class="table table-sm table-bordered">
-                                            <thead class="table-@reserved.Color">
-                                                <tr>
-                                                    <th>Carrier</th>
-                                                    <th>Lot</th>
-                                                    <th>Qty</th>
-                                                    <th>PPID</th>
-                                                    <th>NextFurnace</th>
-                                                    <th>Location</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach (var (item, idx) in reserved.Items.Select((it, i) => (it, i)))
+                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                        {
+                                            <td class="align-top col-inprocess" id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                                @foreach (var (item, idx) in eqp.InProcess.Select((it, i) => (it, i)))
                                                 {
-                                                    <tr>
-                                                        <td id="reserved@(resIdx)-carrier-@typeGroup.Key-@eqpIndex-@idx">@item.Carrier</td>
-                                                        <td id="reserved@(resIdx)-lot-@typeGroup.Key-@eqpIndex-@idx">@item.Lot</td>
-                                                        <td id="reserved@(resIdx)-qty-@typeGroup.Key-@eqpIndex-@idx">@item.Qty</td>
-                                                        <td id="reserved@(resIdx)-ppid-@typeGroup.Key-@eqpIndex-@idx">@item.PPID</td>
-                                                        <td id="reserved@(resIdx)-next-@typeGroup.Key-@eqpIndex-@idx">@item.NextFurnace</td>
-                                                        <td id="reserved@(resIdx)-loc-@typeGroup.Key-@eqpIndex-@idx">@item.Location</td>
-                                                    </tr>
+                                                    var value = field switch {
+                                                        "Carrier" => item.Carrier,
+                                                        "Lot" => item.Lot,
+                                                        "Qty" => item.Qty.ToString(),
+                                                        "PPID" => item.PPID,
+                                                        "NextFurnace" => item.NextFurnace,
+                                                        "Location" => item.Location,
+                                                        "EndTime" => item.EndTime,
+                                                        _ => ""
+                                                    };
+                                                    if (idx > 0) { <br/> }
+                                                    <span id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
                                                 }
-                                            </tbody>
-                                        </table>
+                                            </td>
+                                        }
                                     }
                                     else
                                     {
-                                        <p class="text-muted">なし</p>
+                                        @for (int i = 0; i < 7; i++)
+                                        {
+                                            <td class="text-muted text-center col-inprocess">-</td>
+                                        }
                                     }
-                                </div>
+
+                                    <!-- Waiting -->
+                                    @if (eqp.Waiting.Any())
+                                    {
+                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                        {
+                                            <td class="align-top col-waiting" id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                                @foreach (var (item, idx) in eqp.Waiting.Select((it, i) => (it, i)))
+                                                {
+                                                    var value = field switch {
+                                                        "Carrier" => item.Carrier,
+                                                        "Lot" => item.Lot,
+                                                        "Qty" => item.Qty.ToString(),
+                                                        "PPID" => item.PPID,
+                                                        "NextFurnace" => item.NextFurnace,
+                                                        "Location" => item.Location,
+                                                        "EndTime" => item.EndTime,
+                                                        _ => ""
+                                                    };
+                                                    if (idx > 0) { <br/> }
+                                                    <span id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                                }
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @for (int i = 0; i < 7; i++)
+                                        {
+                                            <td class="text-muted text-center col-waiting">-</td>
+                                        }
+                                    }
+
+                                    <!-- Reserved 1 -->
+                                    @if (eqp.Reserved1.Any())
+                                    {
+                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                        {
+                                            <td class="align-top" id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                                @foreach (var (item, idx) in eqp.Reserved1.Select((it, i) => (it, i)))
+                                                {
+                                                    var value = field switch {
+                                                        "Carrier" => item.Carrier,
+                                                        "Lot" => item.Lot,
+                                                        "Qty" => item.Qty.ToString(),
+                                                        "PPID" => item.PPID,
+                                                        "NextFurnace" => item.NextFurnace,
+                                                        "Location" => item.Location,
+                                                        "EndTime" => item.EndTime,
+                                                        _ => ""
+                                                    };
+                                                    if (idx > 0) { <br/> }
+                                                    <span id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                                }
+                                                @if (field == "EndTime" && !string.IsNullOrEmpty(eqp.Reserved1BatchId))
+                                                {
+                                                    <br/>
+                                                    <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved1BatchId', '@typeGroup.Key', @eqpIndex)">
+                                                        ×
+                                                    </button>
+                                                }
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @for (int i = 0; i < 7; i++)
+                                        {
+                                            <td class="text-muted text-center">-</td>
+                                        }
+                                    }
+
+                                    <!-- Reserved 2 -->
+                                    @if (eqp.Reserved2.Any())
+                                    {
+                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                        {
+                                            <td class="align-top" id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                                @foreach (var (item, idx) in eqp.Reserved2.Select((it, i) => (it, i)))
+                                                {
+                                                    var value = field switch {
+                                                        "Carrier" => item.Carrier,
+                                                        "Lot" => item.Lot,
+                                                        "Qty" => item.Qty.ToString(),
+                                                        "PPID" => item.PPID,
+                                                        "NextFurnace" => item.NextFurnace,
+                                                        "Location" => item.Location,
+                                                        "EndTime" => item.EndTime,
+                                                        _ => ""
+                                                    };
+                                                    if (idx > 0) { <br/> }
+                                                    <span id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                                }
+                                                @if (field == "EndTime" && !string.IsNullOrEmpty(eqp.Reserved2BatchId))
+                                                {
+                                                    <br/>
+                                                    <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved2BatchId', '@typeGroup.Key', @eqpIndex)">
+                                                        ×
+                                                    </button>
+                                                }
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @for (int i = 0; i < 7; i++)
+                                        {
+                                            <td class="text-muted text-center">-</td>
+                                        }
+                                    }
+
+                                    <!-- Reserved 3 -->
+                                    @if (eqp.Reserved3.Any())
+                                    {
+                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                        {
+                                            <td class="align-top" id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                                @foreach (var (item, idx) in eqp.Reserved3.Select((it, i) => (it, i)))
+                                                {
+                                                    var value = field switch {
+                                                        "Carrier" => item.Carrier,
+                                                        "Lot" => item.Lot,
+                                                        "Qty" => item.Qty.ToString(),
+                                                        "PPID" => item.PPID,
+                                                        "NextFurnace" => item.NextFurnace,
+                                                        "Location" => item.Location,
+                                                        "EndTime" => item.EndTime,
+                                                        _ => ""
+                                                    };
+                                                    if (idx > 0) { <br/> }
+                                                    <span id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                                }
+                                                @if (field == "EndTime" && !string.IsNullOrEmpty(eqp.Reserved3BatchId))
+                                                {
+                                                    <br/>
+                                                    <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved3BatchId', '@typeGroup.Key', @eqpIndex)">
+                                                        ×
+                                                    </button>
+                                                }
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @for (int i = 0; i < 7; i++)
+                                        {
+                                            <td class="text-muted text-center">-</td>
+                                        }
+                                    }
+                                </tr>
                             }
-                        </div>
-                    </div>
-                    <hr />
-                }
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
-    }
+    </div>
+
+    <!-- Edit Note Modal -->
+    <div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modern-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title d-flex align-items-center" id="editNoteModalLabel">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="me-2 text-primary" viewBox="0 0 16 16">
+                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                        </svg>
+                        装置メモ編集
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <form id="editNoteForm">
+                        <input type="hidden" id="editEqpName" />
+                        <input type="hidden" id="editTypeKey" />
+                        <input type="hidden" id="editEqpIndex" />
+                        <div class="mb-4">
+                            <label for="editEqpNameDisplay" class="form-label fw-semibold d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                                    <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+                                </svg>
+                                装置名
+                            </label>
+                            <input type="text" class="form-control form-control-modern" id="editEqpNameDisplay" readonly />
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNoteText" class="form-label fw-semibold d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                                </svg>
+                                メモ
+                            </label>
+                            <textarea class="form-control form-control-modern" id="editNoteText" rows="4" maxlength="200" placeholder="装置に関するメモを入力してください（最大200文字）"></textarea>
+                            <div class="form-text d-flex align-items-center mt-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                                <span class="char-counter"><span id="noteCharCount">0</span> / 200 文字</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                        </svg>
+                        キャンセル
+                    </button>
+                    <button type="button" class="btn btn-modern btn-primary" onclick="saveNote()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                            <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
+                        </svg>
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    :root {
+        --primary-color: #0d6efd;
+        --success-color: #198754;
+        --warning-color: #ffc107;
+        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        --transition-speed: 0.2s;
+    }
+
+    /* Global Background */
+    body {
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    /* Page Header Styling */
+    .page-header {
+        background: #0d6efd;
+        border-radius: 8px;
+        padding: 1.5rem 2rem;
+        box-shadow: var(--card-shadow);
+        color: white;
+    }
+
+    .header-icon {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+
+    .page-subtitle {
+        opacity: 0.95;
+        font-size: 0.95rem;
+    }
+
+    /* Filter Card */
+    .filter-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .filter-type-box {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        max-height: 150px;
+        overflow-y: auto;
+        background: #f8f9fa;
+    }
+
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    /* Modern Select */
+    .modern-select {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        transition: border-color var(--transition-speed);
+    }
+
+    .modern-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+
+    /* Modern Buttons */
+    .btn-modern {
+        border-radius: 6px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        border: none;
+        transition: all var(--transition-speed);
+    }
+
+    .btn-modern.btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+
+    .btn-modern.btn-primary:hover {
+        background: #0b5ed7;
+    }
+
+    .btn-modern.btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-modern.btn-secondary:hover {
+        background: #5c636a;
+    }
+
+    /* Toggle Buttons */
+    .btn-toggle {
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all var(--transition-speed);
+        background: white;
+        border: 1px solid;
+    }
+
+    .btn-toggle-success {
+        border-color: #198754;
+        color: #198754;
+    }
+
+    .btn-toggle-success:hover {
+        background: #198754;
+        color: white;
+    }
+
+    .btn-toggle-warning {
+        border-color: #ffc107;
+        color: #856404;
+    }
+
+    .btn-toggle-warning:hover {
+        background: #ffc107;
+        color: #000;
+    }
+
+    /* Edit Note Button */
+    .btn-edit-note {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.4rem 0.75rem;
+        transition: all var(--transition-speed);
+        cursor: pointer;
+    }
+
+    .btn-edit-note:hover {
+        background: #0b5ed7;
+    }
+
+    /* Table Styling */
+    .compact-table {
+        line-height: 1.5;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .compact-table thead th {
+        font-weight: 600;
+        border: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .compact-table tbody td {
+        padding: 10px;
+        vertical-align: top;
+        border: 1px solid #dee2e6;
+    }
+
+    .compact-table tbody tr:hover td {
+        background-color: #f8f9fa;
+    }
+
+    /* Sticky Header */
+    .sticky-header th {
+        position: sticky;
+        z-index: 10;
+        padding: 6px 10px !important;
+        line-height: 1.2 !important;
+        border: 1px solid #dee2e6 !important;
+        height: auto !important;
+    }
+
+    .sticky-header tr:first-child th {
+        top: 0;
+        padding-bottom: 4px !important;
+    }
+
+    .sticky-header tr:nth-child(2) th {
+        top: 31px;
+        padding-top: 4px !important;
+    }
+
+    /* Header Colors */
+    .sticky-header .table-success {
+        background: #d1e7dd !important;
+        font-weight: 600;
+        color: #0f5132;
+    }
+
+    .sticky-header .table-warning {
+        background: #fff3cd !important;
+        font-weight: 600;
+        color: #664d03;
+    }
+
+    .sticky-header .table-info {
+        background: #cfe2ff !important;
+        font-weight: 600;
+        color: #084298;
+    }
+
+    /* Card Styling */
+    .card {
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid #dee2e6;
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        position: relative;
+        border-radius: 8px;
+    }
+
+    /* Modal Styling */
+    .modern-modal {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+
+    .modern-modal .modal-header {
+        background: #0d6efd;
+        color: white;
+        padding: 1rem 1.5rem;
+    }
+
+    .modern-modal .modal-title {
+        font-weight: 600;
+    }
+
+    .modern-modal .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .modern-modal .modal-body {
+        padding: 1.5rem;
+    }
+
+    .form-control-modern {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        transition: border-color var(--transition-speed);
+    }
+
+    .form-control-modern:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+
+    .form-control-modern:read-only {
+        background-color: #f8f9fa;
+    }
+
+    .char-counter {
+        font-weight: 500;
+        color: #6c757d;
+    }
+
+    /* Scrollbar Styling */
+    .filter-type-box::-webkit-scrollbar,
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .filter-type-box::-webkit-scrollbar-track,
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .filter-type-box::-webkit-scrollbar-thumb,
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #6c757d;
+        border-radius: 4px;
+    }
+
+    .filter-type-box::-webkit-scrollbar-thumb:hover,
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #495057;
+    }
+</style>
 
 @section Scripts {
 <script>
+    // Edit Note Modal functions
+    function openEditNoteModal(eqpName, currentNote, typeKey, eqpIndex) {
+        document.getElementById('editEqpName').value = eqpName;
+        document.getElementById('editEqpNameDisplay').value = eqpName;
+        document.getElementById('editTypeKey').value = typeKey;
+        document.getElementById('editEqpIndex').value = eqpIndex;
+        document.getElementById('editNoteText').value = currentNote || '';
+        updateCharCount();
+
+        var modal = new bootstrap.Modal(document.getElementById('editNoteModal'));
+        modal.show();
+    }
+
+    function updateCharCount() {
+        var text = document.getElementById('editNoteText').value;
+        document.getElementById('noteCharCount').textContent = text.length;
+    }
+
+    // Update char count on input
+    document.addEventListener('DOMContentLoaded', function() {
+        var noteTextarea = document.getElementById('editNoteText');
+        if (noteTextarea) {
+            noteTextarea.addEventListener('input', updateCharCount);
+        }
+    });
+
+    async function saveNote() {
+        var eqpName = document.getElementById('editEqpName').value;
+        var noteText = document.getElementById('editNoteText').value;
+        var typeKey = document.getElementById('editTypeKey').value;
+        var eqpIndex = document.getElementById('editEqpIndex').value;
+
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('eqpName', eqpName);
+            formData.append('note', noteText);
+            formData.append('__RequestVerificationToken', token);
+
+            const response = await fetch('/WorkProgress?handler=UpdateNote', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update the note display on the page
+                var noteElement = document.getElementById('note-' + typeKey + '-' + eqpIndex);
+                if (noteElement) {
+                    if (noteText) {
+                        noteElement.innerHTML = '<small>' + escapeHtml(noteText) + '</small>';
+                        noteElement.className = 'text-secondary';
+                    } else {
+                        noteElement.innerHTML = '<small>(メモなし)</small>';
+                        noteElement.className = 'text-muted';
+                    }
+                }
+
+                // Close modal
+                var modal = bootstrap.Modal.getInstance(document.getElementById('editNoteModal'));
+                modal.hide();
+
+                // Show success message
+                alert('メモを更新しました');
+            } else {
+                alert('更新に失敗しました: ' + result.message);
+            }
+        } catch (error) {
+            console.error('更新エラー:', error);
+            alert('更新中にエラーが発生しました');
+        }
+    }
+
+    function escapeHtml(text) {
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // カラムの折りたたみ機能
+    function toggleColumns(type) {
+        // 2段目のヘッダーとデータセル
+        const columns = document.querySelectorAll('.col-' + type);
+        // 1段目のヘッダー
+        const headerColumns = document.querySelectorAll('.col-' + type + '-header');
+        const iconSvg = document.getElementById('icon-' + type + '-svg');
+
+        let isVisible = true;
+        columns.forEach(col => {
+            if (col.style.display === 'none') {
+                col.style.display = '';
+                isVisible = true;
+            } else {
+                col.style.display = 'none';
+                isVisible = false;
+            }
+        });
+
+        // 1段目のヘッダーも同様に表示/非表示
+        headerColumns.forEach(col => {
+            col.style.display = isVisible ? '' : 'none';
+        });
+
+        // SVGアイコンの更新（下向き矢印↔右向き矢印）
+        if (iconSvg) {
+            if (isVisible) {
+                // 下向き矢印
+                iconSvg.innerHTML = '<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>';
+            } else {
+                // 右向き矢印
+                iconSvg.innerHTML = '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>';
+            }
+        }
+    }
+
+    // バッチ削除機能
+    async function deleteBatch(batchId, typeKey, eqpIndex) {
+        if (!confirm('この予約情報を削除してもよろしいですか？')) {
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('batchId', batchId);
+
+            const response = await fetch('/WorkProgress?handler=DeleteBatch', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // ページをリロードして最新データを表示
+                location.reload();
+            } else {
+                alert('削除に失敗しました: ' + result.message);
+            }
+        } catch (error) {
+            console.error('削除エラー:', error);
+            alert('削除中にエラーが発生しました');
+        }
+    }
+
+    // ヘッダーの高さを動的に調整
+    document.addEventListener('DOMContentLoaded', function() {
+        // 2段目ヘッダーの位置調整
+        const firstRowHeaders = document.querySelectorAll('.sticky-header tr:first-child th');
+        if (firstRowHeaders.length > 0) {
+            const firstRowHeight = firstRowHeaders[2].offsetHeight;
+            const secondRowHeaders = document.querySelectorAll('.sticky-header tr:nth-child(2) th');
+            secondRowHeaders.forEach(th => {
+                th.style.top = firstRowHeight + 'px';
+            });
+        }
+    });
+
     // 自動更新機能 - 5分（300,000ミリ秒）ごとにデータを更新
     const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5分
     let autoRefreshTimer;
