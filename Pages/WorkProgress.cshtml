@@ -29,63 +29,78 @@
     <!-- Filters Card -->
     <div class="filter-card mb-4">
         <div class="card-body">
-            <form method="get" class="row g-3 align-items-end" id="filterForm">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
-                            <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
-                        </svg>
-                        TYPE (複数選択可)
-                    </label>
-                    <div class="filter-type-box">
-                        @foreach (var type in Model.Types)
-                        {
-                            <div class="form-check">
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       name="TypeFilter"
-                                       value="@type"
-                                       id="type-@type"
-                                       checked="@(Model.TypeFilter?.Contains(type) == true)"
-                                       onchange="document.getElementById('filterForm').submit()">
-                                <label class="form-check-label" for="type-@type">
-                                    @type
-                                </label>
-                            </div>
-                        }
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0 fw-semibold d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                        <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                    フィルター
+                </h5>
+                <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse" id="filterToggleBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="filterToggleIcon" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="collapse show" id="filterCollapse">
+                <form method="get" class="row g-3 align-items-end" id="filterForm">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                            </svg>
+                            TYPE (複数選択可)
+                        </label>
+                        <div class="filter-type-box">
+                            @foreach (var type in Model.Types)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="TypeFilter"
+                                           value="@type"
+                                           id="type-@type"
+                                           checked="@(Model.TypeFilter?.Contains(type) == true)"
+                                           onchange="document.getElementById('filterForm').submit()">
+                                    <label class="form-check-label" for="type-@type">
+                                        @type
+                                    </label>
+                                </div>
+                            }
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <label for="lineFilter" class="form-label fw-semibold">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
-                            <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0 3a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0 3a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11z"/>
-                        </svg>
-                        LINE
-                    </label>
-                    <select id="lineFilter" name="LineFilter" class="form-select modern-select" onchange="this.form.submit()">
-                        <option value="">すべて</option>
-                        @foreach (var line in Model.Lines)
-                        {
-                            <option value="@line" selected="@(Model.LineFilter == line)">@line</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-5 d-flex align-items-end gap-2">
-                    <a href="/WorkProgress" class="btn btn-modern btn-secondary flex-fill">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
-                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-                        </svg>
-                        クリア
-                    </a>
-                    <a href="/" class="btn btn-modern btn-primary flex-fill">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
-                            <path d="M8 4a.5.5 0 0 1 .5.5V6a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4zM3.732 5.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707zM2 10a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 10zm9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5zm.754-4.246a.389.389 0 0 0-.527-.02L7.547 9.31a.91.91 0 1 0 1.302 1.258l3.434-4.297a.389.389 0 0 0-.029-.518z"/>
-                            <path fill-rule="evenodd" d="M0 10a8 8 0 1 1 15.547 2.661c-.442 1.253-1.845 1.602-2.932 1.25C11.309 13.488 9.475 13 8 13c-1.474 0-3.31.488-4.615.911-1.087.352-2.49.003-2.932-1.25A7.988 7.988 0 0 1 0 10zm8-7a7 7 0 0 0-6.603 9.329c.203.575.923.876 1.68.63C4.397 12.533 6.358 12 8 12s3.604.532 4.923.96c.757.245 1.477-.056 1.68-.631A7 7 0 0 0 8 3z"/>
-                        </svg>
-                        Dashboard
-                    </a>
-                </div>
-            </form>
+                    <div class="col-md-3">
+                        <label for="lineFilter" class="form-label fw-semibold">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0 3a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm0 3a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11z"/>
+                            </svg>
+                            LINE
+                        </label>
+                        <select id="lineFilter" name="LineFilter" class="form-select modern-select" onchange="this.form.submit()">
+                            <option value="">すべて</option>
+                            @foreach (var line in Model.Lines)
+                            {
+                                <option value="@line" selected="@(Model.LineFilter == line)">@line</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5 d-flex align-items-end gap-2">
+                        <a href="/WorkProgress" class="btn btn-modern btn-secondary flex-fill">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                            </svg>
+                            クリア
+                        </a>
+                        <a href="/" class="btn btn-modern btn-primary flex-fill">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                <path d="M8 4a.5.5 0 0 1 .5.5V6a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4zM3.732 5.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707zM2 10a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 10zm9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5zm.754-4.246a.389.389 0 0 0-.527-.02L7.547 9.31a.91.91 0 1 0 1.302 1.258l3.434-4.297a.389.389 0 0 0-.029-.518z"/>
+                                <path fill-rule="evenodd" d="M0 10a8 8 0 1 1 15.547 2.661c-.442 1.253-1.845 1.602-2.932 1.25C11.309 13.488 9.475 13 8 13c-1.474 0-3.31.488-4.615.911-1.087.352-2.49.003-2.932-1.25A7.988 7.988 0 0 1 0 10zm8-7a7 7 0 0 0-6.603 9.329c.203.575.923.876 1.68.63C4.397 12.533 6.358 12 8 12s3.604.532 4.923.96c.757.245 1.477-.056 1.68-.631A7 7 0 0 0 8 3z"/>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -501,6 +516,21 @@
         box-shadow: var(--card-shadow);
         padding: 1.5rem;
         border: 1px solid #dee2e6;
+    }
+
+    /* Filter Toggle Button */
+    #filterToggleBtn {
+        color: #6c757d;
+        transition: all var(--transition-speed);
+    }
+
+    #filterToggleBtn:hover {
+        color: #0d6efd;
+        transform: scale(1.1);
+    }
+
+    #filterToggleIcon {
+        transition: transform 0.3s ease;
     }
 
     .filter-type-box {
@@ -1048,6 +1078,24 @@
     // ページを離れる時に自動更新を停止
     window.addEventListener('beforeunload', function() {
         stopAutoRefresh();
+    });
+
+    // フィルターの折りたたみアイコンを切り替え
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterCollapse = document.getElementById('filterCollapse');
+        const filterToggleIcon = document.getElementById('filterToggleIcon');
+
+        if (filterCollapse && filterToggleIcon) {
+            filterCollapse.addEventListener('show.bs.collapse', function() {
+                // 展開時: 下向き矢印
+                filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>';
+            });
+
+            filterCollapse.addEventListener('hide.bs.collapse', function() {
+                // 折りたたみ時: 右向き矢印
+                filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>';
+            });
+        }
     });
 </script>
 }

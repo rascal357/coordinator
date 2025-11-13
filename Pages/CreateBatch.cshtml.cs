@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Coordinator.Data;
 using Coordinator.Models;
+using System.Text.Json;
 
 namespace Coordinator.Pages;
 
@@ -23,11 +24,15 @@ public class CreateBatchModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? EqpName { get; set; }
 
+    // Store all PPID/EqpId combinations for each carrier and step
+    public string StepOptionsJson { get; set; } = "{}";
+
     public async Task OnGetAsync()
     {
         if (!string.IsNullOrEmpty(Carriers))
         {
-            var carrierList = Carriers.Split(',').ToList();
+            var carrierList = Carriers.Split(',').Distinct().ToList();
+            var stepOptionsDict = new Dictionary<string, Dictionary<int, List<PpidEqpOption>>>();
 
             foreach (var carrier in carrierList)
             {
@@ -50,16 +55,28 @@ public class CreateBatchModel : PageModel
                     Technology = wipInfo?.Technology ?? ""
                 };
 
-                // Populate step information
-                foreach (var step in steps)
+                // Store all PPID/EqpId options for each step
+                var carrierStepOptions = new Dictionary<int, List<PpidEqpOption>>();
+
+                for (int stepNum = 1; stepNum <= 4; stepNum++)
                 {
+                    var stepData = steps.Where(s => s.Step == stepNum).ToList();
+                    var options = stepData.Select(s => new PpidEqpOption
+                    {
+                        PPID = s.PPID,
+                        EqpId = s.EqpId
+                    }).ToList();
+
+                    carrierStepOptions[stepNum] = options;
+
+                    // Set default step info (first option or empty)
                     var stepInfo = new StepInfo
                     {
-                        EqpId = step.EqpId,
-                        PPID = step.PPID
+                        EqpId = stepData.FirstOrDefault()?.EqpId ?? "",
+                        PPID = stepData.FirstOrDefault()?.PPID ?? ""
                     };
 
-                    switch (step.Step)
+                    switch (stepNum)
                     {
                         case 1:
                             viewModel.Step1 = stepInfo;
@@ -76,8 +93,12 @@ public class CreateBatchModel : PageModel
                     }
                 }
 
+                stepOptionsDict[carrier] = carrierStepOptions;
                 CarrierSteps.Add(viewModel);
             }
+
+            // Serialize to JSON for JavaScript
+            StepOptionsJson = JsonSerializer.Serialize(stepOptionsDict);
         }
     }
 
@@ -88,7 +109,7 @@ public class CreateBatchModel : PageModel
             return RedirectToPage("Index");
         }
 
-        var carrierList = Carriers.Split(',').ToList();
+        var carrierList = Carriers.Split(',').Distinct().ToList();
 
         // Generate unique BatchId using timestamp
         var batchId = DateTime.Now.ToString("yyyyMMddHHmmssfff");
@@ -96,12 +117,6 @@ public class CreateBatchModel : PageModel
 
         foreach (var carrier in carrierList)
         {
-            // Get carrier steps
-            var steps = await _context.DcCarrierSteps
-                .Where(cs => cs.Carrier == carrier)
-                .OrderBy(cs => cs.Step)
-                .ToListAsync();
-
             // Get WIP info for carrier
             var wipInfo = await _context.DcWips
                 .Where(w => w.Carrier == carrier)
@@ -109,20 +124,37 @@ public class CreateBatchModel : PageModel
 
             if (wipInfo == null) continue;
 
-            // Add to DC_Batch
-            foreach (var step in steps)
+            // Process each step (1-4)
+            for (int stepNum = 1; stepNum <= 4; stepNum++)
             {
-                var batch = new DcBatch
+                var ppidKey = $"ppid_{carrier}_{stepNum}";
+                var eqpIdKey = $"eqpid_{carrier}_{stepNum}";
+
+                if (Request.Form.ContainsKey(ppidKey) && Request.Form.ContainsKey(eqpIdKey))
                 {
-                    BatchId = batchId,
-                    Step = step.Step,
-                    CarrierId = carrier,
-                    EqpId = step.EqpId,
-                    PPID = step.PPID,
-                    IsProcessed = false,
-                    CreatedAt = createdAt
-                };
-                _context.DcBatches.Add(batch);
+                    var ppid = Request.Form[ppidKey].ToString();
+                    var eqpId = Request.Form[eqpIdKey].ToString();
+
+                    // Skip if not selected
+                    if (string.IsNullOrEmpty(ppid) || ppid == "選択してください" ||
+                        string.IsNullOrEmpty(eqpId) || eqpId == "選択してください")
+                    {
+                        continue;
+                    }
+
+                    // Add to DC_Batch
+                    var batch = new DcBatch
+                    {
+                        BatchId = batchId,
+                        Step = stepNum,
+                        CarrierId = carrier,
+                        EqpId = eqpId,
+                        PPID = ppid,
+                        IsProcessed = false,
+                        CreatedAt = createdAt
+                    };
+                    _context.DcBatches.Add(batch);
+                }
             }
 
             // Add to DC_BatchMembers
@@ -141,4 +173,11 @@ public class CreateBatchModel : PageModel
 
         return RedirectToPage("WorkProgress");
     }
+}
+
+// Helper class for PPID/EqpId options
+public class PpidEqpOption
+{
+    public string PPID { get; set; } = "";
+    public string EqpId { get; set; } = "";
 }

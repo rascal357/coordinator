@@ -192,6 +192,28 @@
     ::-webkit-scrollbar-thumb:hover {
         background: #495057;
     }
+
+    /* Select dropdown styling */
+    .form-select {
+        padding: 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        min-width: 150px;
+        background-color: white;
+        cursor: pointer;
+    }
+
+    .form-select:disabled {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .form-select:focus {
+        border-color: #0d6efd;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
 </style>
 
 <div class="container mt-4">
@@ -234,14 +256,12 @@
                         <thead>
                             <tr>
                                 <th rowspan="2">Carrier</th>
-                                <th rowspan="2">Qty</th>
                                 <th colspan="2">Step 1</th>
                                 <th colspan="2">Step 2</th>
                                 <th colspan="2">Step 3</th>
                                 <th colspan="2">Step 4</th>
                             </tr>
                             <tr>
-                                <th>EqpId</th>
                                 <th>PPID</th>
                                 <th>EqpId</th>
                                 <th>PPID</th>
@@ -249,6 +269,7 @@
                                 <th>PPID</th>
                                 <th>EqpId</th>
                                 <th>PPID</th>
+                                <th>EqpId</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -256,15 +277,28 @@
                             {
                                 <tr>
                                     <td id="carrier-@index"><strong>@carrierStep.Carrier</strong></td>
-                                    <td id="qty-@index">@carrierStep.Qty</td>
-                                    <td id="step1-eqp-@index">@carrierStep.Step1.EqpId</td>
-                                    <td id="step1-ppid-@index">@carrierStep.Step1.PPID</td>
-                                    <td id="step2-eqp-@index">@carrierStep.Step2.EqpId</td>
-                                    <td id="step2-ppid-@index">@carrierStep.Step2.PPID</td>
-                                    <td id="step3-eqp-@index">@carrierStep.Step3.EqpId</td>
-                                    <td id="step3-ppid-@index">@carrierStep.Step3.PPID</td>
-                                    <td id="step4-eqp-@index">@carrierStep.Step4.EqpId</td>
-                                    <td id="step4-ppid-@index">@carrierStep.Step4.PPID</td>
+                                    @for (int step = 1; step <= 4; step++)
+                                    {
+                                        <td id="step@(step)-ppid-@index">
+                                            <select name="ppid_@(carrierStep.Carrier)_@(step)"
+                                                    id="ppid_@(carrierStep.Carrier)_@(step)"
+                                                    class="form-select ppid-select"
+                                                    data-carrier="@carrierStep.Carrier"
+                                                    data-step="@step"
+                                                    onchange="updateEqpIdOptions(this)">
+                                                <option value="">選択してください</option>
+                                            </select>
+                                        </td>
+                                        <td id="step@(step)-eqp-@index">
+                                            <select name="eqpid_@(carrierStep.Carrier)_@(step)"
+                                                    id="eqpid_@(carrierStep.Carrier)_@(step)"
+                                                    class="form-select eqpid-select"
+                                                    data-carrier="@carrierStep.Carrier"
+                                                    data-step="@step">
+                                                <option value="">選択してください</option>
+                                            </select>
+                                        </td>
+                                    }
                                 </tr>
                             }
                         </tbody>
@@ -315,3 +349,98 @@
         </a>
     }
 </div>
+
+<script>
+    // Parse step options from server
+    const stepOptions = @Html.Raw(Model.StepOptionsJson);
+
+    // Initialize dropdowns on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeDropdowns();
+    });
+
+    function initializeDropdowns() {
+        // For each carrier
+        Object.keys(stepOptions).forEach(carrier => {
+            const carrierData = stepOptions[carrier];
+
+            // For each step (1-4)
+            for (let step = 1; step <= 4; step++) {
+                const ppidSelect = document.getElementById(`ppid_${carrier}_${step}`);
+                const eqpIdSelect = document.getElementById(`eqpid_${carrier}_${step}`);
+
+                if (!ppidSelect || !eqpIdSelect) continue;
+
+                const stepData = carrierData[step] || [];
+
+                if (stepData.length === 0) {
+                    // No data for this step, disable both dropdowns
+                    ppidSelect.disabled = true;
+                    eqpIdSelect.disabled = true;
+                    continue;
+                }
+
+                // Get unique PPIDs for this step
+                const uniquePPIDs = [...new Set(stepData.map(item => item.PPID))];
+
+                // Populate PPID dropdown
+                uniquePPIDs.forEach(ppid => {
+                    const option = document.createElement('option');
+                    option.value = ppid;
+                    option.textContent = ppid;
+                    ppidSelect.appendChild(option);
+                });
+
+                // Store all step data as data attribute for later use
+                ppidSelect.setAttribute('data-step-options', JSON.stringify(stepData));
+            }
+        });
+    }
+
+    function updateEqpIdOptions(ppidSelect) {
+        const carrier = ppidSelect.getAttribute('data-carrier');
+        const step = ppidSelect.getAttribute('data-step');
+        const selectedPPID = ppidSelect.value;
+
+        const eqpIdSelect = document.getElementById(`eqpid_${carrier}_${step}`);
+
+        if (!eqpIdSelect) return;
+
+        // Clear existing options
+        eqpIdSelect.innerHTML = '<option value="">選択してください</option>';
+
+        if (!selectedPPID) {
+            eqpIdSelect.disabled = true;
+            return;
+        }
+
+        // Get step data
+        const stepDataStr = ppidSelect.getAttribute('data-step-options');
+        if (!stepDataStr) return;
+
+        const stepData = JSON.parse(stepDataStr);
+
+        // Filter EqpIds that match the selected PPID
+        const matchingEqpIds = stepData
+            .filter(item => item.PPID === selectedPPID)
+            .map(item => item.EqpId);
+
+        // Get unique EqpIds
+        const uniqueEqpIds = [...new Set(matchingEqpIds)];
+
+        // Populate EqpId dropdown
+        uniqueEqpIds.forEach(eqpId => {
+            const option = document.createElement('option');
+            option.value = eqpId;
+            option.textContent = eqpId;
+            eqpIdSelect.appendChild(option);
+        });
+
+        eqpIdSelect.disabled = false;
+
+        // Auto-select if only one option
+        if (uniqueEqpIds.length === 1) {
+            eqpIdSelect.value = uniqueEqpIds[0];
+        }
+    }
+</script>
