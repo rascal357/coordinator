@@ -79,7 +79,8 @@
 2. OnPostAsync
    - 選択されたキャリアのリストを受け取る
    - 重複を除去
-   - キャリアに関連するWIP情報を取得
+   - キャリアに関連するWIP情報（Carrier, LotId, Technology, Qty）を取得
+   - WIP情報をJSON形式でTempDataに保存
    - CreateBatch画面へリダイレクト
 
 ■ 実装ファイル
@@ -103,10 +104,16 @@
 1. selectedCarriers（選択されたキャリアリスト）を受け取る
 2. キャリアが選択されていなければエラーメッセージを表示
 3. 重複を除去（Distinct）
-4. DC_Wips から選択されたキャリアの情報を取得
-5. キャリアリストをカンマ区切りでシリアライズ
-6. CreateBatch画面へリダイレクト（carriers パラメータ付き）
+4. DC_Wips から選択されたキャリアの情報（Carrier, LotId, Technology, Qty）を取得
+5. WIP情報をJSON形式でシリアライズしてTempDataに保存
+6. キャリアリストをカンマ区切りでシリアライズ
+7. CreateBatch画面へリダイレクト（carriers パラメータ付き）
 ```
+
+【将来の拡張性】
+- WipLotListModel.csには将来の外部データソース取得用のコメントコードが含まれている
+- 現在はDC_Wipsテーブルから取得しているが、将来的にはSQLクエリで
+  外部データソースから取得することが想定されている
 
 【重要なプロパティ】
 - WipLots: 表示するWIPロットのリスト

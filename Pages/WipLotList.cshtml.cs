@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Coordinator.Data;
 using Coordinator.Models;
+using System.Text.Json;
+// TODO: 将来的にSQLクエリで取得する場合は以下のusing文を追加
+// using Microsoft.Data.Sqlite;
+// using System.Data;
 
 namespace Coordinator.Pages;
 
@@ -38,6 +42,51 @@ public class WipLotListModel : PageModel
                 .Where(w => w.TargetEqpId == EqpName && !registeredCarriers.Contains(w.Carrier))
                 .OrderBy(w => w.Priority)
                 .ToListAsync();
+
+            // TODO: 将来的にSQLクエリで取得する場合
+            // 以下のようなSQLクエリでDC_Wipsと同じ項目を取得し、DcWipモデルにマッピングする
+            /*
+            var sql = @"
+                SELECT
+                    Priority, Technology, Carrier, LotId, Qty, PartName,
+                    CurrentStage, CurrentStep, TargetStage, TargetStep,
+                    TargetEqpId, TargetPPID
+                FROM [外部データソース]
+                WHERE TargetEqpId = @eqpName
+                AND Carrier NOT IN (SELECT DISTINCT CarrierId FROM DC_Batch)
+                ORDER BY Priority
+            ";
+
+            using (var command = _context.Database.GetDbConnection().CreateCommand())
+            {
+                command.CommandText = sql;
+                command.Parameters.Add(new SqliteParameter("@eqpName", EqpName));
+
+                await _context.Database.OpenConnectionAsync();
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    WipLots = new List<DcWip>();
+                    while (await reader.ReadAsync())
+                    {
+                        WipLots.Add(new DcWip
+                        {
+                            Priority = reader.GetInt32(0),
+                            Technology = reader.GetString(1),
+                            Carrier = reader.GetString(2),
+                            LotId = reader.GetString(3),
+                            Qty = reader.GetInt32(4),
+                            PartName = reader.GetString(5),
+                            CurrentStage = reader.GetString(6),
+                            CurrentStep = reader.GetString(7),
+                            TargetStage = reader.GetString(8),
+                            TargetStep = reader.GetString(9),
+                            TargetEqpId = reader.GetString(10),
+                            TargetPPID = reader.GetString(11)
+                        });
+                    }
+                }
+            }
+            */
         }
     }
 
@@ -64,7 +113,41 @@ public class WipLotListModel : PageModel
             })
             .ToListAsync();
 
-        // Serialize data to pass to CreateBatch page
+        // TODO: 将来的にSQLクエリで取得する場合
+        // 選択されたキャリアの情報を外部データソースから取得する
+        /*
+        var sql = @"
+            SELECT Carrier, LotId, Technology, Qty
+            FROM [外部データソース]
+            WHERE Carrier IN (" + string.Join(",", uniqueCarriers.Select(c => $"'{c}'")) + @")
+        ";
+
+        using (var command = _context.Database.GetDbConnection().CreateCommand())
+        {
+            command.CommandText = sql;
+
+            await _context.Database.OpenConnectionAsync();
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                wipData = new List<dynamic>();
+                while (await reader.ReadAsync())
+                {
+                    wipData.Add(new
+                    {
+                        Carrier = reader.GetString(0),
+                        LotId = reader.GetString(1),
+                        Technology = reader.GetString(2),
+                        Qty = reader.GetInt32(3)
+                    });
+                }
+            }
+        }
+        */
+
+        // Store selected carrier information in TempData to pass to CreateBatch page
+        TempData["SelectedWipData"] = JsonSerializer.Serialize(wipData);
+
+        // Also keep carriers param for backward compatibility
         var carriersParam = string.Join(",", uniqueCarriers);
 
         return RedirectToPage("CreateBatch", new { carriers = carriersParam, eqpName = EqpName });

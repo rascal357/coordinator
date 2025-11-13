@@ -40,11 +40,13 @@ Coordinatorは、半導体製造工程における炉（Furnace）装置の処�
   [Dashboard]
       ↓ 装置選択
   [WIP Lot List]
-      ↓ キャリア選択・検証
+      ↓ キャリア選択・検証（WIPデータをTempDataで渡す）
   [Create Batch]
-      ↓ バッチ作成
+      ↓ ステップ情報確認・装置レシピ確認・バッチ作成
   [Work Progress]
       ← リアルタイム監視（5分間隔自動更新）
+
+※ ヘッダーからはWork Progress画面へ直接アクセス可能
 
 ■ ビジネスロジックの特徴
 
@@ -59,8 +61,9 @@ Coordinatorは、半導体製造工程における炉（Furnace）装置の処�
   - 早いグループ = 処理中
   - 遅いグループ = 処理待ち
 - "予約1/2/3": DC_BatchレコードをCreatedAt順（古い順）で表示
-- DC_ActlとDC_BatchのLotIDをマッチングし、IS_PROCESSING=trueを設定して
-  予約表示から除外
+- DC_ActlとDC_BatchのLotID/EqpIdをマッチングし、該当ステップのみ
+  IsProcessed=trueを設定して予約表示から除外（複数ステップがある場合は
+  最小Stepのレコードのみを処理済みにする）
 
 【UI要件】
 - 全動的要素に一意のIDを付与（JavaScript更新用）
@@ -101,5 +104,23 @@ Coordinatorは、半導体製造工程における炉（Furnace）装置の処�
 - 非同期処理（async/await）による応答性の向上
 - Work Progress画面でのクライアントサイド自動更新（5分間隔）
 - インデックスとクエリ最適化によるデータベースアクセスの高速化
+
+■ 将来の拡張性
+
+【外部データソース対応】
+以下のモデルファイルには、将来の外部データソース取得用のコメントコードが含まれています：
+- WipLotListModel.cs: DC_Wips の外部データソース取得
+- CreateBatchModel.cs: DC_CarrierSteps の外部データソース取得
+- WorkProgressModel.cs: DC_Actl の外部データソース取得
+
+現在はSQLiteテーブルから取得していますが、将来的にはSQLクエリで
+外部システムから取得することが想定されています。
+
+【UI/UX改善】
+- ヘッダーナビゲーション: Dashboardリンクを削除し、Work Progressへの
+  直接アクセスを優先
+- 動的なPPID/EqpId選択: ドロップダウンによる柔軟な選択と
+  装置レシピ情報の即時確認
+- Stepごとのレシピ情報表示: 視覚的に整理された縦並び表示
 
 ================================================================================

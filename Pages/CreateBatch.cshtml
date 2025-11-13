@@ -227,9 +227,24 @@
 
     /* Recipe cards styling */
     .recipe-cards-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .recipe-step-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .recipe-step-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0d6efd;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid #0d6efd;
+        margin-bottom: 0.5rem;
     }
 
     .recipe-card {
@@ -325,6 +340,15 @@
         <form method="post">
             <input type="hidden" name="Carriers" value="@Model.Carriers" />
 
+            @* Hidden fields for carrier data *@
+            @foreach (var (carrierStep, index) in Model.CarrierSteps.Select((cs, i) => (cs, i)))
+            {
+                <input type="hidden" name="CarrierData[@index].Carrier" value="@carrierStep.Carrier" />
+                <input type="hidden" name="CarrierData[@index].LotId" value="@carrierStep.LotId" />
+                <input type="hidden" name="CarrierData[@index].Technology" value="@carrierStep.Technology" />
+                <input type="hidden" name="CarrierData[@index].Qty" value="@carrierStep.Qty" />
+            }
+
             <!-- Table Card -->
             <div class="table-card">
                 <div class="table-card-header">
@@ -339,6 +363,7 @@
                         <thead>
                             <tr>
                                 <th rowspan="2">Carrier</th>
+                                <th rowspan="2">LotId</th>
                                 <th colspan="2">Step 1</th>
                                 <th colspan="2">Step 2</th>
                                 <th colspan="2">Step 3</th>
@@ -360,6 +385,7 @@
                             {
                                 <tr>
                                     <td id="carrier-@index"><strong>@carrierStep.Carrier</strong></td>
+                                    <td id="lotid-@index">@carrierStep.LotId</td>
                                     @for (int step = 1; step <= 4; step++)
                                     {
                                         <td id="step@(step)-ppid-@index">
@@ -564,6 +590,7 @@
     // Display recipe card
     function displayRecipeCard(carrier, step, recipeData) {
         const container = document.getElementById('recipeCardsContainer');
+        const stepSectionId = `recipe-step-section-${step}`;
         const cardId = `recipe-card-${carrier}-${step}`;
 
         // Remove existing card if present
@@ -572,13 +599,31 @@
             existingCard.remove();
         }
 
+        // Get or create step section
+        let stepSection = document.getElementById(stepSectionId);
+        if (!stepSection) {
+            stepSection = document.createElement('div');
+            stepSection.id = stepSectionId;
+            stepSection.className = 'recipe-step-section';
+            stepSection.setAttribute('data-step', step);
+
+            // Create step title
+            const stepTitle = document.createElement('div');
+            stepTitle.className = 'recipe-step-title';
+            stepTitle.textContent = `Step ${step}`;
+            stepSection.appendChild(stepTitle);
+
+            // Insert section in the correct order
+            insertStepSectionInOrder(container, stepSection, step);
+        }
+
         // Create new card
         const card = document.createElement('div');
         card.id = cardId;
         card.className = 'recipe-card';
         card.innerHTML = `
             <div class="recipe-card-header">
-                Step ${step} - ${carrier}
+                ${carrier}
             </div>
             <div class="recipe-card-body">
                 <div class="recipe-info-row">
@@ -642,7 +687,33 @@
             </div>
         `;
 
-        container.appendChild(card);
+        stepSection.appendChild(card);
+    }
+
+    // Insert step section in the correct order (Step 1, 2, 3, 4)
+    function insertStepSectionInOrder(container, newSection, newStep) {
+        const existingSections = Array.from(container.querySelectorAll('.recipe-step-section'));
+
+        if (existingSections.length === 0) {
+            container.appendChild(newSection);
+            return;
+        }
+
+        // Find the correct position to insert
+        let inserted = false;
+        for (const section of existingSections) {
+            const sectionStep = parseInt(section.getAttribute('data-step'));
+            if (newStep < sectionStep) {
+                container.insertBefore(newSection, section);
+                inserted = true;
+                break;
+            }
+        }
+
+        // If not inserted, append at the end
+        if (!inserted) {
+            container.appendChild(newSection);
+        }
     }
 
     // Remove recipe card
@@ -651,6 +722,16 @@
         const card = document.getElementById(cardId);
         if (card) {
             card.remove();
+
+            // Check if step section is now empty (only has title)
+            const stepSectionId = `recipe-step-section-${step}`;
+            const stepSection = document.getElementById(stepSectionId);
+            if (stepSection) {
+                const cards = stepSection.querySelectorAll('.recipe-card');
+                if (cards.length === 0) {
+                    stepSection.remove();
+                }
+            }
         }
     }
 </script>

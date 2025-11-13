@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Coordinator.Data;
 using Coordinator.Models;
+// TODO: 将来的にSQLクエリで取得する場合は以下のusing文を追加
+// using Microsoft.Data.Sqlite;
+// using System.Data;
 
 namespace Coordinator.Pages;
 
@@ -156,6 +159,40 @@ public class WorkProgressModel : PageModel
                     .Where(a => a.EqpId == eqp.Name)
                     .OrderBy(a => a.TrackInTime)
                     .ToListAsync();
+
+                // TODO: 将来的にSQLクエリで取得する場合
+                // 以下のようなSQLクエリでDC_Actlと同じ項目を取得し、DcActlモデルにマッピングする
+                /*
+                var sql = @"
+                    SELECT
+                        EqpId, LotId, LotType, TrackInTime
+                    FROM [外部データソース]
+                    WHERE EqpId = @eqpName
+                    ORDER BY TrackInTime
+                ";
+
+                using (var command = _context.Database.GetDbConnection().CreateCommand())
+                {
+                    command.CommandText = sql;
+                    command.Parameters.Add(new SqliteParameter("@eqpName", eqp.Name));
+
+                    await _context.Database.OpenConnectionAsync();
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        actls = new List<DcActl>();
+                        while (await reader.ReadAsync())
+                        {
+                            actls.Add(new DcActl
+                            {
+                                EqpId = reader.GetString(0),
+                                LotId = reader.GetString(1),
+                                LotType = reader.GetString(2),
+                                TrackInTime = reader.GetDateTime(3)
+                            });
+                        }
+                    }
+                }
+                */
 
                 // Group actls by TrackInTime within ±5 minutes
                 var timeGroups = GroupByTimeWindow(actls, TimeSpan.FromMinutes(5));
