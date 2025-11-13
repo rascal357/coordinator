@@ -306,36 +306,43 @@ public class WorkProgressModel : PageModel
     {
         if (!timeGroups.Any()) return;
 
-        // Get all LotIds from actual processing
-        var allLotIds = timeGroups.SelectMany(g => g.Select(a => a.LotId)).Distinct().ToList();
+        // Get all LotIds and EqpIds from actual processing
+        var actlData = timeGroups
+            .SelectMany(g => g.Select(a => new { a.LotId, a.EqpId }))
+            .Distinct()
+            .ToList();
 
-        // Get full batch members for this equipment
-        var fullBatchMembers = await (from batch in _context.DcBatches
-                                      join member in _context.DcBatchMembers
-                                      on new { batch.BatchId, CarrierId = batch.CarrierId }
-                                      equals new { member.BatchId, CarrierId = member.CarrierId }
-                                      where batch.EqpId == eqpId
-                                      select new { batch, member }).ToListAsync();
-
-        // Check if any actual LotId exists in batch members
-        foreach (var lotId in allLotIds)
+        foreach (var actl in actlData)
         {
-            var matchingBatch = fullBatchMembers.FirstOrDefault(fb => fb.member.LotId == lotId);
+            // Find matching batch members by LotId
+            var matchingMembers = await _context.DcBatchMembers
+                .Where(m => m.LotId == actl.LotId)
+                .ToListAsync();
 
-            if (matchingBatch != null)
+            foreach (var member in matchingMembers)
             {
-                // Mark all batches with the same BatchId as processed
-                var batchesToUpdate = await _context.DcBatches
-                    .Where(b => b.BatchId == matchingBatch.batch.BatchId)
+                // Join DC_BatchMembers and DC_Batch by BatchId and CarrierId
+                // Filter by LotId, EqpId, and BatchId
+                var matchingBatches = await _context.DcBatches
+                    .Where(b => b.BatchId == member.BatchId &&
+                               b.CarrierId == member.CarrierId &&
+                               b.EqpId == actl.EqpId)
+                    .OrderBy(b => b.Step)
                     .ToListAsync();
 
-                foreach (var b in batchesToUpdate)
+                if (matchingBatches.Count == 1)
                 {
-                    b.IsProcessed = true;
+                    // If only one record, mark it as processed
+                    matchingBatches[0].IsProcessed = true;
                 }
-
-                await _context.SaveChangesAsync();
+                else if (matchingBatches.Count > 1)
+                {
+                    // If multiple records, mark the one with the smallest Step as processed
+                    matchingBatches[0].IsProcessed = true;
+                }
             }
         }
+
+        await _context.SaveChangesAsync();
     }
 }

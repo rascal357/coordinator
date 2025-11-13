@@ -102,6 +102,31 @@ public class CreateBatchModel : PageModel
         }
     }
 
+    // API endpoint to get equipment recipe information
+    public async Task<IActionResult> OnGetRecipeInfoAsync(string eqpId, string ppid)
+    {
+        // TODO: Replace with actual SQL query to fetch recipe information
+        // For now, return dummy data
+        var recipeInfo = new
+        {
+            eqpId = eqpId,
+            ppid = ppid,
+            okNg = "OK",
+            specialNotes = "なし",
+            trenchDummy = "必要",
+            dmType = "AAA",
+            twType = "BBB",
+            posA = "○",
+            posB = "ー",
+            posC = "ー",
+            posD = "○",
+            posE = "○",
+            posF = "ー"
+        };
+
+        return new JsonResult(recipeInfo);
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         if (string.IsNullOrEmpty(Carriers))

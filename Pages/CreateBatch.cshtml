@@ -90,12 +90,13 @@
     .modern-table thead th {
         background: #f8f9fa;
         font-weight: 600;
-        padding: 0.75rem;
+        padding: 0.5rem 0.25rem;
         text-align: center;
         border-bottom: 2px solid #dee2e6;
         position: sticky;
         top: 0;
         z-index: 10;
+        font-size: 0.85rem;
     }
 
     .modern-table tbody tr {
@@ -107,10 +108,11 @@
     }
 
     .modern-table tbody td {
-        padding: 0.75rem;
+        padding: 0.5rem 0.25rem;
         text-align: center;
         border-top: 1px solid #dee2e6;
         vertical-align: middle;
+        font-size: 0.85rem;
     }
 
     .action-buttons {
@@ -195,11 +197,12 @@
 
     /* Select dropdown styling */
     .form-select {
-        padding: 0.5rem;
+        padding: 0.375rem 0.5rem;
         border: 1px solid #ced4da;
         border-radius: 4px;
-        font-size: 0.9rem;
-        min-width: 150px;
+        font-size: 0.85rem;
+        min-width: 120px;
+        max-width: 140px;
         background-color: white;
         cursor: pointer;
     }
@@ -214,9 +217,89 @@
         outline: 0;
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     }
+
+    /* Wide container for better table display */
+    .container-wide {
+        max-width: 95%;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    /* Recipe cards styling */
+    .recipe-cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .recipe-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid #dee2e6;
+        overflow: hidden;
+    }
+
+    .recipe-card-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .recipe-card-body {
+        padding: 1rem;
+    }
+
+    .recipe-info-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .recipe-info-row:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .recipe-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .recipe-info-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .recipe-info-value {
+        font-size: 0.85rem;
+        color: #212529;
+        font-weight: 500;
+    }
+
+    .recipe-pos-row {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+    }
+
+    .recipe-pos-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
 </style>
 
-<div class="container mt-4">
+<div class="container-wide mt-4">
     <!-- Header -->
     <div class="page-header">
         <div class="d-flex align-items-center justify-content-between">
@@ -303,6 +386,14 @@
                             }
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Equipment Recipe Information -->
+            <div id="recipeInfoContainer" style="margin-top: 2rem;">
+                <h5 style="margin-bottom: 1rem; color: #0d6efd; font-weight: 600;">装置レシピ情報</h5>
+                <div id="recipeCardsContainer" class="recipe-cards-container">
+                    <!-- Recipe cards will be dynamically inserted here -->
                 </div>
             </div>
 
@@ -411,6 +502,8 @@
 
         if (!selectedPPID) {
             eqpIdSelect.disabled = true;
+            // Clear recipe info for this step
+            removeRecipeCard(carrier, step);
             return;
         }
 
@@ -441,6 +534,123 @@
         // Auto-select if only one option
         if (uniqueEqpIds.length === 1) {
             eqpIdSelect.value = uniqueEqpIds[0];
+            // Fetch recipe info for auto-selected EqpId
+            fetchAndDisplayRecipeInfo(carrier, step, selectedPPID, uniqueEqpIds[0]);
+        }
+
+        // Add event listener to EqpId select
+        eqpIdSelect.onchange = function() {
+            const selectedEqpId = this.value;
+            if (selectedEqpId && selectedEqpId !== '選択してください') {
+                fetchAndDisplayRecipeInfo(carrier, step, selectedPPID, selectedEqpId);
+            } else {
+                removeRecipeCard(carrier, step);
+            }
+        };
+    }
+
+    // Fetch and display recipe information
+    async function fetchAndDisplayRecipeInfo(carrier, step, ppid, eqpId) {
+        try {
+            const response = await fetch(`/CreateBatch?handler=RecipeInfo&eqpId=${encodeURIComponent(eqpId)}&ppid=${encodeURIComponent(ppid)}`);
+            const data = await response.json();
+
+            displayRecipeCard(carrier, step, data);
+        } catch (error) {
+            console.error('Error fetching recipe info:', error);
+        }
+    }
+
+    // Display recipe card
+    function displayRecipeCard(carrier, step, recipeData) {
+        const container = document.getElementById('recipeCardsContainer');
+        const cardId = `recipe-card-${carrier}-${step}`;
+
+        // Remove existing card if present
+        const existingCard = document.getElementById(cardId);
+        if (existingCard) {
+            existingCard.remove();
+        }
+
+        // Create new card
+        const card = document.createElement('div');
+        card.id = cardId;
+        card.className = 'recipe-card';
+        card.innerHTML = `
+            <div class="recipe-card-header">
+                Step ${step} - ${carrier}
+            </div>
+            <div class="recipe-card-body">
+                <div class="recipe-info-row">
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">EqpId</div>
+                        <div class="recipe-info-value">${recipeData.eqpId}</div>
+                    </div>
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">PPID</div>
+                        <div class="recipe-info-value">${recipeData.ppid}</div>
+                    </div>
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">OK/NG</div>
+                        <div class="recipe-info-value">${recipeData.okNg}</div>
+                    </div>
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">特記事項</div>
+                        <div class="recipe-info-value">${recipeData.specialNotes}</div>
+                    </div>
+                </div>
+                <div class="recipe-info-row">
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">Trench Dummy</div>
+                        <div class="recipe-info-value">${recipeData.trenchDummy}</div>
+                    </div>
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">DM種別</div>
+                        <div class="recipe-info-value">${recipeData.dmType}</div>
+                    </div>
+                    <div class="recipe-info-item">
+                        <div class="recipe-info-label">TW種別</div>
+                        <div class="recipe-info-value">${recipeData.twType}</div>
+                    </div>
+                </div>
+                <div class="recipe-pos-row">
+                    <div class="recipe-pos-item">
+                        <div class="recipe-info-label">POS-A</div>
+                        <div class="recipe-info-value">${recipeData.posA}</div>
+                    </div>
+                    <div class="recipe-pos-item">
+                        <div class="recipe-info-label">POS-B</div>
+                        <div class="recipe-info-value">${recipeData.posB}</div>
+                    </div>
+                    <div class="recipe-pos-item">
+                        <div class="recipe-info-label">POS-C</div>
+                        <div class="recipe-info-value">${recipeData.posC}</div>
+                    </div>
+                    <div class="recipe-pos-item">
+                        <div class="recipe-info-label">POS-D</div>
+                        <div class="recipe-info-value">${recipeData.posD}</div>
+                    </div>
+                    <div class="recipe-pos-item">
+                        <div class="recipe-info-label">POS-E</div>
+                        <div class="recipe-info-value">${recipeData.posE}</div>
+                    </div>
+                    <div class="recipe-pos-item">
+                        <div class="recipe-info-label">POS-F</div>
+                        <div class="recipe-info-value">${recipeData.posF}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+    }
+
+    // Remove recipe card
+    function removeRecipeCard(carrier, step) {
+        const cardId = `recipe-card-${carrier}-${step}`;
+        const card = document.getElementById(cardId);
+        if (card) {
+            card.remove();
         }
     }
 </script>
