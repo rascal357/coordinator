@@ -90,66 +90,38 @@ public class WipLotListModel : PageModel
         }
     }
 
-    public async Task<IActionResult> OnPostAsync(List<string> selectedCarriers)
+    [BindProperty]
+    public List<WipDataItem> WipData { get; set; } = new();
+
+    [BindProperty]
+    public List<int> SelectedIndices { get; set; } = new();
+
+    public IActionResult OnPost()
     {
-        if (selectedCarriers == null || !selectedCarriers.Any())
+        if (SelectedIndices == null || !SelectedIndices.Any())
         {
             Message = "キャリアを選択してください";
             return RedirectToPage(new { eqpName = EqpName });
         }
 
-        // Remove duplicates
-        var uniqueCarriers = selectedCarriers.Distinct().ToList();
+        // Get selected WIP data based on indices
+        var selectedWipData = SelectedIndices
+            .Where(i => i >= 0 && i < WipData.Count)
+            .Select(i => WipData[i])
+            .ToList();
 
-        // Get carrier information
-        var wipData = await _context.DcWips
-            .Where(w => uniqueCarriers.Contains(w.Carrier))
-            .Select(w => new
-            {
-                w.Carrier,
-                w.LotId,
-                w.Technology,
-                w.Qty
-            })
-            .ToListAsync();
-
-        // TODO: 将来的にSQLクエリで取得する場合
-        // 選択されたキャリアの情報を外部データソースから取得する
-        /*
-        var sql = @"
-            SELECT Carrier, LotId, Technology, Qty
-            FROM [外部データソース]
-            WHERE Carrier IN (" + string.Join(",", uniqueCarriers.Select(c => $"'{c}'")) + @")
-        ";
-
-        using (var command = _context.Database.GetDbConnection().CreateCommand())
+        if (!selectedWipData.Any())
         {
-            command.CommandText = sql;
-
-            await _context.Database.OpenConnectionAsync();
-            using (var reader = await command.ExecuteReaderAsync())
-            {
-                wipData = new List<dynamic>();
-                while (await reader.ReadAsync())
-                {
-                    wipData.Add(new
-                    {
-                        Carrier = reader.GetString(0),
-                        LotId = reader.GetString(1),
-                        Technology = reader.GetString(2),
-                        Qty = reader.GetInt32(3)
-                    });
-                }
-            }
+            Message = "選択されたキャリアのデータが見つかりません";
+            return RedirectToPage(new { eqpName = EqpName });
         }
-        */
 
         // Store selected carrier information in TempData to pass to CreateBatch page
-        TempData["SelectedWipData"] = JsonSerializer.Serialize(wipData);
+        TempData["SelectedWipData"] = JsonSerializer.Serialize(selectedWipData);
 
-        // Also keep carriers param for backward compatibility
-        var carriersParam = string.Join(",", uniqueCarriers);
+        // Pass LotIds to CreateBatch page
+        var lotIdsParam = string.Join(",", selectedWipData.Select(w => w.LotId));
 
-        return RedirectToPage("CreateBatch", new { carriers = carriersParam, eqpName = EqpName });
+        return RedirectToPage("CreateBatch", new { lotIds = lotIdsParam, eqpName = EqpName });
     }
 }

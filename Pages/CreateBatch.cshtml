@@ -338,7 +338,7 @@
     @if (Model.CarrierSteps.Any())
     {
         <form method="post">
-            <input type="hidden" name="Carriers" value="@Model.Carriers" />
+            <input type="hidden" name="LotIds" value="@Model.LotIds" />
 
             @* Hidden fields for carrier data *@
             @foreach (var (carrierStep, index) in Model.CarrierSteps.Select((cs, i) => (cs, i)))

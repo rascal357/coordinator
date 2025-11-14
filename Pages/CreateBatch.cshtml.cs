@@ -22,7 +22,7 @@ public class CreateBatchModel : PageModel
     public List<CarrierStepViewModel> CarrierSteps { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
-    public string? Carriers { get; set; }
+    public string? LotIds { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public string? EqpName { get; set; }
@@ -32,45 +32,55 @@ public class CreateBatchModel : PageModel
 
     public async Task OnGetAsync()
     {
-        if (!string.IsNullOrEmpty(Carriers))
+        if (!string.IsNullOrEmpty(LotIds))
         {
-            var carrierList = Carriers.Split(',').Distinct().ToList();
+            var lotIdList = LotIds.Split(',').Distinct().ToList();
             var stepOptionsDict = new Dictionary<string, Dictionary<int, List<PpidEqpOption>>>();
 
-            // Try to get WIP data from TempData (passed from WipLotList)
-            Dictionary<string, WipDataItem>? wipDataDict = null;
+            // Get WIP data from TempData (passed from WipLotList)
+            Dictionary<string, WipDataItem>? wipDataByLotId = null;
             if (TempData["SelectedWipData"] is string wipDataJson)
             {
                 var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
                 if (wipDataList != null)
                 {
-                    wipDataDict = wipDataList.ToDictionary(w => w.Carrier);
+                    wipDataByLotId = wipDataList.ToDictionary(w => w.LotId);
                 }
             }
 
-            foreach (var carrier in carrierList)
+            // Process each LotId
+            foreach (var lotId in lotIdList)
             {
-                // Get carrier steps
+                // Get carrier and WIP info from TempData
+                if (wipDataByLotId == null || !wipDataByLotId.ContainsKey(lotId))
+                {
+                    continue; // Skip if LotId not found in WIP data
+                }
+
+                var wipData = wipDataByLotId[lotId];
+                var carrier = wipData.Carrier;
+
+                // Get carrier steps from database
                 var steps = await _context.DcCarrierSteps
                     .Where(cs => cs.Carrier == carrier)
                     .OrderBy(cs => cs.Step)
                     .ToListAsync();
 
                 // TODO: 将来的にSQLクエリで取得する場合
-                // 以下のようなSQLクエリでDC_CarrierStepsと同じ項目を取得し、DcCarrierStepモデルにマッピングする
+                // LotIdでCarrierStepsを検索する
                 /*
                 var sql = @"
                     SELECT
                         Carrier, Qty, Step, EqpId, PPID
                     FROM [外部データソース]
-                    WHERE Carrier = @carrier
+                    WHERE LotId = @lotId
                     ORDER BY Step
                 ";
 
                 using (var command = _context.Database.GetDbConnection().CreateCommand())
                 {
                     command.CommandText = sql;
-                    command.Parameters.Add(new SqliteParameter("@carrier", carrier));
+                    command.Parameters.Add(new SqliteParameter("@lotId", lotId));
 
                     await _context.Database.OpenConnectionAsync();
                     using (var reader = await command.ExecuteReaderAsync())
@@ -91,36 +101,12 @@ public class CreateBatchModel : PageModel
                 }
                 */
 
-                // Get WIP info: prioritize TempData, fallback to DC_Wips
-                string lotId = "";
-                string technology = "";
-                int qty = steps.FirstOrDefault()?.Qty ?? 0;
-
-                if (wipDataDict != null && wipDataDict.ContainsKey(carrier))
-                {
-                    // Use data from TempData
-                    var wipData = wipDataDict[carrier];
-                    lotId = wipData.LotId;
-                    technology = wipData.Technology;
-                    qty = wipData.Qty;
-                }
-                else
-                {
-                    // Fallback to DC_Wips
-                    var wipInfo = await _context.DcWips
-                        .Where(w => w.Carrier == carrier)
-                        .FirstOrDefaultAsync();
-
-                    lotId = wipInfo?.LotId ?? "";
-                    technology = wipInfo?.Technology ?? "";
-                }
-
                 var viewModel = new CarrierStepViewModel
                 {
                     Carrier = carrier,
-                    Qty = qty,
+                    Qty = wipData.Qty,
                     LotId = lotId,
-                    Technology = technology
+                    Technology = wipData.Technology
                 };
 
                 // Store all PPID/EqpId options for each step
@@ -200,32 +186,32 @@ public class CreateBatchModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (string.IsNullOrEmpty(Carriers))
+        if (string.IsNullOrEmpty(LotIds))
         {
             return RedirectToPage("Index");
         }
 
-        var carrierList = Carriers.Split(',').Distinct().ToList();
+        var lotIdList = LotIds.Split(',').Distinct().ToList();
 
         // Generate unique BatchId using timestamp
         var batchId = DateTime.Now.ToString("yyyyMMddHHmmssfff");
         var createdAt = DateTime.Now;
 
-        // Create dictionary from CarrierData for quick lookup
-        var carrierDataDict = CarrierData.ToDictionary(cd => cd.Carrier);
+        // Create dictionary from CarrierData for quick lookup by LotId
+        var carrierDataDict = CarrierData.ToDictionary(cd => cd.LotId);
 
-        foreach (var carrier in carrierList)
+        foreach (var lotId in lotIdList)
         {
-            // Get WIP info: prioritize form data, fallback to DC_Wips
-            string lotId = "";
+            // Get WIP info from form data
+            string carrier = "";
             string technology = "";
             int qty = 0;
 
-            if (carrierDataDict.ContainsKey(carrier))
+            if (carrierDataDict.ContainsKey(lotId))
             {
                 // Use data from form
-                var data = carrierDataDict[carrier];
-                lotId = data.LotId;
+                var data = carrierDataDict[lotId];
+                carrier = data.Carrier;
                 technology = data.Technology;
                 qty = data.Qty;
             }
@@ -233,12 +219,12 @@ public class CreateBatchModel : PageModel
             {
                 // Fallback to DC_Wips
                 var wipInfo = await _context.DcWips
-                    .Where(w => w.Carrier == carrier)
+                    .Where(w => w.LotId == lotId)
                     .FirstOrDefaultAsync();
 
                 if (wipInfo == null) continue;
 
-                lotId = wipInfo.LotId;
+                carrier = wipInfo.Carrier;
                 technology = wipInfo.Technology;
                 qty = wipInfo.Qty;
             }
@@ -299,13 +285,4 @@ public class PpidEqpOption
 {
     public string PPID { get; set; } = "";
     public string EqpId { get; set; } = "";
-}
-
-// Helper class for WIP data passed from WipLotList
-public class WipDataItem
-{
-    public string Carrier { get; set; } = "";
-    public string LotId { get; set; } = "";
-    public string Technology { get; set; } = "";
-    public int Qty { get; set; }
 }

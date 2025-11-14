@@ -46,6 +46,17 @@
         <form method="post">
             <input type="hidden" name="EqpName" value="@Model.EqpName" />
 
+            @* Hidden fields for WIP data - to be submitted when checkbox is selected *@
+            @foreach (var (wip, index) in Model.WipLots.Select((w, i) => (w, i)))
+            {
+                <input type="hidden" name="WipData[@index].Carrier" value="@wip.Carrier" />
+                <input type="hidden" name="WipData[@index].LotId" value="@wip.LotId" />
+                <input type="hidden" name="WipData[@index].Technology" value="@wip.Technology" />
+                <input type="hidden" name="WipData[@index].Qty" value="@wip.Qty" />
+                <input type="hidden" name="WipData[@index].TargetStage" value="@wip.TargetStage" />
+                <input type="hidden" name="WipData[@index].TargetStep" value="@wip.TargetStep" />
+            }
+
             <!-- Table Card -->
             <div class="card modern-card mb-4">
                 <div class="card-body p-0">
@@ -73,13 +84,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var wip in Model.WipLots)
+                                @foreach (var (wip, index) in Model.WipLots.Select((w, i) => (w, i)))
                                 {
                                     <tr class="table-row-modern">
                                         <td>
                                             <input type="checkbox"
-                                                   name="selectedCarriers"
-                                                   value="@wip.Carrier"
+                                                   name="SelectedIndices"
+                                                   value="@index"
                                                    id="carrier-@wip.Id"
                                                    class="form-check-input modern-checkbox" />
                                         </td>
