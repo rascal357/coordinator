@@ -978,6 +978,9 @@
 
             const result = await response.json();
 
+            // Log response data to console
+            console.log('Response data:', result);
+
             if (result.success && result.data) {
                 updateUI(result.data);
                 console.log('データを更新しました:', new Date().toLocaleString('ja-JP'));
