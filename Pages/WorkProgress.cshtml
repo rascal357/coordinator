@@ -190,7 +190,7 @@
                                     <td class="fw-bold align-top">@typeGroup.Key</td>
                                     <td class="fw-bold align-top">
                                         <div>
-                                            <a href="/WipLotList?EqpName=@Uri.EscapeDataString(eqp.EqpName)" class="text-decoration-none text-primary fw-bold">
+                                            <a href="/WipLotList?EqpName=@Uri.EscapeDataString(eqp.EqpName)" class="text-decoration-none text-primary fw-bold equipment-name">
                                                 @eqp.EqpName
                                             </a>
                                         </div>
@@ -761,6 +761,12 @@
     .table-responsive::-webkit-scrollbar-thumb:hover {
         background: #495057;
     }
+
+    /* Equipment Name Styling */
+    .equipment-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
 </style>
 
 @section Scripts {
@@ -991,6 +997,9 @@
             equipments.forEach((eqp, eqpIndex) => {
                 console.log(`Equipment ${eqpIndex}:`, eqp);
 
+                // メモを更新
+                updateNote(typeKey, eqpIndex, eqp.note);
+
                 // データを更新する前にクリア
                 clearProcessItems('inprocess', typeKey, eqpIndex);
                 clearProcessItems('waiting', typeKey, eqpIndex);
@@ -1009,6 +1018,23 @@
                 updateReservedItems('reserved2', typeKey, eqpIndex, eqp.reserved2);
                 updateReservedItems('reserved3', typeKey, eqpIndex, eqp.reserved3);
             });
+        }
+    }
+
+    // メモを更新
+    function updateNote(typeKey, eqpIndex, note) {
+        const noteElement = document.getElementById(`note-${typeKey}-${eqpIndex}`);
+        if (noteElement) {
+            if (note) {
+                noteElement.innerHTML = '<small>' + escapeHtml(note) + '</small>';
+                noteElement.className = 'text-secondary';
+            } else {
+                noteElement.innerHTML = '<small>(メモなし)</small>';
+                noteElement.className = 'text-muted';
+            }
+            console.log(`Updated note for ${typeKey}-${eqpIndex}: ${note || '(empty)'}`);
+        } else {
+            console.warn(`Note element not found: note-${typeKey}-${eqpIndex}`);
         }
     }
 
