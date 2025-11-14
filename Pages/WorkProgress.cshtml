@@ -36,13 +36,13 @@
                     </svg>
                     フィルター
                 </h5>
-                <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse" id="filterToggleBtn">
+                <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse" id="filterToggleBtn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="filterToggleIcon" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
                     </svg>
                 </button>
             </div>
-            <div class="collapse show" id="filterCollapse">
+            <div class="collapse" id="filterCollapse">
                 <form method="get" class="row g-3 align-items-end" id="filterForm">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">
@@ -113,6 +113,12 @@
                     </svg>
                     <span id="icon-waiting-text">処理待ち</span>
                 </button>
+                <button type="button" class="btn btn-toggle btn-toggle-info" id="btn-reserved" onclick="toggleColumns('reserved')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16" id="icon-reserved-svg">
+                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    <span id="icon-reserved-text">予約1~3</span>
+                </button>
             </div>
         </div>
     </div>
@@ -128,9 +134,9 @@
                             <th rowspan="2" class="align-middle">装置名</th>
                             <th colspan="7" class="table-success text-center col-inprocess-header">処理中</th>
                             <th colspan="7" class="table-warning text-center col-waiting-header">処理待ち</th>
-                            <th colspan="7" class="table-info text-center">予約1</th>
-                            <th colspan="7" class="table-info text-center">予約2</th>
-                            <th colspan="7" class="table-info text-center">予約3</th>
+                            <th colspan="7" class="table-info text-center col-reserved-header">予約1</th>
+                            <th colspan="7" class="table-info text-center col-reserved-header">予約2</th>
+                            <th colspan="7" class="table-info text-center col-reserved-header">予約3</th>
                         </tr>
                         <tr>
                             <!-- In Process sub-headers -->
@@ -150,29 +156,29 @@
                             <th class="table-warning col-waiting">Loc</th>
                             <th class="table-warning col-waiting">End</th>
                             <!-- Reserved 1 sub-headers -->
-                            <th class="table-info">Carrier</th>
-                            <th class="table-info">Lot</th>
-                            <th class="table-info">Qty</th>
-                            <th class="table-info">PPID</th>
-                            <th class="table-info">Next</th>
-                            <th class="table-info">Loc</th>
-                            <th class="table-info">End</th>
+                            <th class="table-info col-reserved">Carrier</th>
+                            <th class="table-info col-reserved">Lot</th>
+                            <th class="table-info col-reserved">Qty</th>
+                            <th class="table-info col-reserved">PPID</th>
+                            <th class="table-info col-reserved">Next</th>
+                            <th class="table-info col-reserved">Loc</th>
+                            <th class="table-info col-reserved">End</th>
                             <!-- Reserved 2 sub-headers -->
-                            <th class="table-info">Carrier</th>
-                            <th class="table-info">Lot</th>
-                            <th class="table-info">Qty</th>
-                            <th class="table-info">PPID</th>
-                            <th class="table-info">Next</th>
-                            <th class="table-info">Loc</th>
-                            <th class="table-info">End</th>
+                            <th class="table-info col-reserved">Carrier</th>
+                            <th class="table-info col-reserved">Lot</th>
+                            <th class="table-info col-reserved">Qty</th>
+                            <th class="table-info col-reserved">PPID</th>
+                            <th class="table-info col-reserved">Next</th>
+                            <th class="table-info col-reserved">Loc</th>
+                            <th class="table-info col-reserved">End</th>
                             <!-- Reserved 3 sub-headers -->
-                            <th class="table-info">Carrier</th>
-                            <th class="table-info">Lot</th>
-                            <th class="table-info">Qty</th>
-                            <th class="table-info">PPID</th>
-                            <th class="table-info">Next</th>
-                            <th class="table-info">Loc</th>
-                            <th class="table-info">End</th>
+                            <th class="table-info col-reserved">Carrier</th>
+                            <th class="table-info col-reserved">Lot</th>
+                            <th class="table-info col-reserved">Qty</th>
+                            <th class="table-info col-reserved">PPID</th>
+                            <th class="table-info col-reserved">Next</th>
+                            <th class="table-info col-reserved">Loc</th>
+                            <th class="table-info col-reserved">End</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -209,14 +215,16 @@
                                     </td>
 
                                     <!-- In Process -->
-                                    @if (eqp.InProcess.Any())
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
                                     {
-                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
-                                        {
-                                            <td class="align-top col-inprocess" id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex">
-                                                @foreach (var (item, idx) in eqp.InProcess.Select((it, i) => (it, i)))
+                                        <td class="align-top col-inprocess" id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                            @for (int idx = 0; idx < 10; idx++)
+                                            {
+                                                var value = "";
+                                                if (idx < eqp.InProcess.Count)
                                                 {
-                                                    var value = field switch {
+                                                    var item = eqp.InProcess[idx];
+                                                    value = field switch {
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
@@ -226,29 +234,24 @@
                                                         "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
-                                                    if (idx > 0) { <br/> }
-                                                    <span id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
                                                 }
-                                            </td>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        @for (int i = 0; i < 7; i++)
-                                        {
-                                            <td class="text-muted text-center col-inprocess">-</td>
-                                        }
+                                                if (idx > 0) { <br/> }
+                                                <span id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                            }
+                                        </td>
                                     }
 
                                     <!-- Waiting -->
-                                    @if (eqp.Waiting.Any())
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
                                     {
-                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
-                                        {
-                                            <td class="align-top col-waiting" id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex">
-                                                @foreach (var (item, idx) in eqp.Waiting.Select((it, i) => (it, i)))
+                                        <td class="align-top col-waiting" id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                            @for (int idx = 0; idx < 10; idx++)
+                                            {
+                                                var value = "";
+                                                if (idx < eqp.Waiting.Count)
                                                 {
-                                                    var value = field switch {
+                                                    var item = eqp.Waiting[idx];
+                                                    value = field switch {
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
@@ -258,29 +261,24 @@
                                                         "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
-                                                    if (idx > 0) { <br/> }
-                                                    <span id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
                                                 }
-                                            </td>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        @for (int i = 0; i < 7; i++)
-                                        {
-                                            <td class="text-muted text-center col-waiting">-</td>
-                                        }
+                                                if (idx > 0) { <br/> }
+                                                <span id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                            }
+                                        </td>
                                     }
 
                                     <!-- Reserved 1 -->
-                                    @if (eqp.Reserved1.Any())
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
                                     {
-                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
-                                        {
-                                            <td class="align-top" id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex">
-                                                @foreach (var (item, idx) in eqp.Reserved1.Select((it, i) => (it, i)))
+                                        <td class="align-top col-reserved" id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                            @for (int idx = 0; idx < 10; idx++)
+                                            {
+                                                var value = "";
+                                                if (idx < eqp.Reserved1.Count)
                                                 {
-                                                    var value = field switch {
+                                                    var item = eqp.Reserved1[idx];
+                                                    value = field switch {
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
@@ -290,36 +288,31 @@
                                                         "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
-                                                    if (idx > 0) { <br/> }
-                                                    <span id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
                                                 }
-                                                @if (field == "Carrier" && !string.IsNullOrEmpty(eqp.Reserved1BatchId))
-                                                {
-                                                    <br/>
-                                                    <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved1BatchId', '@typeGroup.Key', @eqpIndex)">
-                                                        ×
-                                                    </button>
-                                                }
-                                            </td>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        @for (int i = 0; i < 7; i++)
-                                        {
-                                            <td class="text-muted text-center">-</td>
-                                        }
+                                                if (idx > 0) { <br/> }
+                                                <span id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                            }
+                                            @if (field == "Carrier" && !string.IsNullOrEmpty(eqp.Reserved1BatchId))
+                                            {
+                                                <br/>
+                                                <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved1BatchId', '@typeGroup.Key', @eqpIndex)">
+                                                    ×
+                                                </button>
+                                            }
+                                        </td>
                                     }
 
                                     <!-- Reserved 2 -->
-                                    @if (eqp.Reserved2.Any())
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
                                     {
-                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
-                                        {
-                                            <td class="align-top" id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex">
-                                                @foreach (var (item, idx) in eqp.Reserved2.Select((it, i) => (it, i)))
+                                        <td class="align-top col-reserved" id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                            @for (int idx = 0; idx < 10; idx++)
+                                            {
+                                                var value = "";
+                                                if (idx < eqp.Reserved2.Count)
                                                 {
-                                                    var value = field switch {
+                                                    var item = eqp.Reserved2[idx];
+                                                    value = field switch {
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
@@ -329,36 +322,31 @@
                                                         "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
-                                                    if (idx > 0) { <br/> }
-                                                    <span id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
                                                 }
-                                                @if (field == "Carrier" && !string.IsNullOrEmpty(eqp.Reserved2BatchId))
-                                                {
-                                                    <br/>
-                                                    <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved2BatchId', '@typeGroup.Key', @eqpIndex)">
-                                                        ×
-                                                    </button>
-                                                }
-                                            </td>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        @for (int i = 0; i < 7; i++)
-                                        {
-                                            <td class="text-muted text-center">-</td>
-                                        }
+                                                if (idx > 0) { <br/> }
+                                                <span id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                            }
+                                            @if (field == "Carrier" && !string.IsNullOrEmpty(eqp.Reserved2BatchId))
+                                            {
+                                                <br/>
+                                                <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved2BatchId', '@typeGroup.Key', @eqpIndex)">
+                                                    ×
+                                                </button>
+                                            }
+                                        </td>
                                     }
 
                                     <!-- Reserved 3 -->
-                                    @if (eqp.Reserved3.Any())
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
                                     {
-                                        @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
-                                        {
-                                            <td class="align-top" id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex">
-                                                @foreach (var (item, idx) in eqp.Reserved3.Select((it, i) => (it, i)))
+                                        <td class="align-top col-reserved" id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex">
+                                            @for (int idx = 0; idx < 10; idx++)
+                                            {
+                                                var value = "";
+                                                if (idx < eqp.Reserved3.Count)
                                                 {
-                                                    var value = field switch {
+                                                    var item = eqp.Reserved3[idx];
+                                                    value = field switch {
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
@@ -368,25 +356,18 @@
                                                         "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
-                                                    if (idx > 0) { <br/> }
-                                                    <span id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
                                                 }
-                                                @if (field == "Carrier" && !string.IsNullOrEmpty(eqp.Reserved3BatchId))
-                                                {
-                                                    <br/>
-                                                    <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved3BatchId', '@typeGroup.Key', @eqpIndex)">
-                                                        ×
-                                                    </button>
-                                                }
-                                            </td>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        @for (int i = 0; i < 7; i++)
-                                        {
-                                            <td class="text-muted text-center">-</td>
-                                        }
+                                                if (idx > 0) { <br/> }
+                                                <span id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex-@idx">@value</span>
+                                            }
+                                            @if (field == "Carrier" && !string.IsNullOrEmpty(eqp.Reserved3BatchId))
+                                            {
+                                                <br/>
+                                                <button type="button" class="btn btn-sm btn-danger mt-1" onclick="deleteBatch('@eqp.Reserved3BatchId', '@typeGroup.Key', @eqpIndex)">
+                                                    ×
+                                                </button>
+                                            }
+                                        </td>
                                     }
                                 </tr>
                             }
@@ -607,6 +588,16 @@
 
     .btn-toggle-warning:hover {
         background: #ffc107;
+        color: #000;
+    }
+
+    .btn-toggle-info {
+        border-color: #0dcaf0;
+        color: #055160;
+    }
+
+    .btn-toggle-info:hover {
+        background: #0dcaf0;
         color: #000;
     }
 
@@ -940,8 +931,8 @@
         }
     });
 
-    // 自動更新機能 - 5分（300,000ミリ秒）ごとにデータを更新
-    const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5分
+    // 自動更新機能 - 30秒（30,000ミリ秒）ごとにデータを更新
+    const AUTO_REFRESH_INTERVAL = 30 * 1000; // 30秒
     let autoRefreshTimer;
 
     // 現在のフィルター設定を取得
@@ -992,48 +983,104 @@
 
     // UIを更新
     function updateUI(equipmentsByType) {
+        console.log('updateUI called with:', equipmentsByType);
+
         for (const [typeKey, equipments] of Object.entries(equipmentsByType)) {
+            console.log(`Processing type: ${typeKey}, equipment count: ${equipments.length}`);
+
             equipments.forEach((eqp, eqpIndex) => {
+                console.log(`Equipment ${eqpIndex}:`, eqp);
+
+                // データを更新する前にクリア
+                clearProcessItems('inprocess', typeKey, eqpIndex);
+                clearProcessItems('waiting', typeKey, eqpIndex);
+                clearReservedItems('reserved1', typeKey, eqpIndex);
+                clearReservedItems('reserved2', typeKey, eqpIndex);
+                clearReservedItems('reserved3', typeKey, eqpIndex);
+
                 // 処理中データの更新
-                updateProcessItems('inprocess', typeKey, eqpIndex, eqp.InProcess);
+                updateProcessItems('inprocess', typeKey, eqpIndex, eqp.inProcess);
 
                 // 処理待ちデータの更新
-                updateProcessItems('waiting', typeKey, eqpIndex, eqp.Waiting);
+                updateProcessItems('waiting', typeKey, eqpIndex, eqp.waiting);
 
                 // 予約1-3データの更新
-                updateReservedItems('reserved1', typeKey, eqpIndex, eqp.Reserved1);
-                updateReservedItems('reserved2', typeKey, eqpIndex, eqp.Reserved2);
-                updateReservedItems('reserved3', typeKey, eqpIndex, eqp.Reserved3);
+                updateReservedItems('reserved1', typeKey, eqpIndex, eqp.reserved1);
+                updateReservedItems('reserved2', typeKey, eqpIndex, eqp.reserved2);
+                updateReservedItems('reserved3', typeKey, eqpIndex, eqp.reserved3);
+            });
+        }
+    }
+
+    // 処理中/処理待ちアイテムをクリア
+    function clearProcessItems(prefix, typeKey, eqpIndex) {
+        const fields = ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location', 'endtime'];
+
+        // 最大10個のアイテムをクリア（念のため多めに）
+        for (let idx = 0; idx < 10; idx++) {
+            fields.forEach(field => {
+                const elementId = `${prefix}-${field}-${typeKey}-${eqpIndex}-${idx}`;
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = '';
+                }
             });
         }
     }
 
     // 処理中/処理待ちアイテムを更新
     function updateProcessItems(prefix, typeKey, eqpIndex, items) {
-        if (!items || items.length === 0) return;
+        if (!items || items.length === 0) {
+            console.log(`${prefix}: No items to update`);
+            return;
+        }
+
+        console.log(`Updating ${prefix} for ${typeKey}-${eqpIndex}, items:`, items);
 
         items.forEach((item, idx) => {
-            updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.Carrier);
-            updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.Lot);
-            updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.Qty);
-            updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.PPID);
-            updateElement(`${prefix}-next-${typeKey}-${eqpIndex}-${idx}`, item.NextFurnace);
-            updateElement(`${prefix}-loc-${typeKey}-${eqpIndex}-${idx}`, item.Location);
-            updateElement(`${prefix}-time-${typeKey}-${eqpIndex}-${idx}`, item.EndTime);
+            updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.carrier);
+            updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.lot);
+            updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.qty);
+            updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.ppid);
+            updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
+            updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
+            updateElement(`${prefix}-endtime-${typeKey}-${eqpIndex}-${idx}`, item.endTime);
         });
+    }
+
+    // 予約アイテムをクリア
+    function clearReservedItems(prefix, typeKey, eqpIndex) {
+        const fields = ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location', 'endtime'];
+
+        // 最大10個のアイテムをクリア（念のため多めに）
+        for (let idx = 0; idx < 10; idx++) {
+            fields.forEach(field => {
+                const elementId = `${prefix}-${field}-${typeKey}-${eqpIndex}-${idx}`;
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.textContent = '';
+                }
+            });
+        }
     }
 
     // 予約アイテムを更新
     function updateReservedItems(prefix, typeKey, eqpIndex, items) {
-        if (!items || items.length === 0) return;
+        if (!items || items.length === 0) {
+            console.log(`${prefix}: No items to update`);
+            return;
+        }
+
+        console.log(`Updating ${prefix} for ${typeKey}-${eqpIndex}, items:`, items);
 
         items.forEach((item, idx) => {
-            updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.Carrier);
-            updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.Lot);
-            updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.Qty);
-            updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.PPID);
-            updateElement(`${prefix}-next-${typeKey}-${eqpIndex}-${idx}`, item.NextFurnace);
-            updateElement(`${prefix}-loc-${typeKey}-${eqpIndex}-${idx}`, item.Location);
+            updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.carrier);
+            updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.lot);
+            updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.qty);
+            updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.ppid);
+            updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
+            updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
+            updateElement(`${prefix}-endtime-${typeKey}-${eqpIndex}-${idx}`, item.endTime);
         });
     }
 
@@ -1042,6 +1089,9 @@
         const element = document.getElementById(elementId);
         if (element) {
             element.textContent = value ?? '';
+            console.log(`Updated ${elementId} = ${value}`);
+        } else {
+            console.warn(`Element not found: ${elementId}`);
         }
     }
 
@@ -1054,7 +1104,7 @@
 
         // 新しいタイマーを設定
         autoRefreshTimer = setInterval(refreshData, AUTO_REFRESH_INTERVAL);
-        console.log('自動更新を開始しました（5分間隔）');
+        console.log('自動更新を開始しました（30秒間隔）');
     }
 
     // 自動更新を停止
