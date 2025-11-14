@@ -223,7 +223,7 @@ public class WorkProgressModel : PageModel
                 var reservedItems = new List<List<ProcessItem>>();
                 foreach (var batchGroup in reservedBatchIds)
                 {
-                    var items = await CreateProcessItemsFromBatch(batchGroup.Batch);
+                    var items = await CreateProcessItemsFromBatch(batchGroup.Batch, eqp.Name);
                     reservedItems.Add(items);
                 }
 
@@ -307,12 +307,20 @@ public class WorkProgressModel : PageModel
         return items;
     }
 
-    private async Task<List<ProcessItem>> CreateProcessItemsFromBatch(DcBatch batch)
+    private async Task<List<ProcessItem>> CreateProcessItemsFromBatch(DcBatch batch, string eqpId)
     {
         var items = new List<ProcessItem>();
 
+        // Get CarrierIds that match the BatchId and EqpId
+        var carrierIdsForEqp = await _context.DcBatches
+            .Where(b => b.BatchId == batch.BatchId && b.EqpId == eqpId)
+            .Select(b => b.CarrierId)
+            .Distinct()
+            .ToListAsync();
+
+        // Get batch members only for carriers that use this equipment
         var batchMembers = await _context.DcBatchMembers
-            .Where(bm => bm.BatchId == batch.BatchId)
+            .Where(bm => bm.BatchId == batch.BatchId && carrierIdsForEqp.Contains(bm.CarrierId))
             .ToListAsync();
 
         foreach (var member in batchMembers)
