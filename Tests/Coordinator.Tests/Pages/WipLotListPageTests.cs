@@ -39,7 +39,11 @@ public class WipLotListPageTests
                 TargetStage = "G-SIO",
                 TargetStep = "FDP01",
                 TargetEqpId = "DVETC25",
-                TargetPPID = "GSIO3F4"
+                TargetPPID = "GSIO3F4",
+                State = "Ready",
+                Next1 = "Step1",
+                Next2 = "Step2",
+                Next3 = "Step3"
             },
             new DcWip
             {
@@ -55,7 +59,11 @@ public class WipLotListPageTests
                 TargetStage = "G-SIO",
                 TargetStep = "FDP01",
                 TargetEqpId = "DVETC25",
-                TargetPPID = "GSIO3F4"
+                TargetPPID = "GSIO3F4",
+                State = "Waiting",
+                Next1 = "Step1",
+                Next2 = "Step2",
+                Next3 = "Step3"
             },
             new DcWip
             {
@@ -71,7 +79,11 @@ public class WipLotListPageTests
                 TargetStage = "G-SIO",
                 TargetStep = "FDP01",
                 TargetEqpId = "DVETC26",
-                TargetPPID = "GSIO3F4"
+                TargetPPID = "GSIO3F4",
+                State = "Ready",
+                Next1 = "Step1",
+                Next2 = "Step2",
+                Next3 = "Step3"
             }
         );
 
@@ -226,7 +238,11 @@ public class WipLotListPageTests
                     Carrier = "C22667",
                     LotId = "JM86146.1",
                     Technology = "T6-MV",
-                    Qty = 25
+                    Qty = 25,
+                    State = "Ready",
+                    Next1 = "Step1",
+                    Next2 = "Step2",
+                    Next3 = "Step3"
                 }
             },
             TempData = tempDataMock.Object
@@ -257,8 +273,8 @@ public class WipLotListPageTests
             SelectedIndices = new List<int> { 0, 1 },
             WipData = new List<WipDataItem>
             {
-                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 },
-                new WipDataItem { Carrier = "C22669", LotId = "JM86148.1", Technology = "T6-MV", Qty = 25 }
+                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" },
+                new WipDataItem { Carrier = "C22669", LotId = "JM86148.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
             },
             TempData = tempDataMock.Object
         };
@@ -288,7 +304,7 @@ public class WipLotListPageTests
             SelectedIndices = new List<int> { 0, 999 }, // 999は無効
             WipData = new List<WipDataItem>
             {
-                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
             },
             TempData = tempDataMock.Object
         };

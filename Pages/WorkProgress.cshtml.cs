@@ -288,19 +288,15 @@ public class WorkProgressModel : PageModel
 
         foreach (var actl in actls)
         {
-            var wipInfo = await _context.DcWips
-                .Where(w => w.LotId == actl.LotId)
-                .FirstOrDefaultAsync();
-
             items.Add(new ProcessItem
             {
-                Carrier = wipInfo?.Carrier ?? "",
+                Carrier = actl.Carrier,
                 Lot = actl.LotId,
-                Qty = wipInfo?.Qty ?? 0,
-                PPID = wipInfo?.TargetPPID ?? "",
-                NextFurnace = "",
-                Location = "",
-                EndTime = actl.TrackInTime.ToString("yyyy/MM/dd HH:mm")
+                Qty = actl.Qty,
+                PPID = actl.PPID,
+                NextFurnace = actl.Next,
+                Location = actl.Location,
+                EndTime = actl.EndTime?.ToString("yyyy/MM/dd HH:mm") ?? ""
             });
         }
 

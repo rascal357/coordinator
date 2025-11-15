@@ -83,7 +83,7 @@ public class CreateBatchPageTests
 
         var wipDataList = new List<WipDataItem>
         {
-            new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+            new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
         };
 
         tempDataMock.Setup(t => t["SelectedWipData"])
@@ -123,8 +123,8 @@ public class CreateBatchPageTests
 
         var wipDataList = new List<WipDataItem>
         {
-            new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 },
-            new WipDataItem { Carrier = "C22668", LotId = "JM86147.1", Technology = "T6-MV", Qty = 25 }
+            new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" },
+            new WipDataItem { Carrier = "C22668", LotId = "JM86147.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
         };
 
         tempDataMock.Setup(t => t["SelectedWipData"])
@@ -155,7 +155,7 @@ public class CreateBatchPageTests
 
         var wipDataList = new List<WipDataItem>
         {
-            new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+            new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
         };
 
         tempDataMock.Setup(t => t["SelectedWipData"])
@@ -184,7 +184,7 @@ public class CreateBatchPageTests
             LotIds = "JM86146.1",
             CarrierData = new List<WipDataItem>
             {
-                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
             }
         };
 
@@ -230,7 +230,7 @@ public class CreateBatchPageTests
             LotIds = "JM86146.1",
             CarrierData = new List<WipDataItem>
             {
-                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
             }
         };
 
@@ -273,7 +273,7 @@ public class CreateBatchPageTests
             LotIds = "JM86146.1",
             CarrierData = new List<WipDataItem>
             {
-                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
             }
         };
 
@@ -314,7 +314,7 @@ public class CreateBatchPageTests
             LotIds = "JM86146.1",
             CarrierData = new List<WipDataItem>
             {
-                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25 }
+                new WipDataItem { Carrier = "C22667", LotId = "JM86146.1", Technology = "T6-MV", Qty = 25, State = "Ready", Next1 = "Step1", Next2 = "Step2", Next3 = "Step3" }
             }
         };
 

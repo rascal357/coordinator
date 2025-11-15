@@ -55,6 +55,10 @@
                 <input type="hidden" name="WipData[@index].Qty" value="@wip.Qty" />
                 <input type="hidden" name="WipData[@index].TargetStage" value="@wip.TargetStage" />
                 <input type="hidden" name="WipData[@index].TargetStep" value="@wip.TargetStep" />
+                <input type="hidden" name="WipData[@index].State" value="@wip.State" />
+                <input type="hidden" name="WipData[@index].Next1" value="@wip.Next1" />
+                <input type="hidden" name="WipData[@index].Next2" value="@wip.Next2" />
+                <input type="hidden" name="WipData[@index].Next3" value="@wip.Next3" />
             }
 
             <!-- Table Card -->
@@ -75,6 +79,7 @@
                                     <th class="table-header-modern">Carrier</th>
                                     <th class="table-header-modern">LotId</th>
                                     <th class="table-header-modern">Qty</th>
+                                    <th class="table-header-modern">State</th>
                                     <th class="table-header-modern">PartName</th>
                                     <th class="table-header-modern">CurrentStage</th>
                                     <th class="table-header-modern">CurrentStep</th>
@@ -99,6 +104,7 @@
                                         <td id="carrier-name-@wip.Id"><strong>@wip.Carrier</strong></td>
                                         <td id="lotid-@wip.Id">@wip.LotId</td>
                                         <td id="qty-@wip.Id">@wip.Qty</td>
+                                        <td id="state-@wip.Id">@wip.State</td>
                                         <td id="partname-@wip.Id">@wip.PartName</td>
                                         <td id="currentstage-@wip.Id">@wip.CurrentStage</td>
                                         <td id="currentstep-@wip.Id">@wip.CurrentStep</td>

@@ -31,13 +31,13 @@ public class WorkProgressPageTests
         var baseTime = DateTime.Now.AddHours(-3);
         context.DcActls.AddRange(
             // In Process グループ (3時間前)
-            new DcActl { Id = 1, EqpId = "DVETC38", LotId = "SY79874.1", LotType = "PS", TrackInTime = baseTime },
-            new DcActl { Id = 2, EqpId = "DVETC38", LotId = "SY79872.1", LotType = "PS", TrackInTime = baseTime.AddMinutes(2) },
-            new DcActl { Id = 3, EqpId = "DVETC38", LotId = "SY79906.1", LotType = "PS", TrackInTime = baseTime.AddMinutes(4) },
+            new DcActl { Id = 1, EqpId = "DVETC38", LotId = "SY79874.1", LotType = "PS", TrackInTime = baseTime, Carrier = "C22667", Qty = 25, PPID = "GSIO3F4", Next = "DVETC39", Location = "Bay1", EndTime = baseTime.AddHours(2) },
+            new DcActl { Id = 2, EqpId = "DVETC38", LotId = "SY79872.1", LotType = "PS", TrackInTime = baseTime.AddMinutes(2), Carrier = "C22668", Qty = 25, PPID = "GSIO3F4", Next = "DVETC39", Location = "Bay1", EndTime = baseTime.AddHours(2).AddMinutes(2) },
+            new DcActl { Id = 3, EqpId = "DVETC38", LotId = "SY79906.1", LotType = "PS", TrackInTime = baseTime.AddMinutes(4), Carrier = "C22669", Qty = 25, PPID = "GSIO3F4", Next = "DVETC39", Location = "Bay1", EndTime = baseTime.AddHours(2).AddMinutes(4) },
 
             // Waiting グループ (15分前)
-            new DcActl { Id = 4, EqpId = "DVETC38", LotId = "SY78840.1", LotType = "PS", TrackInTime = DateTime.Now.AddMinutes(-15) },
-            new DcActl { Id = 5, EqpId = "DVETC38", LotId = "SY79506.1", LotType = "PS", TrackInTime = DateTime.Now.AddMinutes(-13) }
+            new DcActl { Id = 4, EqpId = "DVETC38", LotId = "SY78840.1", LotType = "PS", TrackInTime = DateTime.Now.AddMinutes(-15), Carrier = "C22670", Qty = 25, PPID = "GSIO3F5", Next = "DVETC40", Location = "Bay2", EndTime = DateTime.Now.AddMinutes(105) },
+            new DcActl { Id = 5, EqpId = "DVETC38", LotId = "SY79506.1", LotType = "PS", TrackInTime = DateTime.Now.AddMinutes(-13), Carrier = "C22671", Qty = 25, PPID = "GSIO3F5", Next = "DVETC40", Location = "Bay2", EndTime = DateTime.Now.AddMinutes(107) }
         );
 
         // WIPデータ
@@ -56,7 +56,11 @@ public class WorkProgressPageTests
                 TargetStage = "G-SIO",
                 TargetStep = "FDP01",
                 TargetEqpId = "DVETC38",
-                TargetPPID = "GSIO3F4"
+                TargetPPID = "GSIO3F4",
+                State = "Ready",
+                Next1 = "Step1",
+                Next2 = "Step2",
+                Next3 = "Step3"
             }
         );
 

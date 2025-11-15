@@ -22,4 +22,20 @@ public class DcActl
     public string LotType { get; set; } = string.Empty;
 
     public DateTime TrackInTime { get; set; }
+
+    [StringLength(50)]
+    public string Carrier { get; set; } = string.Empty;
+
+    public int Qty { get; set; }
+
+    [StringLength(50)]
+    public string PPID { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string Next { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string Location { get; set; } = string.Empty;
+
+    public DateTime? EndTime { get; set; }
 }

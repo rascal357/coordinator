@@ -106,7 +106,11 @@ public class CreateBatchModel : PageModel
                     Carrier = carrier,
                     Qty = wipData.Qty,
                     LotId = lotId,
-                    Technology = wipData.Technology
+                    Technology = wipData.Technology,
+                    State = wipData.State,
+                    Next1 = wipData.Next1,
+                    Next2 = wipData.Next2,
+                    Next3 = wipData.Next3
                 };
 
                 // Store all PPID/EqpId options for each step

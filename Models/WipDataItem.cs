@@ -11,4 +11,8 @@ public class WipDataItem
     public int Qty { get; set; }
     public string TargetStage { get; set; } = "";
     public string TargetStep { get; set; } = "";
+    public string State { get; set; } = "";
+    public string Next1 { get; set; } = "";
+    public string Next2 { get; set; } = "";
+    public string Next3 { get; set; } = "";
 }

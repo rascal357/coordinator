@@ -45,4 +45,16 @@ public class DcWip
 
     [StringLength(50)]
     public string TargetPPID { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string State { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string Next1 { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string Next2 { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string Next3 { get; set; } = string.Empty;
 }

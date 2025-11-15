@@ -6,6 +6,10 @@ public class CarrierStepViewModel
     public int Qty { get; set; }
     public string LotId { get; set; } = string.Empty;
     public string Technology { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string Next1 { get; set; } = string.Empty;
+    public string Next2 { get; set; } = string.Empty;
+    public string Next3 { get; set; } = string.Empty;
     public StepInfo Step1 { get; set; } = new();
     public StepInfo Step2 { get; set; } = new();
     public StepInfo Step3 { get; set; } = new();
