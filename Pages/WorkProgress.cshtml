@@ -133,10 +133,10 @@
                             <th rowspan="2" class="align-middle">TYPE</th>
                             <th rowspan="2" class="align-middle">装置名</th>
                             <th colspan="7" class="table-success text-center col-inprocess-header">処理中</th>
-                            <th colspan="7" class="table-warning text-center col-waiting-header">処理待ち</th>
-                            <th colspan="7" class="table-info text-center col-reserved-header">予約1</th>
-                            <th colspan="7" class="table-info text-center col-reserved-header">予約2</th>
-                            <th colspan="7" class="table-info text-center col-reserved-header">予約3</th>
+                            <th colspan="6" class="table-warning text-center col-waiting-header">処理待ち</th>
+                            <th colspan="6" class="table-info text-center col-reserved-header">予約1</th>
+                            <th colspan="6" class="table-info text-center col-reserved-header">予約2</th>
+                            <th colspan="6" class="table-info text-center col-reserved-header">予約3</th>
                         </tr>
                         <tr>
                             <!-- In Process sub-headers -->
@@ -154,7 +154,6 @@
                             <th class="table-warning col-waiting">PPID</th>
                             <th class="table-warning col-waiting">Next</th>
                             <th class="table-warning col-waiting">Loc</th>
-                            <th class="table-warning col-waiting">End</th>
                             <!-- Reserved 1 sub-headers -->
                             <th class="table-info col-reserved">Carrier</th>
                             <th class="table-info col-reserved">Lot</th>
@@ -162,7 +161,6 @@
                             <th class="table-info col-reserved">PPID</th>
                             <th class="table-info col-reserved">Next</th>
                             <th class="table-info col-reserved">Loc</th>
-                            <th class="table-info col-reserved">End</th>
                             <!-- Reserved 2 sub-headers -->
                             <th class="table-info col-reserved">Carrier</th>
                             <th class="table-info col-reserved">Lot</th>
@@ -170,7 +168,6 @@
                             <th class="table-info col-reserved">PPID</th>
                             <th class="table-info col-reserved">Next</th>
                             <th class="table-info col-reserved">Loc</th>
-                            <th class="table-info col-reserved">End</th>
                             <!-- Reserved 3 sub-headers -->
                             <th class="table-info col-reserved">Carrier</th>
                             <th class="table-info col-reserved">Lot</th>
@@ -178,7 +175,6 @@
                             <th class="table-info col-reserved">PPID</th>
                             <th class="table-info col-reserved">Next</th>
                             <th class="table-info col-reserved">Loc</th>
-                            <th class="table-info col-reserved">End</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -242,7 +238,7 @@
                                     }
 
                                     <!-- Waiting -->
-                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-waiting" id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -258,7 +254,6 @@
                                                         "PPID" => item.PPID,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
-                                                        "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
                                                 }
@@ -269,7 +264,7 @@
                                     }
 
                                     <!-- Reserved 1 -->
-                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-reserved" id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -285,7 +280,6 @@
                                                         "PPID" => item.PPID,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
-                                                        "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
                                                 }
@@ -303,7 +297,7 @@
                                     }
 
                                     <!-- Reserved 2 -->
-                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-reserved" id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -319,7 +313,6 @@
                                                         "PPID" => item.PPID,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
-                                                        "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
                                                 }
@@ -337,7 +330,7 @@
                                     }
 
                                     <!-- Reserved 3 -->
-                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                    @foreach (var field in new[] { "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-reserved" id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -353,7 +346,6 @@
                                                         "PPID" => item.PPID,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
-                                                        "EndTime" => item.EndTime,
                                                         _ => ""
                                                     };
                                                 }
@@ -625,14 +617,14 @@
 
     .compact-table thead th {
         font-weight: 600;
-        border: 1px solid #dee2e6;
+        border: 1px solid #6c757d;
         background: #f8f9fa;
     }
 
     .compact-table tbody td {
         padding: 10px;
         vertical-align: top;
-        border: 1px solid #dee2e6;
+        border: 1px solid #6c757d;
     }
 
     .compact-table tbody tr:hover td {
@@ -645,7 +637,7 @@
         z-index: 10;
         padding: 6px 10px !important;
         line-height: 1.2 !important;
-        border: 1px solid #dee2e6 !important;
+        border: 1px solid #6c757d !important;
         height: auto !important;
     }
 
@@ -1040,7 +1032,10 @@
 
     // 処理中/処理待ちアイテムをクリア
     function clearProcessItems(prefix, typeKey, eqpIndex) {
-        const fields = ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location', 'endtime'];
+        // 処理中はendtimeを含む、処理待ちはendtimeを含まない
+        const fields = prefix === 'inprocess'
+            ? ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location', 'endtime']
+            : ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location'];
 
         // 最大10個のアイテムをクリア（念のため多めに）
         for (let idx = 0; idx < 10; idx++) {
@@ -1070,13 +1065,16 @@
             updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.ppid);
             updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
             updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
-            updateElement(`${prefix}-endtime-${typeKey}-${eqpIndex}-${idx}`, item.endTime);
+            // 処理中のみendtimeを更新
+            if (prefix === 'inprocess') {
+                updateElement(`${prefix}-endtime-${typeKey}-${eqpIndex}-${idx}`, item.endTime);
+            }
         });
     }
 
     // 予約アイテムをクリア
     function clearReservedItems(prefix, typeKey, eqpIndex) {
-        const fields = ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location', 'endtime'];
+        const fields = ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location'];
 
         // 最大10個のアイテムをクリア（念のため多めに）
         for (let idx = 0; idx < 10; idx++) {
@@ -1106,7 +1104,6 @@
             updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.ppid);
             updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
             updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
-            updateElement(`${prefix}-endtime-${typeKey}-${eqpIndex}-${idx}`, item.endTime);
         });
     }
 

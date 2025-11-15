@@ -7,7 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- SQLite用パッケージ（現在使用中） -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+
+    <!-- Oracle用パッケージ（将来的に使用） -->
+    <!-- Oracleに切り替える場合は、上記のSqliteパッケージをコメントアウトし、以下のコメントを解除してください -->
+    <!-- <PackageReference Include="Oracle.EntityFrameworkCore" Version="8.23.50" /> -->
+
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

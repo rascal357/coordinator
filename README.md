@@ -111,3 +111,117 @@ Coordinator/
 rm coordinator.db
 dotnet run
 ```
+
+## Oracleへの移行手順
+
+現在、システムはSQLiteを使用していますが、将来的にOracleデータベースへの移行が可能です。
+コードベース内の各SQLite使用箇所には、Oracle用のコメントが準備されています。
+
+### 移行ステップ
+
+#### 1. NuGetパッケージの変更
+
+`Coordinator.csproj` ファイルを編集：
+
+```xml
+<!-- SQLite用パッケージをコメントアウト -->
+<!-- <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" /> -->
+
+<!-- Oracle用パッケージのコメントを解除 -->
+<PackageReference Include="Oracle.EntityFrameworkCore" Version="8.23.50" />
+```
+
+#### 2. 接続文字列の変更
+
+`appsettings.json` ファイルを編集：
+
+```json
+{
+  "ConnectionStrings": {
+    // SQLite用をコメントアウト
+    // "DefaultConnection": "Data Source=coordinator.db"
+
+    // Oracle用の接続文字列を設定
+    "DefaultConnection": "User Id=your_username;Password=your_password;Data Source=your_host:1521/your_service_name"
+  }
+}
+```
+
+#### 3. DbContext設定の変更
+
+`Program.cs` の以下の箇所を変更：
+
+```csharp
+// SQLiteをコメントアウト
+// builder.Services.AddDbContext<CoordinatorDbContext>(options =>
+//     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Oracleのコメントを解除
+builder.Services.AddDbContext<CoordinatorDbContext>(options =>
+    options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
+```
+
+#### 4. SQLite固有のSQL構文の変更
+
+`Program.cs` のカラム存在チェックとALTER TABLE文を変更：
+
+```csharp
+// SQLite用をコメントアウト
+// var columnExists = context.Database.SqlQueryRaw<int>(
+//     "SELECT COUNT(*) as Value FROM pragma_table_info('DC_Eqps') WHERE name = 'Note'")
+//     .AsEnumerable()
+//     .FirstOrDefault();
+
+// Oracle用のコメントを解除
+var columnExists = context.Database.SqlQueryRaw<int>(
+    "SELECT COUNT(*) as Value FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'DC_EQPS' AND COLUMN_NAME = 'NOTE'")
+    .AsEnumerable()
+    .FirstOrDefault();
+
+if (columnExists == 0)
+{
+    // SQLiteをコメントアウト
+    // context.Database.ExecuteSqlRaw("ALTER TABLE DC_Eqps ADD COLUMN Note TEXT");
+
+    // Oracleのコメントを解除
+    context.Database.ExecuteSqlRaw("ALTER TABLE DC_EQPS ADD NOTE NVARCHAR2(2000)");
+}
+```
+
+#### 5. モデルクラスの確認（必要に応じて）
+
+`Models/DcEqp.cs` など、主キーの自動採番設定が必要な場合：
+
+```csharp
+[Key]
+[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+public int Id { get; set; }
+```
+
+#### 6. データベースの作成とマイグレーション
+
+Oracleデータベースに接続できることを確認し、以下のコマンドでデータベースを作成：
+
+```bash
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+```
+
+または、`EnsureCreated()`を使用している場合は、そのまま実行：
+
+```bash
+dotnet run
+```
+
+### Oracle移行時の注意点
+
+1. **テーブル名とカラム名**: Oracleでは大文字で保存されます
+2. **識別子の長さ制限**: Oracle 12.1以前は30文字、12.2以降は128文字まで
+3. **データ型のマッピング**:
+   - `string` → `NVARCHAR2(n)`
+   - `DateTime` → `TIMESTAMP`
+   - `bool` → `NUMBER(1)` (0=false, 1=true)
+4. **シーケンス**: 主キーの自動採番にはシーケンスとトリガーが必要な場合があります
+5. **インデックス名**: 長さ制限に注意し、必要に応じて明示的に指定します
+
+詳細は各ファイルのコメントを参照してください。
