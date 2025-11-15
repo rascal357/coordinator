@@ -208,8 +208,8 @@ public class WorkProgressModel : PageModel
                     progressViewModel.Waiting = await CreateProcessItemsFromActls(timeGroups[1]);
                 }
 
-                // Mark batches as processed if their LotIds match actual processing
-                await MarkBatchesAsProcessed(eqp.Name, timeGroups);
+                // Note: Batch processing status is now updated by BatchProcessingBackgroundService
+                // No need to update IsProcessed here to avoid duplicate processing
 
                 // Get reserved batches (not processed), grouped by BatchId
                 var reservedBatchIds = await _context.DcBatches

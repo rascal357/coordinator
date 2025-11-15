@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Coordinator.Data;
+using Coordinator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,9 @@ builder.Services.AddRazorPages();
 // Add DbContext with SQLite
 builder.Services.AddDbContext<CoordinatorDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add Background Service for batch processing
+builder.Services.AddHostedService<BatchProcessingBackgroundService>();
 
 var app = builder.Build();
 
