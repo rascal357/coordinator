@@ -364,6 +364,7 @@
                             <tr>
                                 <th rowspan="2">Carrier</th>
                                 <th rowspan="2">LotId</th>
+                                <th rowspan="2">QTY</th>
                                 <th colspan="2">Step 1</th>
                                 <th colspan="2">Step 2</th>
                                 <th colspan="2">Step 3</th>
@@ -386,6 +387,7 @@
                                 <tr>
                                     <td id="carrier-@index"><strong>@carrierStep.Carrier</strong></td>
                                     <td id="lotid-@index">@carrierStep.LotId</td>
+                                    <td id="qty-@index"><strong>@carrierStep.Qty</strong></td>
                                     @for (int step = 1; step <= 4; step++)
                                     {
                                         <td id="step@(step)-ppid-@index">

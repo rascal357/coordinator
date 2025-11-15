@@ -16,8 +16,12 @@ builder.Services.AddDbContext<CoordinatorDbContext>(options =>
 // builder.Services.AddDbContext<CoordinatorDbContext>(options =>
 //     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add Background Service for batch processing
-builder.Services.AddHostedService<BatchProcessingBackgroundService>();
+// Add Background Service for batch processing (conditionally based on configuration)
+var batchProcessingEnabled = builder.Configuration.GetValue<bool>("BatchProcessing:Enabled", true);
+if (batchProcessingEnabled)
+{
+    builder.Services.AddHostedService<BatchProcessingBackgroundService>();
+}
 
 var app = builder.Build();
 
