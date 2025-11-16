@@ -12,10 +12,12 @@ namespace Coordinator.Pages;
 public class WorkProgressModel : PageModel
 {
     private readonly CoordinatorDbContext _context;
+    private readonly ILogger<WorkProgressModel> _logger;
 
-    public WorkProgressModel(CoordinatorDbContext context)
+    public WorkProgressModel(CoordinatorDbContext context, ILogger<WorkProgressModel> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public Dictionary<string, List<EquipmentProgressViewModel>> EquipmentsByType { get; set; } = new();
@@ -77,16 +79,25 @@ public class WorkProgressModel : PageModel
 
         try
         {
-            // Delete from DC_BatchMembers
+            // Get batch data before deletion for logging
             var batchMembers = await _context.DcBatchMembers
                 .Where(bm => bm.BatchId == batchId)
+                .OrderBy(bm => bm.CarrierId)
                 .ToListAsync();
+
+            var batches = await _context.DcBatches
+                .Where(b => b.BatchId == batchId)
+                .OrderBy(b => b.CarrierId)
+                .ThenBy(b => b.Step)
+                .ToListAsync();
+
+            // Log batch deletion information for maintenance
+            LogBatchDeletion(batchId, batches, batchMembers);
+
+            // Delete from DC_BatchMembers
             _context.DcBatchMembers.RemoveRange(batchMembers);
 
             // Delete from DC_Batches
-            var batches = await _context.DcBatches
-                .Where(b => b.BatchId == batchId)
-                .ToListAsync();
             _context.DcBatches.RemoveRange(batches);
 
             await _context.SaveChangesAsync();
@@ -95,7 +106,50 @@ public class WorkProgressModel : PageModel
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error deleting batch: {BatchId}", batchId);
             return new JsonResult(new { success = false, message = $"Error deleting batch: {ex.Message}" });
+        }
+    }
+
+    private void LogBatchDeletion(string batchId, List<DcBatch> batches, List<DcBatchMember> batchMembers)
+    {
+        try
+        {
+            _logger.LogWarning("=== Batch Deleted ===");
+            _logger.LogWarning("BatchId: {BatchId}", batchId);
+            _logger.LogWarning("Deleted At: {DeletedAt}", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff"));
+            _logger.LogWarning("");
+
+            // Log DC_Batch records
+            _logger.LogWarning("--- DC_Batch Records Deleted ({Count}) ---", batches.Count);
+            foreach (var batch in batches)
+            {
+                _logger.LogWarning("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, IsProcessed: {IsProcessed}, ProcessedAt: {ProcessedAt}",
+                    batch.Step,
+                    batch.CarrierId,
+                    batch.EqpId,
+                    batch.PPID,
+                    batch.NextEqpId,
+                    batch.IsProcessed,
+                    batch.ProcessedAt?.ToString("yyyy/MM/dd HH:mm:ss"));
+            }
+            _logger.LogWarning("");
+
+            // Log DC_BatchMembers records
+            _logger.LogWarning("--- DC_BatchMembers Records Deleted ({Count}) ---", batchMembers.Count);
+            foreach (var member in batchMembers)
+            {
+                _logger.LogWarning("  Carrier: {CarrierId}, LotId: {LotId}, Qty: {Qty}, Technology: {Technology}",
+                    member.CarrierId,
+                    member.LotId,
+                    member.Qty,
+                    member.Technology);
+            }
+            _logger.LogWarning("===========================");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error logging batch deletion for BatchId: {BatchId}", batchId);
         }
     }
 
