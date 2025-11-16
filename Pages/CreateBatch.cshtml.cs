@@ -165,21 +165,21 @@ public class CreateBatchModel : PageModel
     {
         // TODO: Replace with actual SQL query to fetch recipe information
         // For now, return dummy data
-        var recipeInfo = new
+        var recipeInfo = new RecipeInfo
         {
-            eqpId = eqpId,
-            ppid = ppid,
-            okNg = "OK",
-            specialNotes = "なし",
-            trenchDummy = "必要",
-            dmType = "AAA",
-            twType = "BBB",
-            posA = "○",
-            posB = "ー",
-            posC = "ー",
-            posD = "○",
-            posE = "○",
-            posF = "ー"
+            EqpId = eqpId,
+            PPID = ppid,
+            OkNg = "OK",
+            SpecialNotes = "なし",
+            TrenchDummy = "必要",
+            DmType = "AAA",
+            TwType = "BBB",
+            PosA = "○",
+            PosB = "ー",
+            PosC = "ー",
+            PosD = "○",
+            PosE = "○",
+            PosF = "ー"
         };
 
         return new JsonResult(recipeInfo);
@@ -196,6 +196,41 @@ public class CreateBatchModel : PageModel
         }
 
         var lotIdList = LotIds.Split(',').Distinct().ToList();
+
+        // Check for duplicate LotIds in DC_BatchMembers
+        var errorMessages = new List<string>();
+        foreach (var lotId in lotIdList)
+        {
+            var existingMember = await _context.DcBatchMembers
+                .Where(bm => bm.LotId == lotId)
+                .FirstOrDefaultAsync();
+
+            if (existingMember != null)
+            {
+                // Get batch information for this BatchId
+                var batchInfo = await _context.DcBatches
+                    .Where(b => b.BatchId == existingMember.BatchId)
+                    .OrderBy(b => b.CarrierId)
+                    .ThenBy(b => b.Step)
+                    .ToListAsync();
+
+                if (batchInfo.Any())
+                {
+                    var carriers = batchInfo.Select(b => b.CarrierId).Distinct();
+                    var steps = batchInfo.Select(b => b.Step).Distinct().OrderBy(s => s);
+                    var errorMsg = $"{lotId}は以下のバッチに含まれています。workProgress画面で確認してください。" +
+                                   $"BatchId: {existingMember.BatchId}, Carrier: {string.Join(", ", carriers)}, Steps: {string.Join(", ", steps)}";
+                    errorMessages.Add(errorMsg);
+                }
+            }
+        }
+
+        // If there are duplicate LotIds, return error
+        if (errorMessages.Any())
+        {
+            TempData["ErrorMessage"] = string.Join("<br>", errorMessages);
+            return RedirectToPage("CreateBatch", new { LotIds = LotIds, EqpName = EqpName });
+        }
 
         // Generate unique BatchId using timestamp
         var batchId = DateTime.Now.ToString("yyyyMMddHHmmssfff");

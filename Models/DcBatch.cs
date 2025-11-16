@@ -30,4 +30,6 @@ public class DcBatch
     public bool IsProcessed { get; set; } = false;
 
     public DateTime CreatedAt { get; set; }
+
+    public DateTime? ProcessedAt { get; set; }
 }

@@ -335,6 +335,18 @@
         </div>
     </div>
 
+    @* Error Message Display *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>エラー:</strong>
+            <div style="margin-top: 0.5rem;">
+                @Html.Raw(TempData["ErrorMessage"])
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     @if (Model.CarrierSteps.Any())
     {
         <form method="post">

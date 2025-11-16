@@ -138,6 +138,31 @@ public class WorkProgressModel : PageModel
         Types = await _context.DcEqps.Select(e => e.Type).Distinct().OrderBy(t => t).ToListAsync();
         Lines = await _context.DcEqps.Select(e => e.Line).Distinct().OrderBy(l => l).ToListAsync();
 
+        // Optimization: Fetch all equipment data at once to avoid N+1 queries
+        var equipmentIds = equipments.Select(e => e.Name).ToList();
+
+        // Get all DcActls for all equipments in one query
+        var allActls = await _context.DcActls
+            .Where(a => equipmentIds.Contains(a.EqpId))
+            .OrderBy(a => a.EqpId)
+            .ThenBy(a => a.TrackInTime)
+            .ToListAsync();
+
+        // Group by equipment ID in memory
+        var actlsByEquipment = allActls
+            .GroupBy(a => a.EqpId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(a => a.TrackInTime).ToList());
+
+        // Get all batches for all equipments in one query
+        var allBatches = await _context.DcBatches
+            .Where(b => equipmentIds.Contains(b.EqpId) && !b.IsProcessed)
+            .ToListAsync();
+
+        // Group batches by equipment ID in memory
+        var batchesByEquipment = allBatches
+            .GroupBy(b => b.EqpId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         // Group equipments by type
         var groupedEquipments = equipments.GroupBy(e => e.Type);
 
@@ -154,11 +179,10 @@ public class WorkProgressModel : PageModel
                     Note = eqp.Note
                 };
 
-                // Get actual processing data
-                var actls = await _context.DcActls
-                    .Where(a => a.EqpId == eqp.Name)
-                    .OrderBy(a => a.TrackInTime)
-                    .ToListAsync();
+                // Get actual processing data from in-memory dictionary
+                var actls = actlsByEquipment.ContainsKey(eqp.Name)
+                    ? actlsByEquipment[eqp.Name]
+                    : new List<DcActl>();
 
                 // TODO: 将来的にSQLクエリで取得する場合
                 // 以下のようなSQLクエリでDC_Actlと同じ項目を取得し、DcActlモデルにマッピングする
@@ -211,14 +235,17 @@ public class WorkProgressModel : PageModel
                 // Note: Batch processing status is now updated by BatchProcessingBackgroundService
                 // No need to update IsProcessed here to avoid duplicate processing
 
-                // Get reserved batches (not processed), grouped by BatchId
-                var reservedBatchIds = await _context.DcBatches
-                    .Where(b => b.EqpId == eqp.Name && !b.IsProcessed)
+                // Get reserved batches from in-memory dictionary
+                var equipmentBatches = batchesByEquipment.ContainsKey(eqp.Name)
+                    ? batchesByEquipment[eqp.Name]
+                    : new List<DcBatch>();
+
+                var reservedBatchIds = equipmentBatches
                     .GroupBy(b => new { b.BatchId, b.CreatedAt })
                     .OrderBy(g => g.Key.CreatedAt)
                     .Take(3)
                     .Select(g => new { g.Key.BatchId, Batch = g.First() })
-                    .ToListAsync();
+                    .ToList();
 
                 var reservedItems = new List<List<ProcessItem>>();
                 foreach (var batchGroup in reservedBatchIds)
@@ -288,13 +315,37 @@ public class WorkProgressModel : PageModel
 
         foreach (var actl in actls)
         {
+            string nextFurnace = actl.Next;
+
+            // Get the latest ProcessedAt record from DC_Batch for this equipment
+            var latestBatch = await _context.DcBatches
+                .Where(b => b.EqpId == actl.EqpId && b.ProcessedAt != null)
+                .OrderByDescending(b => b.ProcessedAt)
+                .FirstOrDefaultAsync();
+
+            // If the latest batch's ProcessedAt matches actl's TrackInTime
+            if (latestBatch != null && latestBatch.ProcessedAt == actl.TrackInTime)
+            {
+                // Find the next step using BatchId, CarrierId, and Step+1
+                var nextStepBatch = await _context.DcBatches
+                    .Where(b => b.BatchId == latestBatch.BatchId &&
+                               b.CarrierId == actl.Carrier &&
+                               b.Step == latestBatch.Step + 1)
+                    .FirstOrDefaultAsync();
+
+                if (nextStepBatch != null)
+                {
+                    nextFurnace = nextStepBatch.EqpId;
+                }
+            }
+
             items.Add(new ProcessItem
             {
                 Carrier = actl.Carrier,
                 Lot = actl.LotId,
                 Qty = actl.Qty,
                 PPID = actl.PPID,
-                NextFurnace = actl.Next,
+                NextFurnace = nextFurnace,
                 Location = actl.Location,
                 EndTime = actl.EndTime?.ToString("yyyy/MM/dd HH:mm") ?? ""
             });

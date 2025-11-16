@@ -140,11 +140,11 @@ public class BatchProcessingBackgroundService : BackgroundService
         if (!timeGroups.Any()) return 0;
 
         int updatedCount = 0;
+        var updatedBatches = new List<DcBatch>(); // Track updated batches
 
-        // Get all LotIds and EqpIds from actual processing
+        // Get all LotIds, EqpIds, and TrackInTime from actual processing
         var actlData = timeGroups
-            .SelectMany(g => g.Select(a => new { a.LotId, a.EqpId }))
-            .Distinct()
+            .SelectMany(g => g.Select(a => new { a.LotId, a.EqpId, a.TrackInTime }))
             .ToList();
 
         foreach (var actl in actlData)
@@ -173,15 +173,60 @@ public class BatchProcessingBackgroundService : BackgroundService
                 {
                     // If only one record, mark it as processed
                     matchingBatches[0].IsProcessed = true;
+                    matchingBatches[0].ProcessedAt = actl.TrackInTime;
+                    updatedBatches.Add(matchingBatches[0]);
                     updatedCount++;
                 }
                 else if (matchingBatches.Count > 1)
                 {
                     // If multiple records, mark the one with the smallest Step as processed
                     matchingBatches[0].IsProcessed = true;
+                    matchingBatches[0].ProcessedAt = actl.TrackInTime;
+                    updatedBatches.Add(matchingBatches[0]);
                     updatedCount++;
                 }
             }
+        }
+
+        // Check if updated batches are the last step and delete if needed
+        var batchIdsToDelete = new HashSet<string>();
+
+        foreach (var batch in updatedBatches)
+        {
+            if (stoppingToken.IsCancellationRequested)
+                break;
+
+            // Check if there is a next step for this batch
+            var nextStepExists = await context.DcBatches
+                .Where(b => b.BatchId == batch.BatchId &&
+                           b.CarrierId == batch.CarrierId &&
+                           b.Step == batch.Step + 1)
+                .AnyAsync(stoppingToken);
+
+            // If no next step exists, this is the last step
+            if (!nextStepExists)
+            {
+                batchIdsToDelete.Add(batch.BatchId);
+            }
+        }
+
+        // Delete batches and batch members for completed BatchIds
+        if (batchIdsToDelete.Any())
+        {
+            // Delete from DC_BatchMembers
+            var batchMembersToDelete = await context.DcBatchMembers
+                .Where(bm => batchIdsToDelete.Contains(bm.BatchId))
+                .ToListAsync(stoppingToken);
+            context.DcBatchMembers.RemoveRange(batchMembersToDelete);
+
+            // Delete from DC_Batches
+            var batchesToDelete = await context.DcBatches
+                .Where(b => batchIdsToDelete.Contains(b.BatchId))
+                .ToListAsync(stoppingToken);
+            context.DcBatches.RemoveRange(batchesToDelete);
+
+            _logger.LogInformation("Deleted {Count} completed batches: {BatchIds}",
+                batchIdsToDelete.Count, string.Join(", ", batchIdsToDelete));
         }
 
         if (updatedCount > 0)
