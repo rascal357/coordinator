@@ -27,6 +27,9 @@ public class DcBatch
     [StringLength(50)]
     public string PPID { get; set; } = string.Empty;
 
+    [StringLength(50)]
+    public string NextEqpId { get; set; } = string.Empty;
+
     public bool IsProcessed { get; set; } = false;
 
     public DateTime CreatedAt { get; set; }

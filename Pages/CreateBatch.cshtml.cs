@@ -286,6 +286,20 @@ public class CreateBatchModel : PageModel
                         continue;
                     }
 
+                    // Get next step's EqpId (stepNum + 1)
+                    var nextStepNum = stepNum + 1;
+                    var nextEqpIdKey = $"eqpid_{carrier}_{nextStepNum}";
+                    string nextEqpId = "なし";
+
+                    if (Request.Form.ContainsKey(nextEqpIdKey))
+                    {
+                        var nextEqpIdValue = Request.Form[nextEqpIdKey].ToString();
+                        if (!string.IsNullOrEmpty(nextEqpIdValue) && nextEqpIdValue != "選択してください")
+                        {
+                            nextEqpId = nextEqpIdValue;
+                        }
+                    }
+
                     // Add to DC_Batch
                     var batch = new DcBatch
                     {
@@ -294,6 +308,7 @@ public class CreateBatchModel : PageModel
                         CarrierId = carrier,
                         EqpId = eqpId,
                         PPID = ppid,
+                        NextEqpId = nextEqpId,
                         IsProcessed = false,
                         CreatedAt = createdAt
                     };

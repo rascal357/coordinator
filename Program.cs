@@ -141,6 +141,29 @@ using (var scope = app.Services.CreateScope())
         // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD PROCESSEDAT TIMESTAMP");
     }
 
+    // Add NextEqpId column to DC_Batch table if it doesn't exist
+    // SQLite用のカラム存在チェック（現在使用中）
+    var nextEqpIdColumnExists = context.Database.SqlQueryRaw<int>(
+        "SELECT COUNT(*) as Value FROM pragma_table_info('DC_Batch') WHERE name = 'NextEqpId'")
+        .AsEnumerable()
+        .FirstOrDefault();
+
+    // Oracle用のカラム存在チェック（将来的に使用）
+    // var nextEqpIdColumnExists = context.Database.SqlQueryRaw<int>(
+    //     "SELECT COUNT(*) as Value FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'DC_BATCH' AND COLUMN_NAME = 'NEXTEQPID'")
+    //     .AsEnumerable()
+    //     .FirstOrDefault();
+
+    if (nextEqpIdColumnExists == 0)
+    {
+        // SQLite用のALTER TABLE（現在使用中）
+        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN NextEqpId TEXT");
+
+        // Oracle用のALTER TABLE（将来的に使用）
+        // Oracleに切り替える場合は、上記のSQLite用コードをコメントアウトし、以下のコメントを解除してください
+        // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD NEXTEQPID NVARCHAR2(50)");
+    }
+
     DbInitializer.Initialize(context);
 }
 
