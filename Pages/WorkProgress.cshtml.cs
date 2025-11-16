@@ -372,20 +372,13 @@ public class WorkProgressModel : PageModel
 
         foreach (var member in batchMembers)
         {
-            // Get next step's EqpId (current step + 1)
-            var nextStep = await _context.DcBatches
-                .Where(b => b.BatchId == batch.BatchId &&
-                           b.CarrierId == member.CarrierId &&
-                           b.Step == batch.Step + 1)
-                .FirstOrDefaultAsync();
-
             items.Add(new ProcessItem
             {
                 Carrier = member.CarrierId,
                 Lot = member.LotId,
                 Qty = member.Qty,
                 PPID = batch.PPID,
-                NextFurnace = nextStep?.EqpId ?? "なし",
+                NextFurnace = batch.NextEqpId,
                 Location = "",
                 EndTime = ""
             });
