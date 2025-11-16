@@ -326,17 +326,8 @@ public class WorkProgressModel : PageModel
             // If the latest batch's ProcessedAt matches actl's TrackInTime
             if (latestBatch != null && latestBatch.ProcessedAt == actl.TrackInTime)
             {
-                // Find the next step using BatchId, CarrierId, and Step+1
-                var nextStepBatch = await _context.DcBatches
-                    .Where(b => b.BatchId == latestBatch.BatchId &&
-                               b.CarrierId == actl.Carrier &&
-                               b.Step == latestBatch.Step + 1)
-                    .FirstOrDefaultAsync();
-
-                if (nextStepBatch != null)
-                {
-                    nextFurnace = nextStepBatch.EqpId;
-                }
+                // Use NextEqpId from the latest batch
+                nextFurnace = latestBatch.NextEqpId;
             }
 
             items.Add(new ProcessItem

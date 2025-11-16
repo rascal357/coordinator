@@ -13,10 +13,12 @@ namespace Coordinator.Pages;
 public class CreateBatchModel : PageModel
 {
     private readonly CoordinatorDbContext _context;
+    private readonly ILogger<CreateBatchModel> _logger;
 
-    public CreateBatchModel(CoordinatorDbContext context)
+    public CreateBatchModel(CoordinatorDbContext context, ILogger<CreateBatchModel> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public List<CarrierStepViewModel> CarrierSteps { get; set; } = new();
@@ -330,7 +332,56 @@ public class CreateBatchModel : PageModel
 
         await _context.SaveChangesAsync();
 
+        // Log created batch information for maintenance
+        await LogBatchCreation(batchId);
+
         return RedirectToPage("WorkProgress");
+    }
+
+    private async Task LogBatchCreation(string batchId)
+    {
+        try
+        {
+            // Get created batches
+            var createdBatches = await _context.DcBatches
+                .Where(b => b.BatchId == batchId)
+                .OrderBy(b => b.CarrierId)
+                .ThenBy(b => b.Step)
+                .ToListAsync();
+
+            // Get created batch members
+            var createdMembers = await _context.DcBatchMembers
+                .Where(bm => bm.BatchId == batchId)
+                .OrderBy(bm => bm.CarrierId)
+                .ToListAsync();
+
+            _logger.LogInformation("=== Batch Created Successfully ===");
+            _logger.LogInformation("BatchId: {BatchId}", batchId);
+            _logger.LogInformation("Created At: {CreatedAt}", createdBatches.FirstOrDefault()?.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss.fff"));
+            _logger.LogInformation("");
+
+            // Log DC_Batch records
+            _logger.LogInformation("--- DC_Batch Records ({Count}) ---", createdBatches.Count);
+            foreach (var batch in createdBatches)
+            {
+                _logger.LogInformation("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}",
+                    batch.Step, batch.CarrierId, batch.EqpId, batch.PPID, batch.NextEqpId);
+            }
+            _logger.LogInformation("");
+
+            // Log DC_BatchMembers records
+            _logger.LogInformation("--- DC_BatchMembers Records ({Count}) ---", createdMembers.Count);
+            foreach (var member in createdMembers)
+            {
+                _logger.LogInformation("  Carrier: {CarrierId}, LotId: {LotId}, Qty: {Qty}, Technology: {Technology}",
+                    member.CarrierId, member.LotId, member.Qty, member.Technology);
+            }
+            _logger.LogInformation("=====================================");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error logging batch creation for BatchId: {BatchId}", batchId);
+        }
     }
 }
 
