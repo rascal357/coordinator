@@ -93,6 +93,53 @@ public class BatchProcessingBackgroundService : BackgroundService
             .OrderBy(a => a.TrackInTime)
             .ToListAsync(stoppingToken);
 
+        // TODO: 将来的にSQLクエリで取得する場合
+        // 以下のようなSQLクエリでDC_Actlと同じ項目を取得し、DcActlモデルにマッピングする
+        /*
+        var sql = @"
+            SELECT
+                EqpId, LotId, LotType, TrackInTime, Carrier, Qty, PPID, Next, Location, EndTime
+            FROM [外部データソース]
+            WHERE EqpId = @eqpName
+            ORDER BY TrackInTime
+        ";
+
+        using (var command = context.Database.GetDbConnection().CreateCommand())
+        {
+            command.CommandText = sql;
+            command.Parameters.Add(new SqliteParameter("@eqpName", eqpName));
+
+            // Set command timeout if needed for long-running queries
+            // command.CommandTimeout = 300; // seconds
+
+            await context.Database.OpenConnectionAsync(stoppingToken);
+            using (var reader = await command.ExecuteReaderAsync(stoppingToken))
+            {
+                actls = new List<DcActl>();
+                while (await reader.ReadAsync(stoppingToken))
+                {
+                    // Check for cancellation in loop for long-running queries
+                    if (stoppingToken.IsCancellationRequested)
+                        break;
+
+                    actls.Add(new DcActl
+                    {
+                        EqpId = reader.GetString(0),
+                        LotId = reader.GetString(1),
+                        LotType = reader.GetString(2),
+                        TrackInTime = reader.GetDateTime(3),
+                        Carrier = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                        Qty = reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
+                        PPID = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                        Next = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                        Location = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                        EndTime = reader.IsDBNull(9) ? null : reader.GetDateTime(9)
+                    });
+                }
+            }
+        }
+        */
+
         if (!actls.Any())
             return 0;
 
