@@ -217,7 +217,7 @@ public class CreateBatchPageTests
         Assert.Equal("C22667", batch.CarrierId);
         Assert.Equal("DVETC25", batch.EqpId);
         Assert.Equal("PPID1", batch.PPID);
-        Assert.False(batch.IsProcessed);
+        Assert.Equal(0, batch.IsProcessed);
     }
 
     [Fact]

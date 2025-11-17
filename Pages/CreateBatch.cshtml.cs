@@ -311,7 +311,7 @@ public class CreateBatchModel : PageModel
                         EqpId = eqpId,
                         PPID = ppid,
                         NextEqpId = nextEqpId,
-                        IsProcessed = false,
+                        IsProcessed = 0,
                         CreatedAt = createdAt
                     };
                     _context.DcBatches.Add(batch);

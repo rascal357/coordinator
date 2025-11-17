@@ -160,7 +160,7 @@ public class WorkProgressModel : PageModel
             var allBatches = await _context.DcBatches.ToListAsync();
             foreach (var batch in allBatches)
             {
-                batch.IsProcessed = false;
+                batch.IsProcessed = 0;
             }
             await _context.SaveChangesAsync();
 
@@ -209,7 +209,7 @@ public class WorkProgressModel : PageModel
 
         // Get all batches for all equipments in one query
         var allBatches = await _context.DcBatches
-            .Where(b => equipmentIds.Contains(b.EqpId) && !b.IsProcessed)
+            .Where(b => equipmentIds.Contains(b.EqpId) && b.IsProcessed == 0)
             .ToListAsync();
 
         // Group batches by equipment ID in memory
@@ -463,12 +463,12 @@ public class WorkProgressModel : PageModel
                 if (matchingBatches.Count == 1)
                 {
                     // If only one record, mark it as processed
-                    matchingBatches[0].IsProcessed = true;
+                    matchingBatches[0].IsProcessed = 1;
                 }
                 else if (matchingBatches.Count > 1)
                 {
                     // If multiple records, mark the one with the smallest Step as processed
-                    matchingBatches[0].IsProcessed = true;
+                    matchingBatches[0].IsProcessed = 1;
                 }
             }
         }

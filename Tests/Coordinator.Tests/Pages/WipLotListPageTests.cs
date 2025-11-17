@@ -96,7 +96,7 @@ public class WipLotListPageTests
             CarrierId = "C22668",
             EqpId = "DVETC25",
             PPID = "PPID1",
-            IsProcessed = false,
+            IsProcessed = 0,
             CreatedAt = DateTime.Now
         });
 

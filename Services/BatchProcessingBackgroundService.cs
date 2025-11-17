@@ -212,14 +212,14 @@ public class BatchProcessingBackgroundService : BackgroundService
                     .Where(b => b.BatchId == member.BatchId &&
                                b.CarrierId == member.CarrierId &&
                                b.EqpId == actl.EqpId &&
-                               !b.IsProcessed) // Only update if not already processed
+                               b.IsProcessed == 0) // Only update if not already processed
                     .OrderBy(b => b.Step)
                     .ToListAsync(stoppingToken);
 
                 if (matchingBatches.Count == 1)
                 {
                     // If only one record, mark it as processed
-                    matchingBatches[0].IsProcessed = true;
+                    matchingBatches[0].IsProcessed = 1;
                     matchingBatches[0].ProcessedAt = actl.TrackInTime;
                     updatedBatches.Add(matchingBatches[0]);
                     updatedCount++;
@@ -227,7 +227,7 @@ public class BatchProcessingBackgroundService : BackgroundService
                 else if (matchingBatches.Count > 1)
                 {
                     // If multiple records, mark the one with the smallest Step as processed
-                    matchingBatches[0].IsProcessed = true;
+                    matchingBatches[0].IsProcessed = 1;
                     matchingBatches[0].ProcessedAt = actl.TrackInTime;
                     updatedBatches.Add(matchingBatches[0]);
                     updatedCount++;

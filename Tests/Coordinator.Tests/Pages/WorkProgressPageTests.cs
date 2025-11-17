@@ -71,8 +71,8 @@ public class WorkProgressPageTests
         var createdAt2 = DateTime.Now.AddMinutes(-30);
 
         context.DcBatches.AddRange(
-            new DcBatch { Id = 1, BatchId = batchId1, Step = 1, CarrierId = "C22667", EqpId = "DVETC25", PPID = "PPID1", IsProcessed = false, CreatedAt = createdAt1 },
-            new DcBatch { Id = 2, BatchId = batchId2, Step = 1, CarrierId = "C22668", EqpId = "DVETC25", PPID = "PPID1", IsProcessed = false, CreatedAt = createdAt2 }
+            new DcBatch { Id = 1, BatchId = batchId1, Step = 1, CarrierId = "C22667", EqpId = "DVETC25", PPID = "PPID1", IsProcessed = 0, CreatedAt = createdAt1 },
+            new DcBatch { Id = 2, BatchId = batchId2, Step = 1, CarrierId = "C22668", EqpId = "DVETC25", PPID = "PPID1", IsProcessed = 0, CreatedAt = createdAt2 }
         );
 
         context.DcBatchMembers.AddRange(
@@ -309,9 +309,9 @@ public class WorkProgressPageTests
     {
         // Arrange
         var context = GetInMemoryDbContext();
-        // 一部のバッチをIsProcessed=trueに設定
+        // 一部のバッチをIsProcessed=1に設定
         var batch = await context.DcBatches.FirstAsync();
-        batch.IsProcessed = true;
+        batch.IsProcessed = 1;
         await context.SaveChangesAsync();
 
         var pageModel = new WorkProgressModel(context);
@@ -322,9 +322,9 @@ public class WorkProgressPageTests
         // Assert
         Assert.IsType<JsonResult>(result);
 
-        // すべてのバッチがIsProcessed=falseになっていること
+        // すべてのバッチがIsProcessed=0になっていること
         var allBatches = await context.DcBatches.ToListAsync();
-        Assert.All(allBatches, b => Assert.False(b.IsProcessed));
+        Assert.All(allBatches, b => Assert.Equal(0, b.IsProcessed));
     }
 
     [Fact]
