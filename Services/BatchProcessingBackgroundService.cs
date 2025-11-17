@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Coordinator.Data;
 using Coordinator.Models;
 
@@ -8,29 +9,40 @@ public class BatchProcessingBackgroundService : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<BatchProcessingBackgroundService> _logger;
-    private readonly IConfiguration _configuration;
-    private readonly int _updateIntervalSeconds;
+    private readonly IOptionsMonitor<BatchProcessingOptions> _options;
 
     public BatchProcessingBackgroundService(
         IServiceScopeFactory serviceScopeFactory,
         ILogger<BatchProcessingBackgroundService> logger,
-        IConfiguration configuration)
+        IOptionsMonitor<BatchProcessingOptions> options)
     {
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
-        _configuration = configuration;
-        _updateIntervalSeconds = _configuration.GetValue<int>("BatchProcessing:UpdateIntervalSeconds", 30);
+        _options = options;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("BatchProcessingBackgroundService started. Update interval: {Interval} seconds", _updateIntervalSeconds);
+        var options = _options.CurrentValue;
+        _logger.LogInformation("BatchProcessingBackgroundService started. Enabled: {Enabled}, Update interval: {Interval} seconds",
+            options.Enabled, options.UpdateIntervalSeconds);
 
         // Wait a bit before starting the first update to allow the application to fully start
         await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            // Get current options (will reflect any changes from appsettings.json)
+            options = _options.CurrentValue;
+
+            // Check if batch processing is enabled
+            if (!options.Enabled)
+            {
+                _logger.LogDebug("Batch processing is disabled. Waiting...");
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                continue;
+            }
+
             try
             {
                 await UpdateBatchProcessingStatus(stoppingToken);
@@ -40,8 +52,8 @@ public class BatchProcessingBackgroundService : BackgroundService
                 _logger.LogError(ex, "Error occurred while updating batch processing status");
             }
 
-            // Wait for the next update interval
-            await Task.Delay(TimeSpan.FromSeconds(_updateIntervalSeconds), stoppingToken);
+            // Wait for the next update interval (using current value from options)
+            await Task.Delay(TimeSpan.FromSeconds(options.UpdateIntervalSeconds), stoppingToken);
         }
 
         _logger.LogInformation("BatchProcessingBackgroundService stopped");

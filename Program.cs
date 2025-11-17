@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Coordinator.Data;
 using Coordinator.Services;
+using Coordinator.Models;
 using Serilog;
 
-// Configure Serilog
+// Configure Serilog with ReloadOnChange enabled
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
         .Build())
     .WriteTo.Console()
     .WriteTo.File(
@@ -28,6 +30,10 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddRazorPages();
 
+// Configure options with reload on change support
+builder.Services.Configure<BatchProcessingOptions>(
+    builder.Configuration.GetSection(BatchProcessingOptions.SectionName));
+
 // Add DbContext with SQLite（現在使用中）
 builder.Services.AddDbContext<CoordinatorDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -37,12 +43,8 @@ builder.Services.AddDbContext<CoordinatorDbContext>(options =>
 // builder.Services.AddDbContext<CoordinatorDbContext>(options =>
 //     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add Background Service for batch processing (conditionally based on configuration)
-var batchProcessingEnabled = builder.Configuration.GetValue<bool>("BatchProcessing:Enabled", true);
-if (batchProcessingEnabled)
-{
-    builder.Services.AddHostedService<BatchProcessingBackgroundService>();
-}
+// Add Background Service for batch processing (always add, it will check Enabled flag internally)
+builder.Services.AddHostedService<BatchProcessingBackgroundService>();
 
 var app = builder.Build();
 
