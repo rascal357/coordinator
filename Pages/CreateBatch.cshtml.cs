@@ -234,12 +234,62 @@ public class CreateBatchModel : PageModel
             return RedirectToPage("CreateBatch", new { LotIds = LotIds, EqpName = EqpName });
         }
 
+        // Validate that all required steps have PPID and EqpId selected
+        var validationErrors = new List<string>();
+        var carrierDataDict = CarrierData.ToDictionary(cd => cd.LotId);
+
+        foreach (var lotId in lotIdList)
+        {
+            string carrier = "";
+            if (carrierDataDict.ContainsKey(lotId))
+            {
+                carrier = carrierDataDict[lotId].Carrier;
+            }
+            else
+            {
+                var wipInfo = await _context.DcWips.Where(w => w.LotId == lotId).FirstOrDefaultAsync();
+                if (wipInfo == null) continue;
+                carrier = wipInfo.Carrier;
+            }
+
+            // Get all available steps for this carrier from DC_CarrierSteps
+            var availableSteps = await _context.DcCarrierSteps
+                .Where(cs => cs.Carrier == carrier)
+                .Select(cs => cs.Step)
+                .Distinct()
+                .ToListAsync();
+
+            // Check each available step has PPID and EqpId selected
+            foreach (var stepNum in availableSteps)
+            {
+                var ppidKey = $"ppid_{carrier}_{stepNum}";
+                var eqpIdKey = $"eqpid_{carrier}_{stepNum}";
+
+                var ppid = Request.Form[ppidKey].ToString();
+                var eqpId = Request.Form[eqpIdKey].ToString();
+
+                if (string.IsNullOrEmpty(ppid) || ppid == "選択してください")
+                {
+                    validationErrors.Add($"{carrier} のStep {stepNum}のPPIDを選択してください");
+                }
+
+                if (string.IsNullOrEmpty(eqpId) || eqpId == "選択してください")
+                {
+                    validationErrors.Add($"{carrier} のStep {stepNum}のEqpIdを選択してください");
+                }
+            }
+        }
+
+        // If there are validation errors, return to page with error message
+        if (validationErrors.Any())
+        {
+            TempData["ErrorMessage"] = string.Join("<br>", validationErrors);
+            return RedirectToPage("CreateBatch", new { LotIds = LotIds, EqpName = EqpName });
+        }
+
         // Generate unique BatchId using timestamp
         var batchId = DateTime.Now.ToString("yyyyMMddHHmmssfff");
         var createdAt = DateTime.Now;
-
-        // Create dictionary from CarrierData for quick lookup by LotId
-        var carrierDataDict = CarrierData.ToDictionary(cd => cd.LotId);
 
         foreach (var lotId in lotIdList)
         {

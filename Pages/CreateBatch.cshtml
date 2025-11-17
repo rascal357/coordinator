@@ -488,6 +488,16 @@
     // Initialize dropdowns on page load
     document.addEventListener('DOMContentLoaded', function() {
         initializeDropdowns();
+
+        // Add form validation on submit
+        const form = document.querySelector('form[method="post"]');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                }
+            });
+        }
     });
 
     function initializeDropdowns() {
@@ -747,5 +757,41 @@
                 }
             }
         }
+    }
+
+    // Validate form before submission
+    function validateForm() {
+        const errors = [];
+
+        // Check all PPID and EqpId selects
+        const ppidSelects = document.querySelectorAll('.ppid-select');
+        const eqpIdSelects = document.querySelectorAll('.eqpid-select');
+
+        // Validate PPID selects
+        ppidSelects.forEach(select => {
+            if (!select.disabled && (!select.value || select.value === '')) {
+                const carrier = select.getAttribute('data-carrier');
+                const step = select.getAttribute('data-step');
+                errors.push(`${carrier} のStep ${step}のPPIDを選択してください`);
+            }
+        });
+
+        // Validate EqpId selects
+        eqpIdSelects.forEach(select => {
+            if (!select.disabled && (!select.value || select.value === '')) {
+                const carrier = select.getAttribute('data-carrier');
+                const step = select.getAttribute('data-step');
+                errors.push(`${carrier} のStep ${step}のEqpIdを選択してください`);
+            }
+        });
+
+        // Show errors if any
+        if (errors.length > 0) {
+            const errorMessage = errors.join('\n');
+            alert('以下の項目を選択してください:\n\n' + errorMessage);
+            return false;
+        }
+
+        return true;
     }
 </script>
