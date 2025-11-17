@@ -1005,10 +1005,10 @@
                 // 処理待ちデータの更新
                 updateProcessItems('waiting', typeKey, eqpIndex, eqp.waiting);
 
-                // 予約1-3データの更新
-                updateReservedItems('reserved1', typeKey, eqpIndex, eqp.reserved1);
-                updateReservedItems('reserved2', typeKey, eqpIndex, eqp.reserved2);
-                updateReservedItems('reserved3', typeKey, eqpIndex, eqp.reserved3);
+                // 予約1-3データの更新（BatchIdも渡す）
+                updateReservedItems('reserved1', typeKey, eqpIndex, eqp.reserved1, eqp.reserved1BatchId);
+                updateReservedItems('reserved2', typeKey, eqpIndex, eqp.reserved2, eqp.reserved2BatchId);
+                updateReservedItems('reserved3', typeKey, eqpIndex, eqp.reserved3, eqp.reserved3BatchId);
             });
         }
     }
@@ -1086,16 +1086,21 @@
                 }
             });
         }
+
+        // 削除ボタンもクリア
+        updateDeleteButton(prefix, typeKey, eqpIndex, null);
     }
 
     // 予約アイテムを更新
-    function updateReservedItems(prefix, typeKey, eqpIndex, items) {
-        if (!items || items.length === 0) {
-            console.log(`${prefix}: No items to update`);
+    function updateReservedItems(prefix, typeKey, eqpIndex, items, batchId) {
+        console.log(`Updating ${prefix} for ${typeKey}-${eqpIndex}, items:`, items, 'batchId:', batchId);
+
+        // アイテムがない、またはbatchIdがnullの場合は削除ボタンを削除
+        if (!items || items.length === 0 || !batchId) {
+            // 削除ボタンを削除
+            updateDeleteButton(prefix, typeKey, eqpIndex, null);
             return;
         }
-
-        console.log(`Updating ${prefix} for ${typeKey}-${eqpIndex}, items:`, items);
 
         items.forEach((item, idx) => {
             updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.carrier);
@@ -1105,6 +1110,47 @@
             updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
             updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
         });
+
+        // 削除ボタンを更新
+        updateDeleteButton(prefix, typeKey, eqpIndex, batchId);
+    }
+
+    // 削除ボタンを更新
+    function updateDeleteButton(prefix, typeKey, eqpIndex, batchId) {
+        const carrierId = `${prefix}-carrier-${typeKey}-${eqpIndex}`;
+        const carrierCell = document.getElementById(carrierId);
+
+        if (!carrierCell) {
+            console.warn(`Carrier cell not found: ${carrierId}`);
+            return;
+        }
+
+        // 既存の削除ボタンと直前の<br>タグを削除
+        const existingButton = carrierCell.querySelector('.btn-danger');
+        if (existingButton) {
+            // ボタンの直前の要素が<br>タグかチェック
+            const prevElement = existingButton.previousElementSibling;
+            if (prevElement && prevElement.tagName === 'BR') {
+                prevElement.remove();
+            }
+            existingButton.remove();
+        }
+
+        // batchIdがある場合は削除ボタンを追加
+        if (batchId) {
+            const br = document.createElement('br');
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-sm btn-danger mt-1';
+            button.textContent = '×';
+            button.onclick = function() { deleteBatch(batchId, typeKey, eqpIndex); };
+
+            carrierCell.appendChild(br);
+            carrierCell.appendChild(button);
+            console.log(`Added delete button for ${prefix}, batchId: ${batchId}`);
+        } else {
+            console.log(`No batchId for ${prefix}, delete button not added`);
+        }
     }
 
     // DOM要素の内容を更新
