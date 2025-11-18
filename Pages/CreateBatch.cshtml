@@ -446,7 +446,7 @@
                     </svg>
                     <span>作成</span>
                 </button>
-                <a href="/WipLotList?EqpName=@Uri.EscapeDataString(Model.EqpName ?? "")" class="btn-modern btn-cancel">
+                <a asp-page="/WipLotList" asp-route-EqpName="@(Model.EqpName ?? "")" class="btn-modern btn-cancel">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"/>
                         <line x1="6" y1="6" x2="18" y2="18"/>
@@ -471,7 +471,7 @@
                 </div>
             </div>
         </div>
-        <a href="/" class="btn-modern btn-cancel">
+        <a asp-page="/Index" class="btn-modern btn-cancel">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
@@ -602,7 +602,8 @@
     // Fetch and display recipe information
     async function fetchAndDisplayRecipeInfo(carrier, step, ppid, eqpId) {
         try {
-            const response = await fetch(`/CreateBatch?handler=RecipeInfo&eqpId=${encodeURIComponent(eqpId)}&ppid=${encodeURIComponent(ppid)}`);
+            const baseUrl = '@Url.Page("/CreateBatch", new { handler = "RecipeInfo" })';
+            const response = await fetch(`${baseUrl}&eqpId=${encodeURIComponent(eqpId)}&ppid=${encodeURIComponent(ppid)}`);
             const data = await response.json();
 
             displayRecipeCard(carrier, step, data);

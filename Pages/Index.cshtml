@@ -42,8 +42,8 @@
                     </select>
                 </div>
                 <div class="col-md-5 d-flex align-items-end">
-                    <a href="/" class="btn btn-secondary me-2">フィルタークリア</a>
-                    <a href="/WorkProgress" class="btn btn-primary">Work Progress画面へ</a>
+                    <a asp-page="/Index" class="btn btn-secondary me-2">フィルタークリア</a>
+                    <a asp-page="/WorkProgress" class="btn btn-primary">Work Progress画面へ</a>
                 </div>
             </form>
         </div>
@@ -74,7 +74,8 @@
                                 {
                                     <tr>
                                         <td>
-                                            <a href="/WipLotList?eqpName=@eqp.Name"
+                                            <a asp-page="/WipLotList"
+                                               asp-route-eqpName="@eqp.Name"
                                                id="eqp-name-@eqp.Id"
                                                class="btn btn-link">
                                                 @eqp.Name

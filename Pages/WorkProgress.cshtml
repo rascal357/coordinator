@@ -85,7 +85,7 @@
                         </select>
                     </div>
                     <div class="col-md-5 d-flex align-items-end gap-2">
-                        <a href="/WorkProgress" class="btn btn-modern btn-secondary flex-fill">
+                        <a asp-page="/WorkProgress" class="btn btn-modern btn-secondary flex-fill">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
                                 <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
                             </svg>
@@ -186,7 +186,7 @@
                                     <td class="fw-bold align-top">@typeGroup.Key</td>
                                     <td class="fw-bold align-top">
                                         <div>
-                                            <a href="/WipLotList?EqpName=@Uri.EscapeDataString(eqp.EqpName)" class="text-decoration-none text-primary fw-bold equipment-name">
+                                            <a asp-page="/WipLotList" asp-route-EqpName="@eqp.EqpName" class="text-decoration-none text-primary fw-bold equipment-name">
                                                 @eqp.EqpName
                                             </a>
                                         </div>
@@ -802,7 +802,8 @@
             formData.append('note', noteText);
             formData.append('__RequestVerificationToken', token);
 
-            const response = await fetch('/WorkProgress?handler=UpdateNote', {
+            const updateNoteUrl = '@Url.Page("/WorkProgress", new { handler = "UpdateNote" })';
+            const response = await fetch(updateNoteUrl, {
                 method: 'POST',
                 body: formData
             });
@@ -894,7 +895,8 @@
             const formData = new FormData();
             formData.append('batchId', batchId);
 
-            const response = await fetch('/WorkProgress?handler=DeleteBatch', {
+            const deleteBatchUrl = '@Url.Page("/WorkProgress", new { handler = "DeleteBatch" })';
+            const response = await fetch(deleteBatchUrl, {
                 method: 'POST',
                 headers: {
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
@@ -958,7 +960,8 @@
             }
             params.append('handler', 'Refresh');
 
-            const response = await fetch(`/WorkProgress?${params.toString()}`);
+            const refreshUrl = '@Url.Page("/WorkProgress")';
+            const response = await fetch(`${refreshUrl}?${params.toString()}`);
 
             if (!response.ok) {
                 console.error('データの取得に失敗しました:', response.statusText);
