@@ -80,22 +80,14 @@ public class WorkProgressModel : PageModel
         try
         {
             // Get batch data before deletion for logging
-            var batchMembers = await _context.DcBatchMembers
-                .Where(bm => bm.BatchId == batchId)
-                .OrderBy(bm => bm.CarrierId)
-                .ToListAsync();
-
             var batches = await _context.DcBatches
                 .Where(b => b.BatchId == batchId)
-                .OrderBy(b => b.CarrierId)
+                .OrderBy(b => b.LotId)
                 .ThenBy(b => b.Step)
                 .ToListAsync();
 
             // Log batch deletion information for maintenance
-            LogBatchDeletion(batchId, batches, batchMembers);
-
-            // Delete from DC_BatchMembers
-            _context.DcBatchMembers.RemoveRange(batchMembers);
+            LogBatchDeletion(batchId, batches);
 
             // Delete from DC_Batches
             _context.DcBatches.RemoveRange(batches);
@@ -111,7 +103,7 @@ public class WorkProgressModel : PageModel
         }
     }
 
-    private void LogBatchDeletion(string batchId, List<DcBatch> batches, List<DcBatchMember> batchMembers)
+    private void LogBatchDeletion(string batchId, List<DcBatch> batches)
     {
         try
         {
@@ -124,26 +116,17 @@ public class WorkProgressModel : PageModel
             _logger.LogWarning("--- DC_Batch Records Deleted ({Count}) ---", batches.Count);
             foreach (var batch in batches)
             {
-                _logger.LogWarning("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, IsProcessed: {IsProcessed}, ProcessedAt: {ProcessedAt}",
+                _logger.LogWarning("  [Step {Step}] LotId: {LotId}, Carrier: {CarrierId}, Qty: {Qty}, Technology: {Technology}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, IsProcessed: {IsProcessed}, ProcessedAt: {ProcessedAt}",
                     batch.Step,
+                    batch.LotId,
                     batch.CarrierId,
+                    batch.Qty,
+                    batch.Technology,
                     batch.EqpId,
                     batch.PPID,
                     batch.NextEqpId,
                     batch.IsProcessed,
                     batch.ProcessedAt?.ToString("yyyy/MM/dd HH:mm:ss"));
-            }
-            _logger.LogWarning("");
-
-            // Log DC_BatchMembers records
-            _logger.LogWarning("--- DC_BatchMembers Records Deleted ({Count}) ---", batchMembers.Count);
-            foreach (var member in batchMembers)
-            {
-                _logger.LogWarning("  Carrier: {CarrierId}, LotId: {LotId}, Qty: {Qty}, Technology: {Technology}",
-                    member.CarrierId,
-                    member.LotId,
-                    member.Qty,
-                    member.Technology);
             }
             _logger.LogWarning("===========================");
         }
@@ -444,32 +427,21 @@ public class WorkProgressModel : PageModel
 
         foreach (var actl in actlData)
         {
-            // Find matching batch members by LotId
-            var matchingMembers = await _context.DcBatchMembers
-                .Where(m => m.LotId == actl.LotId)
+            // Find matching batches by LotId and EqpId
+            var matchingBatches = await _context.DcBatches
+                .Where(b => b.LotId == actl.LotId && b.EqpId == actl.EqpId)
+                .OrderBy(b => b.Step)
                 .ToListAsync();
 
-            foreach (var member in matchingMembers)
+            if (matchingBatches.Count == 1)
             {
-                // Join DC_BatchMembers and DC_Batch by BatchId and CarrierId
-                // Filter by LotId, EqpId, and BatchId
-                var matchingBatches = await _context.DcBatches
-                    .Where(b => b.BatchId == member.BatchId &&
-                               b.CarrierId == member.CarrierId &&
-                               b.EqpId == actl.EqpId)
-                    .OrderBy(b => b.Step)
-                    .ToListAsync();
-
-                if (matchingBatches.Count == 1)
-                {
-                    // If only one record, mark it as processed
-                    matchingBatches[0].IsProcessed = 1;
-                }
-                else if (matchingBatches.Count > 1)
-                {
-                    // If multiple records, mark the one with the smallest Step as processed
-                    matchingBatches[0].IsProcessed = 1;
-                }
+                // If only one record, mark it as processed
+                matchingBatches[0].IsProcessed = 1;
+            }
+            else if (matchingBatches.Count > 1)
+            {
+                // If multiple records, mark the one with the smallest Step as processed
+                matchingBatches[0].IsProcessed = 1;
             }
         }
 

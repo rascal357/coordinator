@@ -211,39 +211,29 @@ public class BatchProcessingBackgroundService : BackgroundService
             if (stoppingToken.IsCancellationRequested)
                 break;
 
-            // Find matching batch members by LotId
-            var matchingMembers = await context.DcBatchMembers
-                .Where(m => m.LotId == actl.LotId)
+            // Find matching batches by LotId and EqpId
+            var matchingBatches = await context.DcBatches
+                .Where(b => b.LotId == actl.LotId &&
+                           b.EqpId == actl.EqpId &&
+                           b.IsProcessed == 0) // Only update if not already processed
+                .OrderBy(b => b.Step)
                 .ToListAsync(stoppingToken);
 
-            foreach (var member in matchingMembers)
+            if (matchingBatches.Count == 1)
             {
-                // Join DC_BatchMembers and DC_Batch by BatchId and CarrierId
-                // Filter by LotId, EqpId, and BatchId
-                var matchingBatches = await context.DcBatches
-                    .Where(b => b.BatchId == member.BatchId &&
-                               b.CarrierId == member.CarrierId &&
-                               b.EqpId == actl.EqpId &&
-                               b.IsProcessed == 0) // Only update if not already processed
-                    .OrderBy(b => b.Step)
-                    .ToListAsync(stoppingToken);
-
-                if (matchingBatches.Count == 1)
-                {
-                    // If only one record, mark it as processed
-                    matchingBatches[0].IsProcessed = 1;
-                    matchingBatches[0].ProcessedAt = actl.TrackInTime;
-                    updatedBatches.Add(matchingBatches[0]);
-                    updatedCount++;
-                }
-                else if (matchingBatches.Count > 1)
-                {
-                    // If multiple records, mark the one with the smallest Step as processed
-                    matchingBatches[0].IsProcessed = 1;
-                    matchingBatches[0].ProcessedAt = actl.TrackInTime;
-                    updatedBatches.Add(matchingBatches[0]);
-                    updatedCount++;
-                }
+                // If only one record, mark it as processed
+                matchingBatches[0].IsProcessed = 1;
+                matchingBatches[0].ProcessedAt = actl.TrackInTime;
+                updatedBatches.Add(matchingBatches[0]);
+                updatedCount++;
+            }
+            else if (matchingBatches.Count > 1)
+            {
+                // If multiple records, mark the one with the smallest Step as processed
+                matchingBatches[0].IsProcessed = 1;
+                matchingBatches[0].ProcessedAt = actl.TrackInTime;
+                updatedBatches.Add(matchingBatches[0]);
+                updatedCount++;
             }
         }
 
@@ -258,7 +248,7 @@ public class BatchProcessingBackgroundService : BackgroundService
             // Check if there is a next step for this batch
             var nextStepExists = await context.DcBatches
                 .Where(b => b.BatchId == batch.BatchId &&
-                           b.CarrierId == batch.CarrierId &&
+                           b.LotId == batch.LotId &&
                            b.Step == batch.Step + 1)
                 .AnyAsync(stoppingToken);
 
@@ -269,15 +259,9 @@ public class BatchProcessingBackgroundService : BackgroundService
             }
         }
 
-        // Delete batches and batch members for completed BatchIds
+        // Delete batches for completed BatchIds
         if (batchIdsToDelete.Any())
         {
-            // Delete from DC_BatchMembers
-            var batchMembersToDelete = await context.DcBatchMembers
-                .Where(bm => batchIdsToDelete.Contains(bm.BatchId))
-                .ToListAsync(stoppingToken);
-            context.DcBatchMembers.RemoveRange(batchMembersToDelete);
-
             // Delete from DC_Batches
             var batchesToDelete = await context.DcBatches
                 .Where(b => batchIdsToDelete.Contains(b.BatchId))

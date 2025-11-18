@@ -21,6 +21,15 @@ public class DcBatch
 
     [Required]
     [StringLength(50)]
+    public string LotId { get; set; } = string.Empty;
+
+    public int Qty { get; set; }
+
+    [StringLength(50)]
+    public string Technology { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(50)]
     public string EqpId { get; set; } = string.Empty;
 
     [Required]

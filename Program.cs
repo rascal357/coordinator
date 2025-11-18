@@ -187,6 +187,33 @@ using (var scope = app.Services.CreateScope())
         // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD NEXTEQPID NVARCHAR2(50)");
     }
 
+    // Add LotId, Qty, Technology columns to DC_Batch table if they don't exist
+    // SQLite用のカラム存在チェック（現在使用中）
+    var lotIdColumnExists = context.Database.SqlQueryRaw<int>(
+        "SELECT COUNT(*) as Value FROM pragma_table_info('DC_Batch') WHERE name = 'LotId'")
+        .AsEnumerable()
+        .FirstOrDefault();
+
+    // Oracle用のカラム存在チェック（将来的に使用）
+    // var lotIdColumnExists = context.Database.SqlQueryRaw<int>(
+    //     "SELECT COUNT(*) as Value FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'DC_BATCH' AND COLUMN_NAME = 'LOTID'")
+    //     .AsEnumerable()
+    //     .FirstOrDefault();
+
+    if (lotIdColumnExists == 0)
+    {
+        // SQLite用のALTER TABLE（現在使用中）
+        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN LotId TEXT NOT NULL DEFAULT ''");
+        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN Qty INTEGER DEFAULT 0");
+        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN Technology TEXT");
+
+        // Oracle用のALTER TABLE（将来的に使用）
+        // Oracleに切り替える場合は、上記のSQLite用コードをコメントアウトし、以下のコメントを解除してください
+        // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD LOTID NVARCHAR2(50) NOT NULL");
+        // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD QTY NUMBER(10) DEFAULT 0");
+        // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD TECHNOLOGY NVARCHAR2(50)");
+    }
+
     // Create DC_LotSteps table if it doesn't exist
     // SQLite用のテーブル存在チェック（現在使用中）
     var lotStepsTableExists = context.Database.SqlQueryRaw<int>(

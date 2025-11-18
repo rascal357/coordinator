@@ -161,29 +161,29 @@ public class CreateBatchModel : PageModel
 
         var lotIdList = LotIds.Split(',').Distinct().ToList();
 
-        // Check for duplicate LotIds in DC_BatchMembers
+        // Check for duplicate LotIds in DC_Batch
         var errorMessages = new List<string>();
         foreach (var lotId in lotIdList)
         {
-            var existingMember = await _context.DcBatchMembers
-                .Where(bm => bm.LotId == lotId)
+            var existingBatch = await _context.DcBatches
+                .Where(b => b.LotId == lotId)
                 .FirstOrDefaultAsync();
 
-            if (existingMember != null)
+            if (existingBatch != null)
             {
                 // Get batch information for this BatchId
                 var batchInfo = await _context.DcBatches
-                    .Where(b => b.BatchId == existingMember.BatchId)
-                    .OrderBy(b => b.CarrierId)
+                    .Where(b => b.BatchId == existingBatch.BatchId)
+                    .OrderBy(b => b.LotId)
                     .ThenBy(b => b.Step)
                     .ToListAsync();
 
                 if (batchInfo.Any())
                 {
-                    var carriers = batchInfo.Select(b => b.CarrierId).Distinct();
+                    var lotIds = batchInfo.Select(b => b.LotId).Distinct();
                     var steps = batchInfo.Select(b => b.Step).Distinct().OrderBy(s => s);
                     var errorMsg = $"{lotId}は以下のバッチに含まれています。workProgress画面で確認してください。" +
-                                   $"BatchId: {existingMember.BatchId}, Carrier: {string.Join(", ", carriers)}, Steps: {string.Join(", ", steps)}";
+                                   $"BatchId: {existingBatch.BatchId}, LotId: {string.Join(", ", lotIds)}, Steps: {string.Join(", ", steps)}";
                     errorMessages.Add(errorMsg);
                 }
             }
@@ -308,6 +308,9 @@ public class CreateBatchModel : PageModel
                         BatchId = batchId,
                         Step = stepNum,
                         CarrierId = carrier,
+                        LotId = lotId,
+                        Qty = qty,
+                        Technology = technology,
                         EqpId = eqpId,
                         PPID = ppid,
                         NextEqpId = nextEqpId,
@@ -317,17 +320,6 @@ public class CreateBatchModel : PageModel
                     _context.DcBatches.Add(batch);
                 }
             }
-
-            // Add to DC_BatchMembers
-            var batchMember = new DcBatchMember
-            {
-                BatchId = batchId,
-                CarrierId = carrier,
-                LotId = lotId,
-                Qty = qty,
-                Technology = technology
-            };
-            _context.DcBatchMembers.Add(batchMember);
         }
 
         await _context.SaveChangesAsync();
@@ -345,14 +337,8 @@ public class CreateBatchModel : PageModel
             // Get created batches
             var createdBatches = await _context.DcBatches
                 .Where(b => b.BatchId == batchId)
-                .OrderBy(b => b.CarrierId)
+                .OrderBy(b => b.LotId)
                 .ThenBy(b => b.Step)
-                .ToListAsync();
-
-            // Get created batch members
-            var createdMembers = await _context.DcBatchMembers
-                .Where(bm => bm.BatchId == batchId)
-                .OrderBy(bm => bm.CarrierId)
                 .ToListAsync();
 
             _logger.LogInformation("=== Batch Created Successfully ===");
@@ -364,17 +350,8 @@ public class CreateBatchModel : PageModel
             _logger.LogInformation("--- DC_Batch Records ({Count}) ---", createdBatches.Count);
             foreach (var batch in createdBatches)
             {
-                _logger.LogInformation("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}",
-                    batch.Step, batch.CarrierId, batch.EqpId, batch.PPID, batch.NextEqpId);
-            }
-            _logger.LogInformation("");
-
-            // Log DC_BatchMembers records
-            _logger.LogInformation("--- DC_BatchMembers Records ({Count}) ---", createdMembers.Count);
-            foreach (var member in createdMembers)
-            {
-                _logger.LogInformation("  Carrier: {CarrierId}, LotId: {LotId}, Qty: {Qty}, Technology: {Technology}",
-                    member.CarrierId, member.LotId, member.Qty, member.Technology);
+                _logger.LogInformation("  [Step {Step}] LotId: {LotId}, Carrier: {CarrierId}, Qty: {Qty}, Technology: {Technology}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}",
+                    batch.Step, batch.LotId, batch.CarrierId, batch.Qty, batch.Technology, batch.EqpId, batch.PPID, batch.NextEqpId);
             }
             _logger.LogInformation("=====================================");
         }
