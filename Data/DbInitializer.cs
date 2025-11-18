@@ -90,7 +90,7 @@ public static class DbInitializer
         context.DcWips.AddRange(wips);
         context.SaveChanges();
 
-        // Add sample carrier steps
+        // Add sample carrier steps (legacy - kept for backward compatibility)
         var carrierSteps = new DcCarrierStep[]
         {
             new DcCarrierStep { Carrier = "C22667", Qty = 25, Step = 1, EqpId = "DVETC25", PPID = "PPID1" },
@@ -103,6 +103,21 @@ public static class DbInitializer
             new DcCarrierStep { Carrier = "C22668", Qty = 25, Step = 4, EqpId = "DVETC28", PPID = "PPID4" },
         };
         context.DcCarrierSteps.AddRange(carrierSteps);
+        context.SaveChanges();
+
+        // Add sample lot steps (new structure based on LotId)
+        var lotSteps = new DcLotStep[]
+        {
+            new DcLotStep { LotId = "JM86146.1", Qty = 25, Step = 1, EqpId = "DVETC25", PPID = "PPID1" },
+            new DcLotStep { LotId = "JM86146.1", Qty = 25, Step = 2, EqpId = "DVETC26", PPID = "PPID2" },
+            new DcLotStep { LotId = "JM86146.1", Qty = 25, Step = 3, EqpId = "DVETC27", PPID = "PPID3" },
+            new DcLotStep { LotId = "JM86146.1", Qty = 25, Step = 4, EqpId = "DVETC28", PPID = "PPID4" },
+            new DcLotStep { LotId = "JM86147.1", Qty = 25, Step = 1, EqpId = "DVETC25", PPID = "PPID1" },
+            new DcLotStep { LotId = "JM86147.1", Qty = 25, Step = 2, EqpId = "DVETC26", PPID = "PPID2" },
+            new DcLotStep { LotId = "JM86147.1", Qty = 25, Step = 3, EqpId = "DVETC27", PPID = "PPID3" },
+            new DcLotStep { LotId = "JM86147.1", Qty = 25, Step = 4, EqpId = "DVETC28", PPID = "PPID4" },
+        };
+        context.DcLotSteps.AddRange(lotSteps);
         context.SaveChanges();
 
         // Add sample actual processing data

@@ -13,6 +13,7 @@ public class CoordinatorDbContext : DbContext
     public DbSet<DcEqp> DcEqps { get; set; } = null!;
     public DbSet<DcWip> DcWips { get; set; } = null!;
     public DbSet<DcCarrierStep> DcCarrierSteps { get; set; } = null!;
+    public DbSet<DcLotStep> DcLotSteps { get; set; } = null!;
     public DbSet<DcBatch> DcBatches { get; set; } = null!;
     public DbSet<DcBatchMember> DcBatchMembers { get; set; } = null!;
     public DbSet<DcActl> DcActls { get; set; } = null!;
@@ -42,6 +43,10 @@ public class CoordinatorDbContext : DbContext
         modelBuilder.Entity<DcCarrierStep>()
             .HasIndex(e => e.Carrier);
         // .HasDatabaseName("IDX_DCCARRIERSTEP_CARRIER");
+
+        modelBuilder.Entity<DcLotStep>()
+            .HasIndex(e => e.LotId);
+        // .HasDatabaseName("IDX_DCLOTSTEP_LOTID");
 
         modelBuilder.Entity<DcBatch>()
             .HasIndex(e => new { e.BatchId, e.EqpId });

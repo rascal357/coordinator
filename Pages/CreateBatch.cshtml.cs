@@ -21,7 +21,7 @@ public class CreateBatchModel : PageModel
         _logger = logger;
     }
 
-    public List<CarrierStepViewModel> CarrierSteps { get; set; } = new();
+    public List<LotStepViewModel> LotSteps { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
     public string? LotIds { get; set; }
@@ -46,31 +46,7 @@ public class CreateBatchModel : PageModel
                 var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
                 if (wipDataList != null)
                 {
-                    // Process duplicate carriers: sort by LotId and add sequence numbers
-                    var carrierGroups = wipDataList.GroupBy(w => w.Carrier).ToList();
-                    var processedList = new List<WipDataItem>();
-
-                    foreach (var group in carrierGroups)
-                    {
-                        var items = group.ToList();
-
-                        // If there are multiple items with the same carrier
-                        if (items.Count > 1)
-                        {
-                            // Sort by LotId
-                            items = items.OrderBy(item => item.LotId).ToList();
-
-                            // Add sequence numbers to carrier names
-                            for (int i = 0; i < items.Count; i++)
-                            {
-                                items[i].Carrier = $"{items[i].Carrier}-{i + 1}";
-                            }
-                        }
-
-                        processedList.AddRange(items);
-                    }
-
-                    wipDataByLotId = processedList.ToDictionary(w => w.LotId);
+                    wipDataByLotId = wipDataList.ToDictionary(w => w.LotId);
                 }
             }
 
@@ -86,18 +62,18 @@ public class CreateBatchModel : PageModel
                 var wipData = wipDataByLotId[lotId];
                 var carrier = wipData.Carrier;
 
-                // Get carrier steps from database
-                var steps = await _context.DcCarrierSteps
-                    .Where(cs => cs.Carrier == carrier)
-                    .OrderBy(cs => cs.Step)
+                // Get lot steps from database
+                var steps = await _context.DcLotSteps
+                    .Where(ls => ls.LotId == lotId)
+                    .OrderBy(ls => ls.Step)
                     .ToListAsync();
 
                 // TODO: 将来的にSQLクエリで取得する場合
-                // LotIdでCarrierStepsを検索する
+                // LotIdでLotStepsを検索する
                 /*
                 var sql = @"
                     SELECT
-                        Carrier, Qty, Step, EqpId, PPID
+                        LotId, Qty, Step, EqpId, PPID
                     FROM [外部データソース]
                     WHERE LotId = @lotId
                     ORDER BY Step
@@ -111,12 +87,12 @@ public class CreateBatchModel : PageModel
                     await _context.Database.OpenConnectionAsync();
                     using (var reader = await command.ExecuteReaderAsync())
                     {
-                        steps = new List<DcCarrierStep>();
+                        steps = new List<DcLotStep>();
                         while (await reader.ReadAsync())
                         {
-                            steps.Add(new DcCarrierStep
+                            steps.Add(new DcLotStep
                             {
-                                Carrier = reader.GetString(0),
+                                LotId = reader.GetString(0),
                                 Qty = reader.GetInt32(1),
                                 Step = reader.GetInt32(2),
                                 EqpId = reader.GetString(3),
@@ -127,11 +103,11 @@ public class CreateBatchModel : PageModel
                 }
                 */
 
-                var viewModel = new CarrierStepViewModel
+                var viewModel = new LotStepViewModel
                 {
+                    LotId = lotId,
                     Carrier = carrier,
                     Qty = wipData.Qty,
-                    LotId = lotId,
                     Technology = wipData.Technology,
                     State = wipData.State,
                     Next1 = wipData.Next1,
@@ -140,7 +116,7 @@ public class CreateBatchModel : PageModel
                 };
 
                 // Store all PPID/EqpId options for each step
-                var carrierStepOptions = new Dictionary<int, List<PpidEqpOption>>();
+                var lotStepOptions = new Dictionary<int, List<PpidEqpOption>>();
 
                 for (int stepNum = 1; stepNum <= 4; stepNum++)
                 {
@@ -151,7 +127,7 @@ public class CreateBatchModel : PageModel
                         EqpId = s.EqpId
                     }).ToList();
 
-                    carrierStepOptions[stepNum] = options;
+                    lotStepOptions[stepNum] = options;
 
                     // Set default step info (first option or empty)
                     var stepInfo = new StepInfo
@@ -177,8 +153,8 @@ public class CreateBatchModel : PageModel
                     }
                 }
 
-                stepOptionsDict[carrier] = carrierStepOptions;
-                CarrierSteps.Add(viewModel);
+                stepOptionsDict[lotId] = lotStepOptions;
+                LotSteps.Add(viewModel);
             }
 
             // Serialize to JSON for JavaScript
@@ -276,10 +252,10 @@ public class CreateBatchModel : PageModel
                 carrier = wipInfo.Carrier;
             }
 
-            // Get all available steps for this carrier from DC_CarrierSteps
-            var availableSteps = await _context.DcCarrierSteps
-                .Where(cs => cs.Carrier == carrier)
-                .Select(cs => cs.Step)
+            // Get all available steps for this lot from DC_LotSteps
+            var availableSteps = await _context.DcLotSteps
+                .Where(ls => ls.LotId == lotId)
+                .Select(ls => ls.Step)
                 .Distinct()
                 .ToListAsync();
 
