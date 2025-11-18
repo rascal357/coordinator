@@ -15,9 +15,3 @@ public class LotStepViewModel
     public StepInfo Step3 { get; set; } = new();
     public StepInfo Step4 { get; set; } = new();
 }
-
-public class StepInfo
-{
-    public string EqpId { get; set; } = string.Empty;
-    public string PPID { get; set; } = string.Empty;
-}
