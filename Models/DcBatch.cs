@@ -19,14 +19,13 @@ public class DcBatch
     [StringLength(50)]
     public string CarrierId { get; set; } = string.Empty;
 
-    [Required]
     [StringLength(50)]
-    public string LotId { get; set; } = string.Empty;
+    public string? LotId { get; set; }
 
     public int Qty { get; set; }
 
     [StringLength(50)]
-    public string Technology { get; set; } = string.Empty;
+    public string? Technology { get; set; }
 
     [Required]
     [StringLength(50)]

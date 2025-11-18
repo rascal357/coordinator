@@ -203,13 +203,13 @@ using (var scope = app.Services.CreateScope())
     if (lotIdColumnExists == 0)
     {
         // SQLite用のALTER TABLE（現在使用中）
-        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN LotId TEXT NOT NULL DEFAULT ''");
+        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN LotId TEXT");
         context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN Qty INTEGER DEFAULT 0");
         context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN Technology TEXT");
 
         // Oracle用のALTER TABLE（将来的に使用）
         // Oracleに切り替える場合は、上記のSQLite用コードをコメントアウトし、以下のコメントを解除してください
-        // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD LOTID NVARCHAR2(50) NOT NULL");
+        // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD LOTID NVARCHAR2(50)");
         // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD QTY NUMBER(10) DEFAULT 0");
         // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD TECHNOLOGY NVARCHAR2(50)");
     }
