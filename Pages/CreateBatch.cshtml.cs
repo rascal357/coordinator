@@ -4,9 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Coordinator.Data;
 using Coordinator.Models;
 using System.Text.Json;
-// TODO: 将来的にSQLクエリで取得する場合は以下のusing文を追加
-// using Microsoft.Data.Sqlite;
-// using System.Data;
 
 namespace Coordinator.Pages;
 
@@ -67,41 +64,6 @@ public class CreateBatchModel : PageModel
                     .Where(ls => ls.LotId == lotId)
                     .OrderBy(ls => ls.Step)
                     .ToListAsync();
-
-                // TODO: 将来的にSQLクエリで取得する場合
-                // LotIdでLotStepsを検索する
-                /*
-                var sql = @"
-                    SELECT
-                        LotId, Qty, Step, EqpId, PPID
-                    FROM [外部データソース]
-                    WHERE LotId = @lotId
-                    ORDER BY Step
-                ";
-
-                using (var command = _context.Database.GetDbConnection().CreateCommand())
-                {
-                    command.CommandText = sql;
-                    command.Parameters.Add(new SqliteParameter("@lotId", lotId));
-
-                    await _context.Database.OpenConnectionAsync();
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        steps = new List<DcLotStep>();
-                        while (await reader.ReadAsync())
-                        {
-                            steps.Add(new DcLotStep
-                            {
-                                LotId = reader.GetString(0),
-                                Qty = reader.GetInt32(1),
-                                Step = reader.GetInt32(2),
-                                EqpId = reader.GetString(3),
-                                PPID = reader.GetString(4)
-                            });
-                        }
-                    }
-                }
-                */
 
                 var viewModel = new LotStepViewModel
                 {
@@ -240,18 +202,6 @@ public class CreateBatchModel : PageModel
 
         foreach (var lotId in lotIdList)
         {
-            string carrier = "";
-            if (carrierDataDict.ContainsKey(lotId))
-            {
-                carrier = carrierDataDict[lotId].Carrier;
-            }
-            else
-            {
-                var wipInfo = await _context.DcWips.Where(w => w.LotId == lotId).FirstOrDefaultAsync();
-                if (wipInfo == null) continue;
-                carrier = wipInfo.Carrier;
-            }
-
             // Get all available steps for this lot from DC_LotSteps
             var availableSteps = await _context.DcLotSteps
                 .Where(ls => ls.LotId == lotId)
@@ -262,20 +212,20 @@ public class CreateBatchModel : PageModel
             // Check each available step has PPID and EqpId selected
             foreach (var stepNum in availableSteps)
             {
-                var ppidKey = $"ppid_{carrier}_{stepNum}";
-                var eqpIdKey = $"eqpid_{carrier}_{stepNum}";
+                var ppidKey = $"ppid_{lotId}_{stepNum}";
+                var eqpIdKey = $"eqpid_{lotId}_{stepNum}";
 
                 var ppid = Request.Form[ppidKey].ToString();
                 var eqpId = Request.Form[eqpIdKey].ToString();
 
                 if (string.IsNullOrEmpty(ppid) || ppid == "選択してください")
                 {
-                    validationErrors.Add($"{carrier} のStep {stepNum}のPPIDを選択してください");
+                    validationErrors.Add($"{lotId} のStep {stepNum}のPPIDを選択してください");
                 }
 
                 if (string.IsNullOrEmpty(eqpId) || eqpId == "選択してください")
                 {
-                    validationErrors.Add($"{carrier} のStep {stepNum}のEqpIdを選択してください");
+                    validationErrors.Add($"{lotId} のStep {stepNum}のEqpIdを選択してください");
                 }
             }
         }
@@ -323,8 +273,8 @@ public class CreateBatchModel : PageModel
             // Process each step (1-4)
             for (int stepNum = 1; stepNum <= 4; stepNum++)
             {
-                var ppidKey = $"ppid_{carrier}_{stepNum}";
-                var eqpIdKey = $"eqpid_{carrier}_{stepNum}";
+                var ppidKey = $"ppid_{lotId}_{stepNum}";
+                var eqpIdKey = $"eqpid_{lotId}_{stepNum}";
 
                 if (Request.Form.ContainsKey(ppidKey) && Request.Form.ContainsKey(eqpIdKey))
                 {
@@ -340,7 +290,7 @@ public class CreateBatchModel : PageModel
 
                     // Get next step's EqpId (stepNum + 1)
                     var nextStepNum = stepNum + 1;
-                    var nextEqpIdKey = $"eqpid_{carrier}_{nextStepNum}";
+                    var nextEqpIdKey = $"eqpid_{lotId}_{nextStepNum}";
                     string nextEqpId = "なし";
 
                     if (Request.Form.ContainsKey(nextEqpIdKey))

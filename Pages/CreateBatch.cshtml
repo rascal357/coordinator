@@ -403,7 +403,7 @@
                                     @for (int step = 1; step <= 4; step++)
                                     {
                                         <td id="step@(step)-ppid-@index">
-                                            <select name="ppid_@(lotStep.Carrier)_@(step)"
+                                            <select name="ppid_@(lotStep.LotId)_@(step)"
                                                     id="ppid_@(lotStep.LotId)_@(step)"
                                                     class="form-select ppid-select"
                                                     data-lotid="@lotStep.LotId"
@@ -414,7 +414,7 @@
                                             </select>
                                         </td>
                                         <td id="step@(step)-eqp-@index">
-                                            <select name="eqpid_@(lotStep.Carrier)_@(step)"
+                                            <select name="eqpid_@(lotStep.LotId)_@(step)"
                                                     id="eqpid_@(lotStep.LotId)_@(step)"
                                                     class="form-select eqpid-select"
                                                     data-lotid="@lotStep.LotId"
