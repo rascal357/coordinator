@@ -1,0 +1,202 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container mt-5">
+    <div class="error-container">
+        <div class="error-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+        </div>
+        <h1 class="error-title">エラーが発生しました</h1>
+        <p class="error-message">
+            申し訳ございませんが、リクエストの処理中にエラーが発生しました。<br>
+            しばらく時間をおいてから再度お試しください。
+        </p>
+
+        @if (Model.ShowRequestId)
+        {
+            <div class="error-details">
+                <p class="request-id-label">リクエストID:</p>
+                <p class="request-id-value">
+                    <code>@Model.RequestId</code>
+                </p>
+                <p class="request-id-note">
+                    問題が解決しない場合は、このIDをサポートにお知らせください。
+                </p>
+            </div>
+        }
+
+        <div class="error-actions">
+            <a asp-page="/Index" class="btn btn-modern btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                </svg>
+                ホームに戻る
+            </a>
+            <button onclick="history.back()" class="btn btn-modern btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                前のページに戻る
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --error-color: #dc3545;
+        --primary-color: #0d6efd;
+        --secondary-color: #6c757d;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        --transition-speed: 0.2s;
+    }
+
+    body {
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .error-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+    }
+
+    .error-icon {
+        color: var(--error-color);
+        margin-bottom: 1.5rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+    }
+
+    .error-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 1rem;
+    }
+
+    .error-message {
+        font-size: 1rem;
+        color: #6c757d;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    .error-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--error-color);
+    }
+
+    .request-id-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .request-id-value {
+        margin-bottom: 0.75rem;
+    }
+
+    .request-id-value code {
+        background: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        font-size: 0.875rem;
+        color: var(--error-color);
+        font-weight: 500;
+        word-break: break-all;
+    }
+
+    .request-id-note {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-modern {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        text-decoration: none;
+    }
+
+    .btn-modern.btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-modern.btn-primary:hover {
+        background: #0b5ed7;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    }
+
+    .btn-modern.btn-secondary {
+        background: var(--secondary-color);
+        color: white;
+    }
+
+    .btn-modern.btn-secondary:hover {
+        background: #5c636a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 576px) {
+        .error-container {
+            padding: 2rem 1.5rem;
+        }
+
+        .error-title {
+            font-size: 1.5rem;
+        }
+
+        .error-actions {
+            flex-direction: column;
+        }
+
+        .btn-modern {
+            width: 100%;
+        }
+    }
+</style>

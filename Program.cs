@@ -193,7 +193,16 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler(options =>
+    {
+        options.Run(async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            var errorPageUrl = $"{context.Request.PathBase}/Error";
+            context.Response.Redirect(errorPageUrl);
+            await Task.CompletedTask;
+        });
+    });
     app.UseHsts();
 }
 
@@ -205,7 +214,11 @@ app.UseRouting();
 app.UseAuthorization();
 
 // Redirect root to WorkProgress
-app.MapGet("/", () => Results.Redirect("/WorkProgress"));
+app.MapGet("/", (LinkGenerator linkGenerator, HttpContext httpContext) =>
+{
+    var url = linkGenerator.GetPathByPage(httpContext, "/WorkProgress");
+    return Results.Redirect(url ?? "/WorkProgress");
+});
 
 app.MapRazorPages();
 
