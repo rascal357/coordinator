@@ -187,6 +187,54 @@ using (var scope = app.Services.CreateScope())
         // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD NEXTEQPID NVARCHAR2(50)");
     }
 
+    // Create DC_LotSteps table if it doesn't exist
+    // SQLite用のテーブル存在チェック（現在使用中）
+    var lotStepsTableExists = context.Database.SqlQueryRaw<int>(
+        "SELECT COUNT(*) as Value FROM sqlite_master WHERE type='table' AND name='DC_LotSteps'")
+        .AsEnumerable()
+        .FirstOrDefault();
+
+    // Oracle用のテーブル存在チェック（将来的に使用）
+    // var lotStepsTableExists = context.Database.SqlQueryRaw<int>(
+    //     "SELECT COUNT(*) as Value FROM USER_TABLES WHERE TABLE_NAME = 'DC_LOTSTEPS'")
+    //     .AsEnumerable()
+    //     .FirstOrDefault();
+
+    if (lotStepsTableExists == 0)
+    {
+        // SQLite用のCREATE TABLE（現在使用中）
+        context.Database.ExecuteSqlRaw(@"
+            CREATE TABLE DC_LotSteps (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LotId TEXT NOT NULL,
+                Qty INTEGER NOT NULL,
+                Step INTEGER NOT NULL,
+                EqpId TEXT NOT NULL,
+                PPID TEXT NOT NULL
+            )");
+
+        // インデックスを作成
+        context.Database.ExecuteSqlRaw("CREATE INDEX IX_DcLotStep_LotId ON DC_LotSteps (LotId)");
+
+        // Oracle用のCREATE TABLE（将来的に使用）
+        // Oracleに切り替える場合は、上記のSQLite用コードをコメントアウトし、以下のコメントを解除してください
+        // context.Database.ExecuteSqlRaw(@"
+        //     CREATE TABLE DC_LOTSTEPS (
+        //         ID NUMBER(10) PRIMARY KEY,
+        //         LOTID NVARCHAR2(50) NOT NULL,
+        //         QTY NUMBER(10) NOT NULL,
+        //         STEP NUMBER(10) NOT NULL,
+        //         EQPID NVARCHAR2(50) NOT NULL,
+        //         PPID NVARCHAR2(50) NOT NULL
+        //     )");
+        //
+        // // Oracleでシーケンスを作成
+        // context.Database.ExecuteSqlRaw("CREATE SEQUENCE DC_LOTSTEPS_SEQ START WITH 1 INCREMENT BY 1");
+        //
+        // // インデックスを作成
+        // context.Database.ExecuteSqlRaw("CREATE INDEX IDX_DCLOTSTEP_LOTID ON DC_LOTSTEPS (LOTID)");
+    }
+
     DbInitializer.Initialize(context);
 }
 
