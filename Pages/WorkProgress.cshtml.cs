@@ -386,27 +386,22 @@ public class WorkProgressModel : PageModel
     {
         var items = new List<ProcessItem>();
 
-        // Get CarrierIds that match the BatchId and EqpId
-        var carrierIdsForEqp = await _context.DcBatches
+        // Get batches that match the BatchId and EqpId
+        var batches = await _context.DcBatches
             .Where(b => b.BatchId == batch.BatchId && b.EqpId == eqpId)
-            .Select(b => b.CarrierId)
-            .Distinct()
+            .GroupBy(b => new { b.LotId, b.CarrierId, b.Qty, b.Technology })
+            .Select(g => g.First())
             .ToListAsync();
 
-        // Get batch members only for carriers that use this equipment
-        var batchMembers = await _context.DcBatchMembers
-            .Where(bm => bm.BatchId == batch.BatchId && carrierIdsForEqp.Contains(bm.CarrierId))
-            .ToListAsync();
-
-        foreach (var member in batchMembers)
+        foreach (var batchItem in batches)
         {
             items.Add(new ProcessItem
             {
-                Carrier = member.CarrierId,
-                Lot = member.LotId,
-                Qty = member.Qty,
-                PPID = batch.PPID,
-                NextFurnace = batch.NextEqpId,
+                Carrier = batchItem.CarrierId,
+                Lot = batchItem.LotId ?? "",
+                Qty = batchItem.Qty,
+                PPID = batchItem.PPID,
+                NextFurnace = batchItem.NextEqpId,
                 Location = "",
                 EndTime = ""
             });
