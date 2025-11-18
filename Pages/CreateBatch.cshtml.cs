@@ -46,7 +46,31 @@ public class CreateBatchModel : PageModel
                 var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
                 if (wipDataList != null)
                 {
-                    wipDataByLotId = wipDataList.ToDictionary(w => w.LotId);
+                    // Process duplicate carriers: sort by LotId and add sequence numbers
+                    var carrierGroups = wipDataList.GroupBy(w => w.Carrier).ToList();
+                    var processedList = new List<WipDataItem>();
+
+                    foreach (var group in carrierGroups)
+                    {
+                        var items = group.ToList();
+
+                        // If there are multiple items with the same carrier
+                        if (items.Count > 1)
+                        {
+                            // Sort by LotId
+                            items = items.OrderBy(item => item.LotId).ToList();
+
+                            // Add sequence numbers to carrier names
+                            for (int i = 0; i < items.Count; i++)
+                            {
+                                items[i].Carrier = $"{items[i].Carrier}-{i + 1}";
+                            }
+                        }
+
+                        processedList.AddRange(items);
+                    }
+
+                    wipDataByLotId = processedList.ToDictionary(w => w.LotId);
                 }
             }
 
