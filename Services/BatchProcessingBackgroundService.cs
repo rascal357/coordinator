@@ -292,22 +292,36 @@ public class BatchProcessingBackgroundService : BackgroundService
             if (stoppingToken.IsCancellationRequested)
                 break;
 
-            // Check if there is a next step for this specific LotId
-            var nextStepExists = await context.DcBatches
-                .Where(b => b.BatchId == batch.BatchId &&
-                           b.LotId == batch.LotId &&
-                           b.Step == batch.Step + 1)
-                .AnyAsync(stoppingToken);
-
-            // If no next step exists, this is the last step for this LotId
-            if (!nextStepExists)
+            try
             {
-                // Delete all records for this BatchId and LotId
-                var recordsToDelete = await context.DcBatches
-                    .Where(b => b.BatchId == batch.BatchId && b.LotId == batch.LotId)
-                    .ToListAsync(stoppingToken);
+                // Check if there is a next step for this specific LotId
+                var nextStepExists = await context.DcBatches
+                    .Where(b => b.BatchId == batch.BatchId &&
+                               b.LotId == batch.LotId &&
+                               b.Step == batch.Step + 1)
+                    .AnyAsync(stoppingToken);
 
-                batchesToDelete.AddRange(recordsToDelete);
+                _logger.LogDebug("Checked next step for BatchId: {BatchId}, LotId: {LotId}, Step: {Step}, NextStepExists: {NextStepExists}",
+                    batch.BatchId, batch.LotId, batch.Step, nextStepExists);
+
+                // If no next step exists, this is the last step for this LotId
+                if (!nextStepExists)
+                {
+                    // Delete all records for this BatchId and LotId
+                    var recordsToDelete = await context.DcBatches
+                        .Where(b => b.BatchId == batch.BatchId && b.LotId == batch.LotId)
+                        .ToListAsync(stoppingToken);
+
+                    batchesToDelete.AddRange(recordsToDelete);
+
+                    _logger.LogDebug("Marked {Count} records for deletion: BatchId: {BatchId}, LotId: {LotId}",
+                        recordsToDelete.Count, batch.BatchId, batch.LotId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking/deleting next step for BatchId: {BatchId}, LotId: {LotId}, Step: {Step}",
+                    batch.BatchId, batch.LotId, batch.Step);
             }
         }
 
