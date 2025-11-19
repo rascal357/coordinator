@@ -354,16 +354,14 @@ public class WorkProgressModel : PageModel
         {
             string nextFurnace = actl.Next;
 
-            // Get the latest ProcessedAt record from DC_Batch for this equipment
+            // Get the batch record from DC_Batch for this equipment, lot, and TrackInTime
             var latestBatch = await _context.DcBatches
-                .Where(b => b.EqpId == actl.EqpId && b.ProcessedAt != null)
-                .OrderByDescending(b => b.ProcessedAt)
+                .Where(b => b.EqpId == actl.EqpId && b.LotId == actl.LotId && b.ProcessedAt == actl.TrackInTime)
                 .FirstOrDefaultAsync();
 
-            // If the latest batch's ProcessedAt matches actl's TrackInTime
-            if (latestBatch != null && latestBatch.ProcessedAt == actl.TrackInTime)
+            // If the batch is found, use NextEqpId from the batch
+            if (latestBatch != null)
             {
-                // Use NextEqpId from the latest batch
                 nextFurnace = latestBatch.NextEqpId;
             }
 
@@ -375,7 +373,7 @@ public class WorkProgressModel : PageModel
                 PPID = actl.PPID,
                 NextFurnace = nextFurnace,
                 Location = actl.Location,
-                EndTime = actl.EndTime?.ToString("yyyy/MM/dd HH:mm") ?? ""
+                EndTime = actl.EndTime?.ToString("HH:mm") ?? ""
             });
         }
 

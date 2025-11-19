@@ -230,6 +230,33 @@ public class CreateBatchModel : PageModel
             }
         }
 
+        // Check for duplicate EqpIds within each lot's steps
+        foreach (var lotId in lotIdList)
+        {
+            var selectedEqpIds = new List<string>();
+
+            for (int stepNum = 1; stepNum <= 4; stepNum++)
+            {
+                var eqpIdKey = $"eqpid_{lotId}_{stepNum}";
+                var eqpId = Request.Form[eqpIdKey].ToString();
+
+                // Skip if not selected or empty
+                if (string.IsNullOrEmpty(eqpId) || eqpId == "選択してください")
+                {
+                    continue;
+                }
+
+                // Check if this EqpId is already used in another step for this lot
+                if (selectedEqpIds.Contains(eqpId))
+                {
+                    validationErrors.Add($"{lotId} のStep1~4の中で同じ装置（{eqpId}）が重複して選択されています");
+                    break; // Stop checking this lot once we found a duplicate
+                }
+
+                selectedEqpIds.Add(eqpId);
+            }
+        }
+
         // If there are validation errors, return to page with error message
         if (validationErrors.Any())
         {

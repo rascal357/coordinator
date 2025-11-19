@@ -224,6 +224,7 @@ public class BatchProcessingBackgroundService : BackgroundService
                 // If only one record, mark it as processed
                 matchingBatches[0].IsProcessed = 1;
                 matchingBatches[0].ProcessedAt = actl.TrackInTime;
+                context.Update(matchingBatches[0]); // Explicitly mark as modified
                 updatedBatches.Add(matchingBatches[0]);
                 updatedCount++;
             }
@@ -232,6 +233,7 @@ public class BatchProcessingBackgroundService : BackgroundService
                 // If multiple records, mark the one with the smallest Step as processed
                 matchingBatches[0].IsProcessed = 1;
                 matchingBatches[0].ProcessedAt = actl.TrackInTime;
+                context.Update(matchingBatches[0]); // Explicitly mark as modified
                 updatedBatches.Add(matchingBatches[0]);
                 updatedCount++;
             }

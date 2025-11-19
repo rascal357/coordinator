@@ -15,7 +15,7 @@ public class CoordinatorDbContext : DbContext
     public DbSet<DcCarrierStep> DcCarrierSteps { get; set; } = null!;
     public DbSet<DcLotStep> DcLotSteps { get; set; } = null!;
     public DbSet<DcBatch> DcBatches { get; set; } = null!;
-    public DbSet<DcBatchMember> DcBatchMembers { get; set; } = null!;
+    // public DbSet<DcBatchMember> DcBatchMembers { get; set; } = null!; // Deprecated: Merged into DcBatch
     public DbSet<DcActl> DcActls { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -52,8 +52,9 @@ public class CoordinatorDbContext : DbContext
             .HasIndex(e => new { e.BatchId, e.EqpId });
         // .HasDatabaseName("IDX_DCBATCH_BATCHID_EQPID");
 
-        modelBuilder.Entity<DcBatchMember>()
-            .HasIndex(e => e.BatchId);
+        // Deprecated: DC_BatchMembers is merged into DC_Batch
+        // modelBuilder.Entity<DcBatchMember>()
+        //     .HasIndex(e => e.BatchId);
         // .HasDatabaseName("IDX_DCBATCHMEMBER_BATCHID");
 
         modelBuilder.Entity<DcActl>()
