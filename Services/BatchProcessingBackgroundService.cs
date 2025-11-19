@@ -284,42 +284,56 @@ public class BatchProcessingBackgroundService : BackgroundService
 
     private async Task DeleteCompletedBatches(CoordinatorDbContext context, List<DcBatch> updatedBatches, CancellationToken stoppingToken)
     {
-        // Check if updated batches are the last step and delete if needed
-        var batchIdsToDelete = new HashSet<string>();
+        // Check if updated batches are the last step and delete if needed (per LotId)
+        var batchesToDelete = new List<DcBatch>();
 
         foreach (var batch in updatedBatches)
         {
             if (stoppingToken.IsCancellationRequested)
                 break;
 
-            // Check if there is a next step for this batch
+            // Check if there is a next step for this specific LotId
             var nextStepExists = await context.DcBatches
                 .Where(b => b.BatchId == batch.BatchId &&
                            b.LotId == batch.LotId &&
                            b.Step == batch.Step + 1)
                 .AnyAsync(stoppingToken);
 
-            // If no next step exists, this is the last step
+            // If no next step exists, this is the last step for this LotId
             if (!nextStepExists)
             {
-                batchIdsToDelete.Add(batch.BatchId);
+                // Delete all records for this BatchId and LotId
+                var recordsToDelete = await context.DcBatches
+                    .Where(b => b.BatchId == batch.BatchId && b.LotId == batch.LotId)
+                    .ToListAsync(stoppingToken);
+
+                batchesToDelete.AddRange(recordsToDelete);
             }
         }
 
-        // Delete batches for completed BatchIds
-        if (batchIdsToDelete.Any())
+        // Delete completed batches (per LotId)
+        if (batchesToDelete.Any())
         {
-            // Delete from DC_Batches
-            var batchesToDelete = await context.DcBatches
-                .Where(b => batchIdsToDelete.Contains(b.BatchId))
-                .ToListAsync(stoppingToken);
             context.DcBatches.RemoveRange(batchesToDelete);
 
             // Save changes for deletions
             await context.SaveChangesAsync(stoppingToken);
 
-            _logger.LogInformation("Deleted {Count} completed batches: {BatchIds}",
-                batchIdsToDelete.Count, string.Join(", ", batchIdsToDelete));
+            // Group by BatchId and LotId for logging
+            var deletedGroups = batchesToDelete
+                .GroupBy(b => new { b.BatchId, b.LotId })
+                .Select(g => new { g.Key.BatchId, g.Key.LotId, Count = g.Count() })
+                .ToList();
+
+            _logger.LogInformation("Deleted {Count} completed batch records for {Groups} LotIds",
+                batchesToDelete.Count,
+                deletedGroups.Count);
+
+            foreach (var group in deletedGroups)
+            {
+                _logger.LogInformation("  - BatchId: {BatchId}, LotId: {LotId}, Records: {Count}",
+                    group.BatchId, group.LotId, group.Count);
+            }
         }
     }
 }
