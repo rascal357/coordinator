@@ -759,6 +759,21 @@
         font-size: 1.25rem;
         font-weight: 600;
     }
+
+    /* Location Column Styling - Prevent line breaks */
+    .compact-table th:nth-child(8),
+    .compact-table td:nth-child(8),
+    .compact-table th:nth-child(15),
+    .compact-table td:nth-child(15),
+    .compact-table th:nth-child(21),
+    .compact-table td:nth-child(21),
+    .compact-table th:nth-child(27),
+    .compact-table td:nth-child(27),
+    .compact-table th:nth-child(33),
+    .compact-table td:nth-child(33) {
+        min-width: 150px;
+        white-space: nowrap;
+    }
 </style>
 
 @section Scripts {
