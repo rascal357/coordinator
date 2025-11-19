@@ -239,6 +239,13 @@ public class BatchProcessingBackgroundService : BackgroundService
             }
         }
 
+        // Save changes for updates first
+        if (updatedCount > 0)
+        {
+            await context.SaveChangesAsync(stoppingToken);
+            _logger.LogInformation("Saved {Count} batch updates to database", updatedCount);
+        }
+
         // Check if updated batches are the last step and delete if needed
         var batchIdsToDelete = new HashSet<string>();
 
@@ -269,6 +276,9 @@ public class BatchProcessingBackgroundService : BackgroundService
                 .Where(b => batchIdsToDelete.Contains(b.BatchId))
                 .ToListAsync(stoppingToken);
             context.DcBatches.RemoveRange(batchesToDelete);
+
+            // Save changes for deletions
+            await context.SaveChangesAsync(stoppingToken);
 
             _logger.LogInformation("Deleted {Count} completed batches: {BatchIds}",
                 batchIdsToDelete.Count, string.Join(", ", batchIdsToDelete));
@@ -302,11 +312,6 @@ public class BatchProcessingBackgroundService : BackgroundService
                 _logger.LogInformation("");
             }
             _logger.LogInformation("====================================");
-        }
-
-        if (updatedCount > 0)
-        {
-            await context.SaveChangesAsync(stoppingToken);
         }
 
         return updatedCount;
