@@ -246,6 +246,44 @@ public class BatchProcessingBackgroundService : BackgroundService
             _logger.LogInformation("Saved {Count} batch updates to database", updatedCount);
         }
 
+        // Delete completed batches
+        await DeleteCompletedBatches(context, updatedBatches, stoppingToken);
+
+        // Log updated batches for maintenance
+        if (updatedBatches.Any())
+        {
+            _logger.LogInformation("=== Batches Marked as Processed ===");
+            _logger.LogInformation("Equipment: {EqpId}, Updated Count: {Count}", eqpId, updatedBatches.Count);
+            _logger.LogInformation("");
+
+            // Group by BatchId for better readability
+            var groupedBatches = updatedBatches
+                .GroupBy(b => b.BatchId)
+                .OrderBy(g => g.Key);
+
+            foreach (var group in groupedBatches)
+            {
+                _logger.LogInformation("--- BatchId: {BatchId} ---", group.Key);
+                foreach (var batch in group.OrderBy(b => b.CarrierId).ThenBy(b => b.Step))
+                {
+                    _logger.LogInformation("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, ProcessedAt: {ProcessedAt}",
+                        batch.Step,
+                        batch.CarrierId,
+                        batch.EqpId,
+                        batch.PPID,
+                        batch.NextEqpId,
+                        batch.ProcessedAt?.ToString("yyyy/MM/dd HH:mm:ss"));
+                }
+                _logger.LogInformation("");
+            }
+            _logger.LogInformation("====================================");
+        }
+
+        return updatedCount;
+    }
+
+    private async Task DeleteCompletedBatches(CoordinatorDbContext context, List<DcBatch> updatedBatches, CancellationToken stoppingToken)
+    {
         // Check if updated batches are the last step and delete if needed
         var batchIdsToDelete = new HashSet<string>();
 
@@ -283,37 +321,5 @@ public class BatchProcessingBackgroundService : BackgroundService
             _logger.LogInformation("Deleted {Count} completed batches: {BatchIds}",
                 batchIdsToDelete.Count, string.Join(", ", batchIdsToDelete));
         }
-
-        // Log updated batches for maintenance
-        if (updatedBatches.Any())
-        {
-            _logger.LogInformation("=== Batches Marked as Processed ===");
-            _logger.LogInformation("Equipment: {EqpId}, Updated Count: {Count}", eqpId, updatedBatches.Count);
-            _logger.LogInformation("");
-
-            // Group by BatchId for better readability
-            var groupedBatches = updatedBatches
-                .GroupBy(b => b.BatchId)
-                .OrderBy(g => g.Key);
-
-            foreach (var group in groupedBatches)
-            {
-                _logger.LogInformation("--- BatchId: {BatchId} ---", group.Key);
-                foreach (var batch in group.OrderBy(b => b.CarrierId).ThenBy(b => b.Step))
-                {
-                    _logger.LogInformation("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, ProcessedAt: {ProcessedAt}",
-                        batch.Step,
-                        batch.CarrierId,
-                        batch.EqpId,
-                        batch.PPID,
-                        batch.NextEqpId,
-                        batch.ProcessedAt?.ToString("yyyy/MM/dd HH:mm:ss"));
-                }
-                _logger.LogInformation("");
-            }
-            _logger.LogInformation("====================================");
-        }
-
-        return updatedCount;
     }
 }
