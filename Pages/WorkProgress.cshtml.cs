@@ -373,7 +373,7 @@ public class WorkProgressModel : PageModel
                 PPID = actl.PPID,
                 NextFurnace = nextFurnace,
                 Location = actl.Location,
-                EndTime = actl.EndTime?.ToString("HH:mm") ?? ""
+                EndTime = actl.EndTime
             });
         }
 

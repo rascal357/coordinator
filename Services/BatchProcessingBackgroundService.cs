@@ -145,7 +145,7 @@ public class BatchProcessingBackgroundService : BackgroundService
                         PPID = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                         Next = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
                         Location = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                        EndTime = reader.IsDBNull(9) ? null : reader.GetDateTime(9)
+                        EndTime = reader.IsDBNull(9) ? string.Empty : reader.GetString(9)
                     });
                 }
             }

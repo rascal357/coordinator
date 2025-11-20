@@ -37,5 +37,6 @@ public class DcActl
     [StringLength(50)]
     public string Location { get; set; } = string.Empty;
 
-    public DateTime? EndTime { get; set; }
+    [StringLength(50)]
+    public string EndTime { get; set; } = string.Empty;
 }
