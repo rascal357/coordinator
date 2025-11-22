@@ -86,6 +86,7 @@
                                     <th class="table-header-modern">TargetStage</th>
                                     <th class="table-header-modern">TargetStep</th>
                                     <th class="table-header-modern">TargetPPID</th>
+                                    <th class="table-header-modern">Next1</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -111,6 +112,7 @@
                                         <td id="targetstage-@wip.Id">@wip.TargetStage</td>
                                         <td id="targetstep-@wip.Id">@wip.TargetStep</td>
                                         <td id="targetppid-@wip.Id">@wip.TargetPPID</td>
+                                        <td id="next1-@wip.Id">@(!string.IsNullOrEmpty(wip.Next1) ? wip.Next1.Split(',').LastOrDefault() : "")</td>
                                     </tr>
                                 }
                             </tbody>
