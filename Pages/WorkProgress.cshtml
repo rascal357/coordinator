@@ -946,8 +946,8 @@
         }
     });
 
-    // 自動更新機能 - 30秒（30,000ミリ秒）ごとにデータを更新
-    const AUTO_REFRESH_INTERVAL = 30 * 1000; // 30秒
+    // 自動更新機能 - appsettings.jsonで設定された間隔でデータを更新
+    const AUTO_REFRESH_INTERVAL = @ViewData["AutoRefreshIntervalSeconds"] * 1000; // ミリ秒に変換
     let autoRefreshTimer;
 
     // 現在のフィルター設定を取得
@@ -1191,7 +1191,7 @@
 
         // 新しいタイマーを設定
         autoRefreshTimer = setInterval(refreshData, AUTO_REFRESH_INTERVAL);
-        console.log('自動更新を開始しました（30秒間隔）');
+        console.log('自動更新を開始しました（' + (@ViewData["AutoRefreshIntervalSeconds"]) + '秒間隔）');
     }
 
     // 自動更新を停止

@@ -13,11 +13,13 @@ public class WorkProgressModel : PageModel
 {
     private readonly CoordinatorDbContext _context;
     private readonly ILogger<WorkProgressModel> _logger;
+    private readonly IConfiguration _configuration;
 
-    public WorkProgressModel(CoordinatorDbContext context, ILogger<WorkProgressModel> logger)
+    public WorkProgressModel(CoordinatorDbContext context, ILogger<WorkProgressModel> logger, IConfiguration configuration)
     {
         _context = context;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public Dictionary<string, List<EquipmentProgressViewModel>> EquipmentsByType { get; set; } = new();
@@ -32,6 +34,9 @@ public class WorkProgressModel : PageModel
 
     public async Task OnGetAsync()
     {
+        // Load auto-refresh interval from configuration (default: 30 seconds)
+        ViewData["AutoRefreshIntervalSeconds"] = _configuration.GetValue<int>("WorkProgress:AutoRefreshIntervalSeconds", 30);
+
         await LoadProgressData();
     }
 
