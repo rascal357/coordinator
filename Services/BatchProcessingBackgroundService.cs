@@ -159,7 +159,12 @@ public class BatchProcessingBackgroundService : BackgroundService
         var timeGroups = GroupByTimeWindow(actls, TimeSpan.FromMinutes(5));
 
         // Mark batches as processed
-        return await MarkBatchesAsProcessed(context, eqpName, timeGroups, stoppingToken);
+        var (updatedCount, updatedBatches) = await MarkBatchesAsProcessed(context, eqpName, timeGroups, stoppingToken);
+
+        // Delete completed batches
+        await DeleteCompletedBatches(context, updatedBatches, stoppingToken);
+
+        return updatedCount;
     }
 
     private List<List<DcActl>> GroupByTimeWindow(List<DcActl> actls, TimeSpan window)
@@ -194,9 +199,9 @@ public class BatchProcessingBackgroundService : BackgroundService
         return groups;
     }
 
-    private async Task<int> MarkBatchesAsProcessed(CoordinatorDbContext context, string eqpId, List<List<DcActl>> timeGroups, CancellationToken stoppingToken)
+    private async Task<(int updatedCount, List<DcBatch> updatedBatches)> MarkBatchesAsProcessed(CoordinatorDbContext context, string eqpId, List<List<DcActl>> timeGroups, CancellationToken stoppingToken)
     {
-        if (!timeGroups.Any()) return 0;
+        if (!timeGroups.Any()) return (0, new List<DcBatch>());
 
         int updatedCount = 0;
         var updatedBatches = new List<DcBatch>(); // Track updated batches
@@ -246,9 +251,6 @@ public class BatchProcessingBackgroundService : BackgroundService
             _logger.LogInformation("Saved {Count} batch updates to database", updatedCount);
         }
 
-        // Delete completed batches
-        await DeleteCompletedBatches(context, updatedBatches, stoppingToken);
-
         // Log updated batches for maintenance
         if (updatedBatches.Any())
         {
@@ -279,7 +281,7 @@ public class BatchProcessingBackgroundService : BackgroundService
             _logger.LogInformation("====================================");
         }
 
-        return updatedCount;
+        return (updatedCount, updatedBatches);
     }
 
     private async Task DeleteCompletedBatches(CoordinatorDbContext context, List<DcBatch> updatedBatches, CancellationToken stoppingToken)
