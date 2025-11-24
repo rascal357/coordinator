@@ -789,10 +789,37 @@
             }
         });
 
+        // Check for duplicate EqpIds within each lot's steps
+        const lotEqpIdMap = {};
+
+        eqpIdSelects.forEach(select => {
+            // Skip disabled or empty selections
+            if (select.disabled || !select.value || select.value === '') {
+                return;
+            }
+
+            const lotId = select.getAttribute('data-lotid');
+            const step = select.getAttribute('data-step');
+            const eqpId = select.value;
+
+            // Initialize array for this lot if not exists
+            if (!lotEqpIdMap[lotId]) {
+                lotEqpIdMap[lotId] = [];
+            }
+
+            // Check if this EqpId is already used in another step for this lot
+            const existingEntry = lotEqpIdMap[lotId].find(entry => entry.eqpId === eqpId);
+            if (existingEntry) {
+                errors.push(`${lotId} のStep${existingEntry.step}とStep${step}で同じ装置（${eqpId}）が重複して選択されています`);
+            } else {
+                lotEqpIdMap[lotId].push({ eqpId: eqpId, step: step });
+            }
+        });
+
         // Show errors if any
         if (errors.length > 0) {
             const errorMessage = errors.join('\n');
-            alert('以下の項目を選択してください:\n\n' + errorMessage);
+            alert('以下のエラーがあります:\n\n' + errorMessage);
             return false;
         }
 
