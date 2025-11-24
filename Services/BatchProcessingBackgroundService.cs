@@ -66,43 +66,19 @@ public class BatchProcessingBackgroundService : BackgroundService
 
         _logger.LogDebug("Starting batch processing status update");
 
-        // Get all equipment
-        var equipments = await context.DcEqps.ToListAsync(stoppingToken);
+        // Get all equipment IDs from DcEqps
+        var equipmentIds = await context.DcEqps
+            .Select(e => e.Name)
+            .ToListAsync(stoppingToken);
 
-        int totalUpdated = 0;
+        // Cache all DcActls and DcBatches at the beginning (like WorkProgressModel.LoadProgressData)
+        // Only include actls for equipment that exists in DcEqps
+        var allActls = await context.DcActls
+            .Where(a => equipmentIds.Contains(a.EqpId))
+            .ToListAsync(stoppingToken);
 
-        foreach (var eqp in equipments)
-        {
-            if (stoppingToken.IsCancellationRequested)
-                break;
-
-            try
-            {
-                int updated = await ProcessEquipmentBatches(context, eqp.Name, stoppingToken);
-                totalUpdated += updated;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error processing batches for equipment {EquipmentName}", eqp.Name);
-            }
-        }
-
-        if (totalUpdated > 0)
-        {
-            _logger.LogInformation("Updated {Count} batch records to IsProcessed=true", totalUpdated);
-        }
-        else
-        {
-            _logger.LogDebug("No batch records needed updating");
-        }
-    }
-
-    private async Task<int> ProcessEquipmentBatches(CoordinatorDbContext context, string eqpName, CancellationToken stoppingToken)
-    {
-        // Get actual processing data
-        var actls = await context.DcActls
-            .Where(a => a.EqpId == eqpName)
-            .OrderBy(a => a.TrackInTime)
+        var allBatches = await context.DcBatches
+            .Where(b => b.IsProcessed == 0)
             .ToListAsync(stoppingToken);
 
         // TODO: 将来的にSQLクエリで取得する場合
@@ -112,14 +88,12 @@ public class BatchProcessingBackgroundService : BackgroundService
             SELECT
                 EqpId, LotId, LotType, TrackInTime, Carrier, Qty, PPID, Next, Location, EndTime
             FROM [外部データソース]
-            WHERE EqpId = @eqpName
-            ORDER BY TrackInTime
+            ORDER BY EqpId, TrackInTime
         ";
 
         using (var command = context.Database.GetDbConnection().CreateCommand())
         {
             command.CommandText = sql;
-            command.Parameters.Add(new SqliteParameter("@eqpName", eqpName));
 
             // Set command timeout if needed for long-running queries
             // command.CommandTimeout = 300; // seconds
@@ -127,14 +101,14 @@ public class BatchProcessingBackgroundService : BackgroundService
             await context.Database.OpenConnectionAsync(stoppingToken);
             using (var reader = await command.ExecuteReaderAsync(stoppingToken))
             {
-                actls = new List<DcActl>();
+                allActls = new List<DcActl>();
                 while (await reader.ReadAsync(stoppingToken))
                 {
                     // Check for cancellation in loop for long-running queries
                     if (stoppingToken.IsCancellationRequested)
                         break;
 
-                    actls.Add(new DcActl
+                    allActls.Add(new DcActl
                     {
                         EqpId = reader.GetString(0),
                         LotId = reader.GetString(1),
@@ -152,203 +126,178 @@ public class BatchProcessingBackgroundService : BackgroundService
         }
         */
 
-        if (!actls.Any())
-            return 0;
+        // Group DcActls by equipment (EqpId)
+        var actlsByEquipment = allActls
+            .GroupBy(a => a.EqpId)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Group actls by TrackInTime within ±5 minutes
-        var timeGroups = GroupByTimeWindow(actls, TimeSpan.FromMinutes(5));
+        // Group DcBatches by equipment (EqpId) for quick lookup
+        var batchesByEquipment = allBatches
+            .GroupBy(b => b.EqpId)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Mark batches as processed
-        var (updatedCount, updatedBatches) = await MarkBatchesAsProcessed(context, eqpName, timeGroups, stoppingToken);
+        int totalUpdated = 0;
 
-        // Delete completed batches
-        await DeleteCompletedBatches(context, updatedBatches, stoppingToken);
-
-        return updatedCount;
-    }
-
-    private List<List<DcActl>> GroupByTimeWindow(List<DcActl> actls, TimeSpan window)
-    {
-        if (!actls.Any()) return new List<List<DcActl>>();
-
-        var groups = new List<List<DcActl>>();
-        var currentGroup = new List<DcActl> { actls[0] };
-        var currentTime = actls[0].TrackInTime;
-
-        for (int i = 1; i < actls.Count; i++)
-        {
-            var timeDiff = Math.Abs((actls[i].TrackInTime - currentTime).TotalMinutes);
-
-            if (timeDiff <= window.TotalMinutes)
-            {
-                currentGroup.Add(actls[i]);
-            }
-            else
-            {
-                groups.Add(currentGroup);
-                currentGroup = new List<DcActl> { actls[i] };
-                currentTime = actls[i].TrackInTime;
-            }
-        }
-
-        if (currentGroup.Any())
-        {
-            groups.Add(currentGroup);
-        }
-
-        return groups;
-    }
-
-    private async Task<(int updatedCount, List<DcBatch> updatedBatches)> MarkBatchesAsProcessed(CoordinatorDbContext context, string eqpId, List<List<DcActl>> timeGroups, CancellationToken stoppingToken)
-    {
-        if (!timeGroups.Any()) return (0, new List<DcBatch>());
-
-        int updatedCount = 0;
-        var updatedBatches = new List<DcBatch>(); // Track updated batches
-
-        // Get all LotIds, EqpIds, and TrackInTime from actual processing
-        var actlData = timeGroups
-            .SelectMany(g => g.Select(a => new { a.LotId, a.EqpId, a.TrackInTime }))
-            .ToList();
-
-        foreach (var actl in actlData)
-        {
-            if (stoppingToken.IsCancellationRequested)
-                break;
-
-            // Find matching batches by LotId and EqpId
-            var matchingBatches = await context.DcBatches
-                .Where(b => b.LotId == actl.LotId &&
-                           b.EqpId == actl.EqpId &&
-                           b.IsProcessed == 0) // Only update if not already processed
-                .OrderBy(b => b.Step)
-                .ToListAsync(stoppingToken);
-
-            if (matchingBatches.Count == 1)
-            {
-                // If only one record, mark it as processed
-                matchingBatches[0].IsProcessed = 1;
-                matchingBatches[0].ProcessedAt = actl.TrackInTime;
-                context.Update(matchingBatches[0]); // Explicitly mark as modified
-                updatedBatches.Add(matchingBatches[0]);
-                updatedCount++;
-            }
-            else if (matchingBatches.Count > 1)
-            {
-                // If multiple records, mark the one with the smallest Step as processed
-                matchingBatches[0].IsProcessed = 1;
-                matchingBatches[0].ProcessedAt = actl.TrackInTime;
-                context.Update(matchingBatches[0]); // Explicitly mark as modified
-                updatedBatches.Add(matchingBatches[0]);
-                updatedCount++;
-            }
-        }
-
-        // Save changes for updates first
-        if (updatedCount > 0)
-        {
-            await context.SaveChangesAsync(stoppingToken);
-            _logger.LogInformation("Saved {Count} batch updates to database", updatedCount);
-        }
-
-        // Log updated batches for maintenance
-        if (updatedBatches.Any())
-        {
-            _logger.LogInformation("=== Batches Marked as Processed ===");
-            _logger.LogInformation("Equipment: {EqpId}, Updated Count: {Count}", eqpId, updatedBatches.Count);
-            _logger.LogInformation("");
-
-            // Group by BatchId for better readability
-            var groupedBatches = updatedBatches
-                .GroupBy(b => b.BatchId)
-                .OrderBy(g => g.Key);
-
-            foreach (var group in groupedBatches)
-            {
-                _logger.LogInformation("--- BatchId: {BatchId} ---", group.Key);
-                foreach (var batch in group.OrderBy(b => b.CarrierId).ThenBy(b => b.Step))
-                {
-                    _logger.LogInformation("  [Step {Step}] Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, ProcessedAt: {ProcessedAt}",
-                        batch.Step,
-                        batch.CarrierId,
-                        batch.EqpId,
-                        batch.PPID,
-                        batch.NextEqpId,
-                        batch.ProcessedAt?.ToString("yyyy/MM/dd HH:mm:ss"));
-                }
-                _logger.LogInformation("");
-            }
-            _logger.LogInformation("====================================");
-        }
-
-        return (updatedCount, updatedBatches);
-    }
-
-    private async Task DeleteCompletedBatches(CoordinatorDbContext context, List<DcBatch> updatedBatches, CancellationToken stoppingToken)
-    {
-        // Check if updated batches are the last step and delete if needed (per LotId)
-        var batchesToDelete = new List<DcBatch>();
-
-        foreach (var batch in updatedBatches)
+        // Process IsProcessed updates for each equipment
+        foreach (var eqpId in actlsByEquipment.Keys)
         {
             if (stoppingToken.IsCancellationRequested)
                 break;
 
             try
             {
-                // Check if there is a next step for this specific LotId
-                var nextStepExists = await context.DcBatches
-                    .Where(b => b.BatchId == batch.BatchId &&
-                               b.LotId == batch.LotId &&
-                               b.Step == batch.Step + 1)
-                    .AnyAsync(stoppingToken);
+                var actls = actlsByEquipment[eqpId];
+                var batches = batchesByEquipment.ContainsKey(eqpId)
+                    ? batchesByEquipment[eqpId]
+                    : new List<DcBatch>();
 
-                _logger.LogDebug("Checked next step for BatchId: {BatchId}, LotId: {LotId}, Step: {Step}, NextStepExists: {NextStepExists}",
-                    batch.BatchId, batch.LotId, batch.Step, nextStepExists);
-
-                // If no next step exists, this is the last step for this LotId
-                if (!nextStepExists)
-                {
-                    // Delete all records for this BatchId and LotId
-                    var recordsToDelete = await context.DcBatches
-                        .Where(b => b.BatchId == batch.BatchId && b.LotId == batch.LotId)
-                        .ToListAsync(stoppingToken);
-
-                    batchesToDelete.AddRange(recordsToDelete);
-
-                    _logger.LogDebug("Marked {Count} records for deletion: BatchId: {BatchId}, LotId: {LotId}",
-                        recordsToDelete.Count, batch.BatchId, batch.LotId);
-                }
+                int updated = await UpdateIsProcessed(context, eqpId, actls, batches, stoppingToken);
+                totalUpdated += updated;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking/deleting next step for BatchId: {BatchId}, LotId: {LotId}, Step: {Step}",
-                    batch.BatchId, batch.LotId, batch.Step);
+                _logger.LogWarning(ex, "Error processing batches for equipment {EquipmentName}", eqpId);
             }
         }
 
-        // Delete completed batches (per LotId)
+        if (totalUpdated > 0)
+        {
+            _logger.LogInformation("Updated {Count} batch records to IsProcessed=1", totalUpdated);
+        }
+        else
+        {
+            _logger.LogDebug("No batch records needed updating");
+        }
+
+        // After all equipment processing is complete, delete completed batches
+        await DeleteCompletedBatches(context, stoppingToken);
+    }
+
+    private async Task<int> UpdateIsProcessed(
+        CoordinatorDbContext context,
+        string eqpId,
+        List<DcActl> actls,
+        List<DcBatch> batches,
+        CancellationToken stoppingToken)
+    {
+        if (!actls.Any() || !batches.Any())
+            return 0;
+
+        int updatedCount = 0;
+        var updatedBatches = new List<DcBatch>();
+
+        // For each LotId in actls, find matching batches and update IsProcessed
+        foreach (var actl in actls)
+        {
+            if (stoppingToken.IsCancellationRequested)
+                break;
+
+            // Find batches with matching EqpId, LotId, and IsProcessed=0
+            var matchingBatches = batches
+                .Where(b => b.LotId == actl.LotId && b.IsProcessed == 0)
+                .ToList();
+
+            if (matchingBatches.Any())
+            {
+                foreach (var batch in matchingBatches)
+                {
+                    batch.IsProcessed = 1;
+                    batch.ProcessedAt = actl.TrackInTime;
+                    context.Update(batch);
+                    updatedBatches.Add(batch);
+                    updatedCount++;
+                }
+            }
+        }
+
+        // Save changes
+        if (updatedCount > 0)
+        {
+            await context.SaveChangesAsync(stoppingToken);
+            _logger.LogInformation("Equipment {EqpId}: Updated {Count} batch records to IsProcessed=1", eqpId, updatedCount);
+
+            // Log updated batches
+            if (updatedBatches.Any())
+            {
+                _logger.LogInformation("=== Batches Marked as Processed ===");
+                _logger.LogInformation("Equipment: {EqpId}, Updated Count: {Count}", eqpId, updatedBatches.Count);
+                _logger.LogInformation("");
+
+                // Group by BatchId for better readability
+                var groupedBatches = updatedBatches
+                    .GroupBy(b => b.BatchId)
+                    .OrderBy(g => g.Key);
+
+                foreach (var group in groupedBatches)
+                {
+                    _logger.LogInformation("--- BatchId: {BatchId} ---", group.Key);
+                    foreach (var batch in group.OrderBy(b => b.CarrierId).ThenBy(b => b.Step))
+                    {
+                        _logger.LogInformation("  [Step {Step}] LotId: {LotId}, Carrier: {CarrierId}, EqpId: {EqpId}, PPID: {PPID}, NextEqpId: {NextEqpId}, ProcessedAt: {ProcessedAt}",
+                            batch.Step,
+                            batch.LotId,
+                            batch.CarrierId,
+                            batch.EqpId,
+                            batch.PPID,
+                            batch.NextEqpId,
+                            batch.ProcessedAt?.ToString("yyyy/MM/dd HH:mm:ss"));
+                    }
+                    _logger.LogInformation("");
+                }
+                _logger.LogInformation("====================================");
+            }
+        }
+
+        return updatedCount;
+    }
+
+    private async Task DeleteCompletedBatches(CoordinatorDbContext context, CancellationToken stoppingToken)
+    {
+        // Re-cache DcBatches after updates
+        var allBatches = await context.DcBatches.ToListAsync(stoppingToken);
+
+        // Group by BatchId
+        var batchGroups = allBatches
+            .GroupBy(b => b.BatchId)
+            .ToList();
+
+        var batchesToDelete = new List<DcBatch>();
+
+        // Check if all records in each BatchId group have IsProcessed=1
+        foreach (var group in batchGroups)
+        {
+            if (stoppingToken.IsCancellationRequested)
+                break;
+
+            var batchList = group.ToList();
+
+            // If all records have IsProcessed=1, delete all records for this BatchId
+            if (batchList.All(b => b.IsProcessed == 1))
+            {
+                batchesToDelete.AddRange(batchList);
+            }
+        }
+
+        // Delete completed batches
         if (batchesToDelete.Any())
         {
             context.DcBatches.RemoveRange(batchesToDelete);
-
-            // Save changes for deletions
             await context.SaveChangesAsync(stoppingToken);
 
-            // Group by BatchId and LotId for logging
+            // Group by BatchId for logging
             var deletedGroups = batchesToDelete
-                .GroupBy(b => new { b.BatchId, b.LotId })
-                .Select(g => new { g.Key.BatchId, g.Key.LotId, Count = g.Count() })
+                .GroupBy(b => b.BatchId)
+                .Select(g => new { BatchId = g.Key, Count = g.Count() })
                 .ToList();
 
-            _logger.LogInformation("Deleted {Count} completed batch records for {Groups} LotIds",
+            _logger.LogInformation("Deleted {Count} completed batch records for {Groups} BatchIds",
                 batchesToDelete.Count,
                 deletedGroups.Count);
 
             foreach (var group in deletedGroups)
             {
-                _logger.LogInformation("  - BatchId: {BatchId}, LotId: {LotId}, Records: {Count}",
-                    group.BatchId, group.LotId, group.Count);
+                _logger.LogInformation("  - BatchId: {BatchId}, Records: {Count}",
+                    group.BatchId, group.Count);
             }
         }
     }
