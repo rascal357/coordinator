@@ -31,21 +31,31 @@ public class CreateBatchModel : PageModel
 
     public async Task OnGetAsync()
     {
-        if (!string.IsNullOrEmpty(LotIds))
-        {
-            var lotIdList = LotIds.Split(',').Distinct().ToList();
-            var stepOptionsDict = new Dictionary<string, Dictionary<int, List<PpidEqpOption>>>();
+        // Get WIP data from TempData (passed from WipLotList)
+        Dictionary<string, WipDataItem>? wipDataByLotId = null;
+        List<string> lotIdList = new();
 
-            // Get WIP data from TempData (passed from WipLotList)
-            Dictionary<string, WipDataItem>? wipDataByLotId = null;
-            if (TempData["SelectedWipData"] is string wipDataJson)
+        if (TempData["SelectedWipData"] is string wipDataJson)
+        {
+            var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
+            if (wipDataList != null)
             {
-                var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
-                if (wipDataList != null)
-                {
-                    wipDataByLotId = wipDataList.ToDictionary(w => w.LotId);
-                }
+                wipDataByLotId = wipDataList.ToDictionary(w => w.LotId);
+                lotIdList = wipDataList.Select(w => w.LotId).Distinct().ToList();
+
+                // Keep TempData for potential error redirects
+                TempData.Keep("SelectedWipData");
             }
+        }
+        // Fallback: Use LotIds from query parameter if TempData is not available (e.g., after error redirect)
+        else if (!string.IsNullOrEmpty(LotIds))
+        {
+            lotIdList = LotIds.Split(',').Distinct().ToList();
+        }
+
+        if (lotIdList.Any())
+        {
+            var stepOptionsDict = new Dictionary<string, Dictionary<int, List<PpidEqpOption>>>();
 
             // Process each LotId
             foreach (var lotId in lotIdList)
@@ -193,7 +203,8 @@ public class CreateBatchModel : PageModel
         if (errorMessages.Any())
         {
             TempData["ErrorMessage"] = string.Join("<br>", errorMessages);
-            return RedirectToPage("CreateBatch", new { LotIds = LotIds, EqpName = EqpName });
+            TempData.Keep("SelectedWipData");
+            return RedirectToPage("CreateBatch", new { LotIds = LotIds });
         }
 
         // Validate that all required steps have PPID and EqpId selected
@@ -261,7 +272,8 @@ public class CreateBatchModel : PageModel
         if (validationErrors.Any())
         {
             TempData["ErrorMessage"] = string.Join("<br>", validationErrors);
-            return RedirectToPage("CreateBatch", new { LotIds = LotIds, EqpName = EqpName });
+            TempData.Keep("SelectedWipData");
+            return RedirectToPage("CreateBatch", new { LotIds = LotIds });
         }
 
         // Generate unique BatchId using timestamp

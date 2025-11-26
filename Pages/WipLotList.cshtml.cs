@@ -104,9 +104,6 @@ public class WipLotListModel : PageModel
         // Store selected carrier information in TempData to pass to CreateBatch page
         TempData["SelectedWipData"] = JsonSerializer.Serialize(WipData);
 
-        // Pass LotIds to CreateBatch page
-        var lotIdsParam = string.Join(",", WipData.Select(w => w.LotId));
-
-        return RedirectToPage("CreateBatch", new { lotIds = lotIdsParam, eqpName = EqpName });
+        return RedirectToPage("CreateBatch");
     }
 }
