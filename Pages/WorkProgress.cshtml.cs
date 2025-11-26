@@ -382,7 +382,8 @@ public class WorkProgressModel : PageModel
             });
         }
 
-        return items;
+        // Sort by Lot in ascending order
+        return items.OrderBy(i => i.Lot).ToList();
     }
 
     private async Task<List<ProcessItem>> CreateProcessItemsFromBatch(DcBatch batch, string eqpId)
@@ -410,7 +411,8 @@ public class WorkProgressModel : PageModel
             });
         }
 
-        return items;
+        // Sort by Lot in ascending order
+        return items.OrderBy(i => i.Lot).ToList();
     }
 
     private async Task MarkBatchesAsProcessed(string eqpId, List<List<DcActl>> timeGroups)
