@@ -93,34 +93,19 @@ public class WipLotListModel : PageModel
     [BindProperty]
     public List<WipDataItem> WipData { get; set; } = new();
 
-    [BindProperty]
-    public List<int> SelectedIndices { get; set; } = new();
-
     public IActionResult OnPost()
     {
-        if (SelectedIndices == null || !SelectedIndices.Any())
+        if (WipData == null || !WipData.Any())
         {
             Message = "キャリアを選択してください";
             return RedirectToPage(new { eqpName = EqpName });
         }
 
-        // Get selected WIP data based on indices
-        var selectedWipData = SelectedIndices
-            .Where(i => i >= 0 && i < WipData.Count)
-            .Select(i => WipData[i])
-            .ToList();
-
-        if (!selectedWipData.Any())
-        {
-            Message = "選択されたキャリアのデータが見つかりません";
-            return RedirectToPage(new { eqpName = EqpName });
-        }
-
         // Store selected carrier information in TempData to pass to CreateBatch page
-        TempData["SelectedWipData"] = JsonSerializer.Serialize(selectedWipData);
+        TempData["SelectedWipData"] = JsonSerializer.Serialize(WipData);
 
         // Pass LotIds to CreateBatch page
-        var lotIdsParam = string.Join(",", selectedWipData.Select(w => w.LotId));
+        var lotIdsParam = string.Join(",", WipData.Select(w => w.LotId));
 
         return RedirectToPage("CreateBatch", new { lotIds = lotIdsParam, eqpName = EqpName });
     }

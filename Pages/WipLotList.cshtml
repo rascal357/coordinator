@@ -43,23 +43,9 @@
 
     @if (Model.WipLots.Any())
     {
-        <form method="post">
+        <form method="post" id="wipForm">
             <input type="hidden" name="EqpName" value="@Model.EqpName" />
-
-            @* Hidden fields for WIP data - to be submitted when checkbox is selected *@
-            @foreach (var (wip, index) in Model.WipLots.Select((w, i) => (w, i)))
-            {
-                <input type="hidden" name="WipData[@index].Carrier" value="@wip.Carrier" />
-                <input type="hidden" name="WipData[@index].LotId" value="@wip.LotId" />
-                <input type="hidden" name="WipData[@index].Technology" value="@wip.Technology" />
-                <input type="hidden" name="WipData[@index].Qty" value="@wip.Qty" />
-                <input type="hidden" name="WipData[@index].TargetStage" value="@wip.TargetStage" />
-                <input type="hidden" name="WipData[@index].TargetStep" value="@wip.TargetStep" />
-                <input type="hidden" name="WipData[@index].State" value="@wip.State" />
-                <input type="hidden" name="WipData[@index].Next1" value="@wip.Next1" />
-                <input type="hidden" name="WipData[@index].Next2" value="@wip.Next2" />
-                <input type="hidden" name="WipData[@index].Next3" value="@wip.Next3" />
-            }
+            <div id="selectedWipDataContainer"></div>
 
             <!-- Table Card -->
             <div class="card modern-card mb-4">
@@ -92,13 +78,21 @@
                             <tbody>
                                 @foreach (var (wip, index) in Model.WipLots.Select((w, i) => (w, i)))
                                 {
-                                    <tr class="table-row-modern">
+                                    <tr class="table-row-modern"
+                                        data-carrier="@wip.Carrier"
+                                        data-lotid="@wip.LotId"
+                                        data-technology="@wip.Technology"
+                                        data-qty="@wip.Qty"
+                                        data-targetstage="@wip.TargetStage"
+                                        data-targetstep="@wip.TargetStep"
+                                        data-state="@wip.State"
+                                        data-next1="@wip.Next1"
+                                        data-next2="@wip.Next2"
+                                        data-next3="@wip.Next3">
                                         <td>
                                             <input type="checkbox"
-                                                   name="SelectedIndices"
-                                                   value="@index"
                                                    id="carrier-@wip.Id"
-                                                   class="form-check-input modern-checkbox" />
+                                                   class="form-check-input modern-checkbox wip-checkbox" />
                                         </td>
                                         <td id="priority-@wip.Id">@wip.Priority</td>
                                         <td id="technology-@wip.Id">@wip.Technology</td>
@@ -316,3 +310,47 @@
         background: #495057;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('wipForm');
+
+        form.addEventListener('submit', function(e) {
+            const container = document.getElementById('selectedWipDataContainer');
+            container.innerHTML = ''; // Clear existing hidden fields
+
+            const checkboxes = document.querySelectorAll('.wip-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                e.preventDefault();
+                alert('キャリアを選択してください');
+                return false;
+            }
+
+            checkboxes.forEach((checkbox, index) => {
+                const row = checkbox.closest('tr');
+                const wipData = {
+                    Carrier: row.dataset.carrier,
+                    LotId: row.dataset.lotid,
+                    Technology: row.dataset.technology,
+                    Qty: row.dataset.qty,
+                    TargetStage: row.dataset.targetstage,
+                    TargetStep: row.dataset.targetstep,
+                    State: row.dataset.state,
+                    Next1: row.dataset.next1,
+                    Next2: row.dataset.next2,
+                    Next3: row.dataset.next3
+                };
+
+                // Create hidden fields for selected WIP data
+                Object.keys(wipData).forEach(key => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = `WipData[${index}].${key}`;
+                    input.value = wipData[key] || '';
+                    container.appendChild(input);
+                });
+            });
+        });
+    });
+</script>
