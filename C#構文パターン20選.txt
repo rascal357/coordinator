@@ -1,0 +1,415 @@
+# このプロジェクトでよく使われているC#構文パターン 20選
+
+================================================================================
+1. プロパティ初期化子とターゲット型推論
+================================================================================
+```csharp
+public List<LotStepViewModel> LotSteps { get; set; } = new();
+public string Technology { get; set; } = string.Empty;
+```
+
+説明:
+- `= new()` でターゲット型を推論（C# 9.0以降）
+- null回避のためのデフォルト値設定
+- コレクションやオブジェクトの初期化を簡潔に記述
+
+場所: Models/DcWip.cs:16, Pages/CreateBatch.cshtml.cs:21
+
+
+================================================================================
+2. Data Annotations（データ注釈）
+================================================================================
+```csharp
+[Table("DC_Wips")]
+[Key]
+[Required]
+[StringLength(50)]
+public string Carrier { get; set; }
+```
+
+説明:
+- Entity Framework用のテーブルマッピング
+- バリデーションルールの宣言的定義
+- データベーススキーマとC#クラスの対応付け
+
+場所: Models/DcWip.cs:6-20, Models/DcBatch.cs:6-14
+
+
+================================================================================
+3. Null許容参照型（Nullable Reference Types）
+================================================================================
+```csharp
+public string? LotId { get; set; }
+public DateTime? ProcessedAt { get; set; }
+```
+
+説明:
+- `?` でnull許容を明示
+- C# 8.0以降の機能
+- null参照例外を防ぐためのコンパイル時チェック
+
+場所: Models/DcBatch.cs:23, 45
+
+
+================================================================================
+4. LINQ to Entities（非同期クエリ）
+================================================================================
+```csharp
+var wips = await _context.DcWips
+    .Where(w => w.TargetEqpId == EqpName)
+    .OrderBy(w => w.Priority)
+    .ToListAsync();
+```
+
+説明:
+- Entity Frameworkでのデータベースクエリ
+- メソッドチェーンによる宣言的記述
+- SQLに変換されて実行される
+
+場所: Pages/WipLotList.cshtml.cs:41-44
+
+
+================================================================================
+5. async/awaitパターン
+================================================================================
+```csharp
+public async Task OnGetAsync()
+{
+    var data = await _context.DcWips.ToListAsync();
+}
+```
+
+説明:
+- 非同期プログラミングの基本
+- UIをブロックせずにI/O処理
+- スレッドプールの効率的な利用
+
+場所: Pages/CreateBatch.cshtml.cs:32, Pages/WorkProgress.cshtml.cs:35
+
+
+================================================================================
+6. 依存性注入（Constructor Injection）
+================================================================================
+```csharp
+private readonly CoordinatorDbContext _context;
+
+public WipLotListModel(CoordinatorDbContext context)
+{
+    _context = context;
+}
+```
+
+説明:
+- ASP.NET Coreの標準DIパターン
+- `readonly`フィールドでイミュータビリティ確保
+- 疎結合な設計とテスト容易性の向上
+
+場所: Pages/WipLotList.cshtml.cs:15-19
+
+
+================================================================================
+7. string補間（String Interpolation）
+================================================================================
+```csharp
+var errorMsg = $"{lotId}は以下のバッチに含まれています。BatchId: {existingBatch.BatchId}";
+_logger.LogInformation("Updated {Count} records", totalUpdated);
+```
+
+説明:
+- `$"{}"`による読みやすい文字列構築
+- ロギングでの構造化パラメータ（プレースホルダー形式）
+- 文字列連結よりも可読性が高い
+
+場所: Pages/CreateBatch.cshtml.cs:195-196
+
+
+================================================================================
+8. 匿名型と射影
+================================================================================
+```csharp
+var batchGroup = batches
+    .GroupBy(b => new { b.BatchId, b.CreatedAt })
+    .Select(g => new { g.Key.BatchId, Batch = g.First() });
+```
+
+説明:
+- 複数プロパティでのグループ化
+- 必要なデータのみを射影
+- 一時的なデータ構造を型定義なしで作成
+
+場所: Pages/WorkProgress.cshtml.cs:286-290
+
+
+================================================================================
+9. コレクション操作（LINQ拡張メソッド）
+================================================================================
+```csharp
+var lotIdList = LotIds.Split(',').Distinct().ToList();
+var wipDataDict = wipDataList.ToDictionary(w => w.LotId);
+var selectedEqpIds = actls.SelectMany(g => g.Select(a => a.EqpId)).ToList();
+```
+
+説明:
+- `Distinct()`, `ToDictionary()`, `SelectMany()`の活用
+- メソッドチェーンで簡潔に記述
+- コレクションの変換と加工
+
+場所: Pages/CreateBatch.cshtml.cs:43-44, 172
+
+
+================================================================================
+10. using スコープとリソース管理
+================================================================================
+```csharp
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<CoordinatorDbContext>();
+}
+```
+
+説明:
+- `using`によるリソースの自動解放
+- DIコンテナからのスコープ付きサービス取得
+- IDisposableの確実なDispose呼び出し
+
+場所: Program.cs:52-57, Services/BatchProcessingBackgroundService.cs:64
+
+
+================================================================================
+11. Null合体演算子（?? と ??=）
+================================================================================
+```csharp
+var carrier = wipData.Carrier ?? "";
+var eqpId = stepData.FirstOrDefault()?.EqpId ?? "";
+nextEqpId ??= "なし";
+```
+
+説明:
+- `??` でnullの場合のデフォルト値を指定
+- `??=` でnullの場合のみ代入
+- null安全なコード記述
+
+場所: Pages/CreateBatch.cshtml.cs:107-108
+
+
+================================================================================
+12. Null条件演算子（?.）
+================================================================================
+```csharp
+var createdAt = createdBatches.FirstOrDefault()?.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss.fff");
+equipment.Note = string.IsNullOrWhiteSpace(note) ? null : note;
+```
+
+説明:
+- `?.` でnullの場合にnullを返す
+- nullチェックを簡潔に記述
+- null参照例外を防ぐ
+
+場所: Pages/CreateBatch.cshtml.cs:385
+
+
+================================================================================
+13. LINQ GroupBy と Dictionary変換
+================================================================================
+```csharp
+var actlsByEquipment = allActls
+    .GroupBy(a => a.EqpId)
+    .ToDictionary(g => g.Key, g => g.OrderBy(a => a.TrackInTime).ToList());
+```
+
+説明:
+- データをグループ化してDictionaryに変換
+- キーによる高速検索のための最適化
+- N+1問題の回避
+
+場所: Pages/WorkProgress.cshtml.cs:194-196, Services/BatchProcessingBackgroundService.cs:130-132
+
+
+================================================================================
+14. TempData を使ったページ間データ受け渡し
+================================================================================
+```csharp
+TempData["SelectedWipData"] = JsonSerializer.Serialize(WipData);
+TempData.Keep("SelectedWipData");
+
+if (TempData["SelectedWipData"] is string wipDataJson)
+{
+    var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
+}
+```
+
+説明:
+- Razor Pages間でのデータ共有
+- JSONシリアライズによる複雑なオブジェクトの保存
+- `Keep()`で次のリクエストでも保持
+
+場所: Pages/WipLotList.cshtml.cs:105, Pages/CreateBatch.cshtml.cs:38-48
+
+
+================================================================================
+15. BindProperty 属性
+================================================================================
+```csharp
+[BindProperty(SupportsGet = true)]
+public string? EqpName { get; set; }
+
+[BindProperty]
+public List<WipDataItem> WipData { get; set; } = new();
+```
+
+説明:
+- HTTPリクエストからプロパティへの自動バインディング
+- `SupportsGet = true` でGETリクエストにも対応
+- POSTデータの自動マッピング
+
+場所: Pages/CreateBatch.cshtml.cs:23-27, Pages/WipLotList.cshtml.cs:24, 94
+
+
+================================================================================
+16. BackgroundService と IHostedService
+================================================================================
+```csharp
+public class BatchProcessingBackgroundService : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await UpdateBatchProcessingStatus(stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        }
+    }
+}
+```
+
+説明:
+- バックグラウンドで実行される長期タスク
+- アプリケーションのライフサイクルに連動
+- 定期的な処理の実装に最適
+
+場所: Services/BatchProcessingBackgroundService.cs:8-60
+
+
+================================================================================
+17. Options パターン（IOptionsMonitor）
+================================================================================
+```csharp
+private readonly IOptionsMonitor<BatchProcessingOptions> _options;
+
+// 使用時に最新の設定値を取得
+var options = _options.CurrentValue;
+if (!options.Enabled) { ... }
+```
+
+説明:
+- 設定ファイル（appsettings.json）の値を型安全に取得
+- `IOptionsMonitor` でホットリロード対応
+- 設定変更を再起動なしで反映
+
+場所: Services/BatchProcessingBackgroundService.cs:12, 26, 36
+
+
+================================================================================
+18. Lambda式とExpression Body
+================================================================================
+```csharp
+// Lambda式
+var steps = stepData.Select(s => new PpidEqpOption
+{
+    PPID = s.PPID,
+    EqpId = s.EqpId
+}).ToList();
+
+// Expression-bodied member
+app.MapGet("/", (LinkGenerator linkGenerator, HttpContext httpContext) =>
+{
+    var url = linkGenerator.GetPathByPage(httpContext, "/WorkProgress");
+    return Results.Redirect(url ?? "/WorkProgress");
+});
+```
+
+説明:
+- `=>` による簡潔な関数定義
+- LINQでの射影や変換に頻繁に使用
+- Minimal APIでのエンドポイント定義
+
+場所: Pages/CreateBatch.cshtml.cs:96-100, Program.cs:292-296
+
+
+================================================================================
+19. try-catch-finally パターンとロギング
+================================================================================
+```csharp
+try
+{
+    Log.Information("Starting Coordinator application");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.Information("Shutting down Coordinator application");
+    Log.CloseAndFlush();
+}
+```
+
+説明:
+- 構造化された例外処理
+- Serilogによる構造化ロギング
+- finallyブロックでリソースのクリーンアップ
+
+場所: Program.cs:21-311
+
+
+================================================================================
+20. File-scoped Namespace（ファイルスコープのnamespace）
+================================================================================
+```csharp
+namespace Coordinator.Models;
+
+public class DcWip
+{
+    // クラス定義
+}
+```
+
+説明:
+- C# 10.0以降の機能
+- インデントレベルを1段階削減
+- ファイル全体に適用されるnamespace宣言
+
+場所: Models/DcWip.cs:4, Models/DcBatch.cs:4, Pages/CreateBatch.cshtml.cs:8
+
+
+================================================================================
+まとめ
+================================================================================
+
+これらの構文パターンは、モダンなC#開発における標準的な手法です：
+
+【データアクセス層】
+- Entity Framework Core (LINQ to Entities, DbContext)
+- 非同期処理 (async/await)
+- Null安全性 (Nullable Reference Types, ??, ?.)
+
+【Web層】
+- Razor Pages (BindProperty, TempData)
+- 依存性注入 (Constructor Injection)
+- Optionsパターン
+
+【バックグラウンド処理】
+- BackgroundService
+- CancellationToken
+
+【言語機能】
+- LINQ拡張メソッド
+- Lambda式
+- File-scoped namespace
+- Target-typed new expressions
+
+これらは.NET 8とC# 12の最新機能を活用した、保守性と可読性の高いコードベースを
+実現しています。

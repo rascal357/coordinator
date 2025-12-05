@@ -1,0 +1,375 @@
+# WipLotList画面からCreateBatch画面へのデータ受け渡し解説
+
+================================================================================
+データフローの全体像
+================================================================================
+
+WipLotList画面 (JavaScript)
+  → WipLotListModel (C# POST処理)
+  → TempData (JSON)
+  → CreateBatchModel (C# GET処理)
+  → CreateBatch画面 (表示)
+
+
+================================================================================
+1️⃣ WipLotList.cshtml - データ準備（HTML側）
+================================================================================
+
+■ テーブル行にdata属性を埋め込み
+
+場所: WipLotList.cshtml:81-91
+
+```html
+<tr class="table-row-modern"
+    data-carrier="@wip.Carrier"
+    data-lotid="@wip.LotId"
+    data-technology="@wip.Technology"
+    data-qty="@wip.Qty"
+    data-targetstage="@wip.TargetStage"
+    data-targetstep="@wip.TargetStep"
+    data-state="@wip.State"
+    data-next1="@wip.Next1"
+    data-next2="@wip.Next2"
+    data-next3="@wip.Next3">
+```
+
+【説明】
+- 各テーブル行（<tr>）に data-* 属性を使ってWIPデータを埋め込む
+- JavaScriptからアクセス可能な形式でデータを保持
+- サーバーから受け取ったモデルデータを、クライアント側で扱えるようにする
+
+
+================================================================================
+2️⃣ WipLotList.cshtml - JavaScriptでの値の取得と送信
+================================================================================
+
+場所: WipLotList.cshtml:318-354
+
+■ フォーム送信時の処理
+
+```javascript
+form.addEventListener('submit', function(e) {
+    const container = document.getElementById('selectedWipDataContainer');
+    container.innerHTML = ''; // 既存のhiddenフィールドをクリア
+
+    const checkboxes = document.querySelectorAll('.wip-checkbox:checked');
+
+    if (checkboxes.length === 0) {
+        e.preventDefault();
+        alert('キャリアを選択してください');
+        return false;
+    }
+
+    checkboxes.forEach((checkbox, index) => {
+        const row = checkbox.closest('tr');
+        const wipData = {
+            Carrier: row.dataset.carrier,
+            LotId: row.dataset.lotid,
+            Technology: row.dataset.technology,
+            Qty: row.dataset.qty,
+            TargetStage: row.dataset.targetstage,
+            TargetStep: row.dataset.targetstep,
+            State: row.dataset.state,
+            Next1: row.dataset.next1,
+            Next2: row.dataset.next2,
+            Next3: row.dataset.next3
+        };
+
+        // hidden inputフィールドを動的生成
+        Object.keys(wipData).forEach(key => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `WipData[${index}].${key}`;  // 配列形式でバインド
+            input.value = wipData[key] || '';
+            container.appendChild(input);
+        });
+    });
+});
+```
+
+■ 重要なポイント
+
+【① チェックボックスの取得】
+```javascript
+const checkboxes = document.querySelectorAll('.wip-checkbox:checked');
+```
+→ チェックされたチェックボックスだけを取得
+
+【② 親行の取得】
+```javascript
+const row = checkbox.closest('tr');
+```
+→ closest('tr')で最も近い親要素の<tr>を取得
+
+【③ data属性からの値取得】
+```javascript
+const wipData = {
+    Carrier: row.dataset.carrier,  // data-carrier → dataset.carrier
+    LotId: row.dataset.lotid,      // data-lotid → dataset.lotid
+    // ...
+};
+```
+→ data-carrier → dataset.carrier に自動変換される
+→ ケバブケース → キャメルケース に変換
+
+【④ hidden inputの動的生成（配列バインディング）】
+```javascript
+input.name = `WipData[${index}].${key}`;  // WipData[0].Carrier, WipData[0].LotId, ...
+```
+→ ASP.NET Core Model Bindingの配列形式
+→ サーバー側で List<WipDataItem> WipData として受け取れる
+
+【生成されるHTMLの例】
+```html
+<input type="hidden" name="WipData[0].Carrier" value="CARR001" />
+<input type="hidden" name="WipData[0].LotId" value="LOT001" />
+<input type="hidden" name="WipData[0].Technology" value="Tech1" />
+<input type="hidden" name="WipData[1].Carrier" value="CARR002" />
+<input type="hidden" name="WipData[1].LotId" value="LOT002" />
+```
+
+
+================================================================================
+3️⃣ WipLotListModel.cs - サーバー側でのPOST処理
+================================================================================
+
+場所: WipLotList.cshtml.cs:94-108
+
+```csharp
+[BindProperty]
+public List<WipDataItem> WipData { get; set; } = new();
+
+public IActionResult OnPost()
+{
+    if (WipData == null || !WipData.Any())
+    {
+        Message = "キャリアを選択してください";
+        return RedirectToPage(new { eqpName = EqpName });
+    }
+
+    // TempDataにJSONシリアライズして保存
+    TempData["SelectedWipData"] = JsonSerializer.Serialize(WipData);
+
+    return RedirectToPage("CreateBatch");
+}
+```
+
+■ ポイント
+
+【① [BindProperty]属性】
+→ POSTされたフォームデータを自動的に WipData プロパティにバインド
+→ WipData[0].Carrier などの配列形式を List<WipDataItem> に変換
+
+【② TempDataの使用】
+```csharp
+TempData["SelectedWipData"] = JsonSerializer.Serialize(WipData);
+```
+→ Razor Pages間でデータを受け渡す仕組み
+→ JSONシリアライズで複雑なオブジェクトを文字列化
+→ 次のリクエストまで保持される（セッションベース）
+
+
+================================================================================
+4️⃣ CreateBatchModel.cs - CreateBatch画面でのGET処理
+================================================================================
+
+場所: CreateBatch.cshtml.cs:32-134
+
+```csharp
+public async Task OnGetAsync()
+{
+    Dictionary<string, WipDataItem>? wipDataByLotId = null;
+    List<string> lotIdList = new();
+
+    // TempDataから取得
+    if (TempData["SelectedWipData"] is string wipDataJson)
+    {
+        var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
+        if (wipDataList != null)
+        {
+            wipDataByLotId = wipDataList.ToDictionary(w => w.LotId);
+            lotIdList = wipDataList.Select(w => w.LotId).Distinct().ToList();
+
+            // エラーリダイレクト時のためにTempDataを保持
+            TempData.Keep("SelectedWipData");
+        }
+    }
+    // フォールバック: クエリパラメータから取得
+    else if (!string.IsNullOrEmpty(LotIds))
+    {
+        lotIdList = LotIds.Split(',').Distinct().ToList();
+    }
+
+    // 以降、データベースから追加情報を取得して表示用ViewModelを構築
+    // ...
+}
+```
+
+■ ポイント
+
+【① TempDataからのデシリアライズ】
+```csharp
+if (TempData["SelectedWipData"] is string wipDataJson)
+{
+    var wipDataList = JsonSerializer.Deserialize<List<WipDataItem>>(wipDataJson);
+}
+```
+→ JSON文字列をオブジェクトに復元
+→ パターンマッチング（is string）でnullチェック
+
+【② TempData.Keep()】
+```csharp
+TempData.Keep("SelectedWipData");
+```
+→ 次のリクエストでもTempDataを保持
+→ エラー時にCreateBatchページに再度リダイレクトする際に必要
+
+
+================================================================================
+データ受け渡しの流れ図
+================================================================================
+
+┌─────────────────────────────────────┐
+│  WipLotList.cshtml (ブラウザ)        │
+│  ・チェックボックス選択              │
+│  ・data属性からデータ取得            │
+│  ・hidden inputを動的生成            │
+└──────────────┬──────────────────────┘
+               │ POST (Form Data)
+               │ WipData[0].Carrier=...
+               │ WipData[0].LotId=...
+               ↓
+┌─────────────────────────────────────┐
+│  WipLotListModel.OnPost()           │
+│  ・List<WipDataItem>にバインド       │
+│  ・JSONシリアライズ                  │
+│  ・TempDataに保存                    │
+└──────────────┬──────────────────────┘
+               │ RedirectToPage("CreateBatch")
+               │ TempData["SelectedWipData"] = JSON
+               ↓
+┌─────────────────────────────────────┐
+│  CreateBatchModel.OnGetAsync()      │
+│  ・TempDataから取得                  │
+│  ・JSONデシリアライズ                │
+│  ・ViewModelに変換                   │
+└──────────────┬──────────────────────┘
+               │ Model → View
+               ↓
+┌─────────────────────────────────────┐
+│  CreateBatch.cshtml (ブラウザ)       │
+│  ・受け取ったデータを表示            │
+│  ・Step1-4のドロップダウン生成       │
+└─────────────────────────────────────┘
+
+
+================================================================================
+技術的なポイント詳細
+================================================================================
+
+■ 1. data属性とdatasetプロパティ
+
+HTML側:
+  <tr data-carrier="CARR001" data-lot-id="LOT001">
+
+JavaScript側:
+  row.dataset.carrier    // "CARR001"
+  row.dataset.lotId      // "LOT001" (ケバブケース→キャメルケース自動変換)
+
+
+■ 2. ASP.NET Core Model Binding（配列形式）
+
+フォームデータ:
+  WipData[0].Carrier=CARR001
+  WipData[0].LotId=LOT001
+  WipData[1].Carrier=CARR002
+  WipData[1].LotId=LOT002
+
+C#での受け取り:
+  [BindProperty]
+  public List<WipDataItem> WipData { get; set; }
+
+→ 自動的にList<WipDataItem>にバインドされる
+
+
+■ 3. TempData
+
+特徴:
+  - セッションベースのデータストア
+  - リダイレクト後も1リクエスト分データを保持
+  - TempData.Keep()で明示的に保持を延長可能
+  - 複雑なオブジェクトはJSONシリアライズして保存
+
+使用例:
+  // 保存
+  TempData["Key"] = JsonSerializer.Serialize(data);
+
+  // 取得
+  if (TempData["Key"] is string json)
+  {
+      var data = JsonSerializer.Deserialize<T>(json);
+  }
+
+  // 保持
+  TempData.Keep("Key");
+
+
+■ 4. JavaScriptによる動的フォーム生成
+
+利点:
+  - 必要なデータのみをPOST（選択されたもののみ）
+  - サーバー側の負荷軽減
+  - 柔軟なデータ構造の送信
+
+実装パターン:
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = `配列名[${index}].プロパティ名`;
+  input.value = 値;
+  container.appendChild(input);
+
+
+================================================================================
+まとめ
+================================================================================
+
+この実装の特徴:
+
+1. data属性を活用
+   → HTMLにデータを埋め込み、JavaScriptから簡単にアクセス
+
+2. 動的hidden input生成
+   → 選択されたデータのみをPOST
+
+3. ASP.NET Core Model Binding
+   → 配列形式のフォームデータを自動的にC#のListにバインド
+
+4. TempData + JSON
+   → ページ間でのデータ受け渡しにセッションベースのTempDataを使用
+
+5. 型安全性
+   → サーバー側では強い型（List<WipDataItem>）で処理
+
+
+この設計により、クライアント側とサーバー側で効率的かつ型安全にデータをやり取りしています。
+
+
+================================================================================
+関連ファイル
+================================================================================
+
+【クライアント側】
+- Pages/WipLotList.cshtml (HTML + JavaScript)
+  - 行: 81-91 (data属性の定義)
+  - 行: 314-356 (JavaScriptでのフォーム送信処理)
+
+【サーバー側】
+- Pages/WipLotList.cshtml.cs (POST処理)
+  - 行: 94-108 (OnPost メソッド)
+
+- Pages/CreateBatch.cshtml.cs (GET処理)
+  - 行: 32-134 (OnGetAsync メソッド)
+
+【モデル】
+- Models/WipDataItem.cs
+  - WipDataの構造定義
