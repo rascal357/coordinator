@@ -27,6 +27,13 @@ public class WipLotListModel : PageModel
     [TempData]
     public string? Message { get; set; }
 
+    // Filter options for select dropdowns
+    public List<string> StateOptions { get; set; } = new();
+    public List<string> CurrentStageOptions { get; set; } = new();
+    public List<string> CurrentStepOptions { get; set; } = new();
+    public List<string> TargetPPIDOptions { get; set; } = new();
+    public List<string> Next1Options { get; set; } = new();
+
     public async Task OnGetAsync()
     {
         if (!string.IsNullOrEmpty(EqpName))
@@ -42,6 +49,43 @@ public class WipLotListModel : PageModel
                 .Where(w => w.TargetEqpId == EqpName && !registeredCarriers.Contains(w.Carrier))
                 .OrderBy(w => w.Priority)
                 .ToListAsync();
+
+            // Get unique values for select filters
+            StateOptions = WipLots
+                .Select(w => w.State)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            CurrentStageOptions = WipLots
+                .Select(w => w.CurrentStage)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            CurrentStepOptions = WipLots
+                .Select(w => w.CurrentStep)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            TargetPPIDOptions = WipLots
+                .Select(w => w.TargetPPID)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            Next1Options = WipLots
+                .Select(w => !string.IsNullOrEmpty(w.Next1) ? w.Next1.Split(',').LastOrDefault() : null)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Select(s => s!)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
 
             // TODO: 将来的にSQLクエリで取得する場合
             // 以下のようなSQLクエリでDC_Wipsと同じ項目を取得し、DcWipモデルにマッピングする

@@ -9,34 +9,31 @@ public class DcActl
     [Key]
     public int Id { get; set; }
 
-    [Required]
     [StringLength(50)]
-    public string EqpId { get; set; } = string.Empty;
+    public string? EqpId { get; set; }
 
-    [Required]
     [StringLength(50)]
-    public string LotId { get; set; } = string.Empty;
+    public string? LotId { get; set; }
 
-    [Required]
     [StringLength(10)]
-    public string LotType { get; set; } = string.Empty;
+    public string? LotType { get; set; }
 
-    public DateTime TrackInTime { get; set; }
-
-    [StringLength(50)]
-    public string Carrier { get; set; } = string.Empty;
-
-    public int Qty { get; set; }
+    public DateTime? TrackInTime { get; set; }
 
     [StringLength(50)]
-    public string PPID { get; set; } = string.Empty;
+    public string? Carrier { get; set; }
+
+    public int? Qty { get; set; }
 
     [StringLength(50)]
-    public string Next { get; set; } = string.Empty;
+    public string? PPID { get; set; }
 
     [StringLength(50)]
-    public string Location { get; set; } = string.Empty;
+    public string? Next { get; set; }
 
     [StringLength(50)]
-    public string EndTime { get; set; } = string.Empty;
+    public string? Location { get; set; }
+
+    [StringLength(50)]
+    public string? EndTime { get; set; }
 }

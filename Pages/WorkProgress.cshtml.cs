@@ -192,7 +192,8 @@ public class WorkProgressModel : PageModel
 
         // Group by equipment ID in memory
         var actlsByEquipment = allActls
-            .GroupBy(a => a.EqpId)
+            .Where(a => a.EqpId != null)
+            .GroupBy(a => a.EqpId!)
             .ToDictionary(g => g.Key, g => g.OrderBy(a => a.TrackInTime).ToList());
 
         // Get all batches for all equipments in one query
@@ -325,11 +326,12 @@ public class WorkProgressModel : PageModel
 
         var groups = new List<List<DcActl>>();
         var currentGroup = new List<DcActl> { actls[0] };
-        var currentTime = actls[0].TrackInTime;
+        var currentTime = actls[0].TrackInTime ?? DateTime.MinValue;
 
         for (int i = 1; i < actls.Count; i++)
         {
-            var timeDiff = Math.Abs((actls[i].TrackInTime - currentTime).TotalMinutes);
+            var trackInTime = actls[i].TrackInTime ?? DateTime.MinValue;
+            var timeDiff = Math.Abs((trackInTime - currentTime).TotalMinutes);
 
             if (timeDiff <= window.TotalMinutes)
             {
@@ -339,7 +341,7 @@ public class WorkProgressModel : PageModel
             {
                 groups.Add(currentGroup);
                 currentGroup = new List<DcActl> { actls[i] };
-                currentTime = actls[i].TrackInTime;
+                currentTime = trackInTime;
             }
         }
 
@@ -357,7 +359,7 @@ public class WorkProgressModel : PageModel
 
         foreach (var actl in actls)
         {
-            string nextFurnace = actl.Next;
+            string? nextFurnace = actl.Next;
 
             // Get the batch record from DC_Batch for this equipment, lot, and TrackInTime
             var latestBatch = await _context.DcBatches
@@ -372,13 +374,13 @@ public class WorkProgressModel : PageModel
 
             items.Add(new ProcessItem
             {
-                Carrier = actl.Carrier,
-                Lot = actl.LotId,
-                Qty = actl.Qty,
-                PPID = actl.PPID,
-                NextFurnace = nextFurnace,
-                Location = actl.Location,
-                EndTime = actl.EndTime
+                Carrier = actl.Carrier ?? string.Empty,
+                Lot = actl.LotId ?? string.Empty,
+                Qty = actl.Qty ?? 0,
+                PPID = actl.PPID ?? string.Empty,
+                NextFurnace = nextFurnace ?? string.Empty,
+                Location = actl.Location ?? string.Empty,
+                EndTime = actl.EndTime ?? string.Empty
             });
         }
 

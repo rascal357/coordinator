@@ -128,7 +128,8 @@ public class BatchProcessingBackgroundService : BackgroundService
 
         // Group DcActls by equipment (EqpId)
         var actlsByEquipment = allActls
-            .GroupBy(a => a.EqpId)
+            .Where(a => a.EqpId != null)
+            .GroupBy(a => a.EqpId!)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         // Group DcBatches by equipment (EqpId) for quick lookup

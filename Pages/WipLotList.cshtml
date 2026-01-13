@@ -51,7 +51,7 @@
             <div class="card modern-card mb-4">
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table modern-table mb-0">
+                        <table class="table modern-table mb-0" id="wipTable">
                             <thead>
                                 <tr>
                                     <th class="table-header-modern">
@@ -60,19 +60,130 @@
                                         </svg>
                                         選択
                                     </th>
-                                    <th class="table-header-modern">Priority</th>
-                                    <th class="table-header-modern">Technology</th>
-                                    <th class="table-header-modern">Carrier</th>
-                                    <th class="table-header-modern">LotId</th>
-                                    <th class="table-header-modern">Qty</th>
-                                    <th class="table-header-modern">State</th>
-                                    <th class="table-header-modern">PartName</th>
-                                    <th class="table-header-modern">CurrentStage</th>
-                                    <th class="table-header-modern">CurrentStep</th>
-                                    <th class="table-header-modern">TargetStage</th>
-                                    <th class="table-header-modern">TargetStep</th>
-                                    <th class="table-header-modern">TargetPPID</th>
-                                    <th class="table-header-modern">Next1</th>
+                                    <th class="table-header-modern sortable" data-column="priority">
+                                        Priority
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="technology">
+                                        Technology
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="carrier">
+                                        Carrier
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="lotid">
+                                        LotId
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="qty">
+                                        Qty
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="state">
+                                        State
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="partname">
+                                        PartName
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="currentstage">
+                                        CurrentStage
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="currentstep">
+                                        CurrentStep
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="targetstage">
+                                        TargetStage
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="targetstep">
+                                        TargetStep
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="targetppid">
+                                        TargetPPID
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                    <th class="table-header-modern sortable" data-column="next1">
+                                        Next1
+                                        <span class="sort-icon">⇅</span>
+                                    </th>
+                                </tr>
+                                <tr class="filter-row">
+                                    <th class="table-header-modern"></th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="priority" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="technology" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="carrier" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="lotid" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="qty" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <select class="filter-select" data-column="state">
+                                            <option value="">すべて</option>
+                                            @foreach (var option in Model.StateOptions)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </select>
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="partname" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <select class="filter-select" data-column="currentstage">
+                                            <option value="">すべて</option>
+                                            @foreach (var option in Model.CurrentStageOptions)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </select>
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <select class="filter-select" data-column="currentstep">
+                                            <option value="">すべて</option>
+                                            @foreach (var option in Model.CurrentStepOptions)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </select>
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="targetstage" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <input type="text" class="filter-input" data-column="targetstep" placeholder="フィルター...">
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <select class="filter-select" data-column="targetppid">
+                                            <option value="">すべて</option>
+                                            @foreach (var option in Model.TargetPPIDOptions)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </select>
+                                    </th>
+                                    <th class="table-header-modern">
+                                        <select class="filter-select" data-column="next1">
+                                            <option value="">すべて</option>
+                                            @foreach (var option in Model.Next1Options)
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </select>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -309,12 +420,84 @@
     .table-responsive::-webkit-scrollbar-thumb:hover {
         background: #495057;
     }
+
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+
+    .sortable:hover {
+        background-color: #e9ecef !important;
+    }
+
+    .sort-icon {
+        margin-left: 0.25rem;
+        font-size: 0.85rem;
+        opacity: 0.5;
+        transition: opacity var(--transition-speed);
+    }
+
+    .sortable.sorted-asc .sort-icon::before {
+        content: '▲';
+        opacity: 1;
+    }
+
+    .sortable.sorted-desc .sort-icon::before {
+        content: '▼';
+        opacity: 1;
+    }
+
+    .sortable:not(.sorted-asc):not(.sorted-desc) .sort-icon {
+        opacity: 0.3;
+    }
+
+    .filter-row {
+        background-color: #f8f9fa;
+    }
+
+    .filter-input, .filter-select {
+        width: 100%;
+        padding: 0.375rem 0.5rem;
+        font-size: 0.85rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: border-color var(--transition-speed);
+        background-color: white;
+    }
+
+    .filter-input:focus, .filter-select:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+
+    .filter-input::placeholder {
+        color: #adb5bd;
+        font-size: 0.8rem;
+    }
+
+    .filter-select {
+        cursor: pointer;
+    }
+
+    .filter-select option {
+        padding: 0.375rem;
+    }
+
+    .table-row-modern.hidden {
+        display: none;
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('wipForm');
+        const table = document.getElementById('wipTable');
+        const tbody = table.querySelector('tbody');
+        let currentSort = { column: null, direction: null };
 
+        // Form submission handler
         form.addEventListener('submit', function(e) {
             const container = document.getElementById('selectedWipDataContainer');
             container.innerHTML = ''; // Clear existing hidden fields
@@ -352,5 +535,171 @@
                 });
             });
         });
+
+        // Filter functionality
+        const filterInputs = document.querySelectorAll('.filter-input');
+        const filterSelects = document.querySelectorAll('.filter-select');
+
+        filterInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                applyFilters();
+            });
+        });
+
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                applyFilters();
+            });
+        });
+
+        function applyFilters() {
+            const filters = {};
+
+            // Collect text input filters
+            filterInputs.forEach(input => {
+                const column = input.dataset.column;
+                const value = input.value.toLowerCase().trim();
+                if (value) {
+                    filters[column] = { value: value, type: 'input' };
+                }
+            });
+
+            // Collect select filters
+            filterSelects.forEach(select => {
+                const column = select.dataset.column;
+                const value = select.value.trim();
+                if (value) {
+                    filters[column] = { value: value.toLowerCase(), type: 'select' };
+                }
+            });
+
+            const rows = tbody.querySelectorAll('.table-row-modern');
+            rows.forEach(row => {
+                let shouldShow = true;
+
+                for (const [column, filterObj] of Object.entries(filters)) {
+                    let cellValue = '';
+
+                    // Get cell value based on column
+                    const columnIndex = getColumnIndex(column);
+                    if (columnIndex >= 0) {
+                        const cell = row.cells[columnIndex];
+                        if (cell) {
+                            cellValue = cell.textContent.toLowerCase().trim();
+                        }
+                    }
+
+                    // Apply filter based on type
+                    if (filterObj.type === 'select') {
+                        // Exact match for select filters
+                        if (cellValue !== filterObj.value) {
+                            shouldShow = false;
+                            break;
+                        }
+                    } else {
+                        // Partial match for text input filters
+                        if (!cellValue.includes(filterObj.value)) {
+                            shouldShow = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (shouldShow) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+
+        function getColumnIndex(columnName) {
+            const columnMap = {
+                'priority': 1,
+                'technology': 2,
+                'carrier': 3,
+                'lotid': 4,
+                'qty': 5,
+                'state': 6,
+                'partname': 7,
+                'currentstage': 8,
+                'currentstep': 9,
+                'targetstage': 10,
+                'targetstep': 11,
+                'targetppid': 12,
+                'next1': 13
+            };
+            return columnMap[columnName] || -1;
+        }
+
+        // Sort functionality
+        const sortableHeaders = document.querySelectorAll('.sortable');
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.dataset.column;
+                const columnIndex = getColumnIndex(column);
+
+                if (columnIndex < 0) return;
+
+                // Determine sort direction
+                let direction = 'asc';
+                if (currentSort.column === column) {
+                    if (currentSort.direction === 'asc') {
+                        direction = 'desc';
+                    } else if (currentSort.direction === 'desc') {
+                        direction = null; // Reset to original order
+                    }
+                }
+
+                // Update sort state
+                currentSort.column = direction ? column : null;
+                currentSort.direction = direction;
+
+                // Update UI
+                sortableHeaders.forEach(h => {
+                    h.classList.remove('sorted-asc', 'sorted-desc');
+                });
+
+                if (direction) {
+                    this.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                    sortTable(columnIndex, direction);
+                } else {
+                    // Reset to original order by reloading or storing original order
+                    resetTableOrder();
+                }
+            });
+        });
+
+        // Store original order
+        const originalOrder = Array.from(tbody.querySelectorAll('.table-row-modern'));
+
+        function sortTable(columnIndex, direction) {
+            const rows = Array.from(tbody.querySelectorAll('.table-row-modern'));
+
+            rows.sort((a, b) => {
+                const aValue = a.cells[columnIndex].textContent.trim();
+                const bValue = b.cells[columnIndex].textContent.trim();
+
+                // Try to parse as numbers for numeric columns
+                const aNum = parseFloat(aValue);
+                const bNum = parseFloat(bValue);
+
+                let comparison = 0;
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    comparison = aNum - bNum;
+                } else {
+                    comparison = aValue.localeCompare(bValue);
+                }
+
+                return direction === 'asc' ? comparison : -comparison;
+            });
+
+            // Re-append rows in sorted order
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function resetTableOrder() {
+            originalOrder.forEach(row => tbody.appendChild(row));
+        }
     });
 </script>
