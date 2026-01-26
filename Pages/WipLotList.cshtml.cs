@@ -24,6 +24,9 @@ public class WipLotListModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? EqpName { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? CarrierNumbers { get; set; }
+
     [TempData]
     public string? Message { get; set; }
 

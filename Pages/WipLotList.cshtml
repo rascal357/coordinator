@@ -15,7 +15,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="page-title mb-0">WIP Lot List</h1>
+                    <h1 class="page-title mb-0">@(!string.IsNullOrEmpty(Model.CarrierNumbers) ? "WIP Lot List TWDW" : "WIP Lot List")</h1>
                     <p class="page-subtitle mb-0">装置: @Model.EqpName</p>
                 </div>
             </div>
@@ -227,6 +227,12 @@
             </div>
 
             <div class="action-bar">
+                <button type="button" class="btn btn-modern btn-info btn-lg me-2" id="twdwBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                    TWDW
+                </button>
                 <button type="submit" class="btn btn-modern btn-primary btn-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -247,6 +253,36 @@
             指定された装置(@Model.EqpName)に対するWIPロットが見つかりません。
         </div>
     }
+</div>
+
+<!-- TWDW Carrier Input Modal -->
+<div id="twdwModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">キャリア検索</h3>
+            <button type="button" class="modal-close" id="closeTwdwModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="carrier-inputs">
+                @for (int i = 1; i <= 10; i++)
+                {
+                    <div class="carrier-input-group">
+                        <label for="carrierInput@(i)">キャリア @i:</label>
+                        <input type="text" id="carrierInput@(i)" class="carrier-input" placeholder="キャリア番号を入力">
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-modern btn-secondary" id="cancelTwdwBtn">キャンセル</button>
+            <button type="button" class="btn btn-modern btn-primary" id="searchCarriersBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                検索
+            </button>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -488,6 +524,127 @@
     .table-row-modern.hidden {
         display: none;
     }
+
+    /* TWDW Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6c757d;
+        transition: color var(--transition-speed);
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-close:hover {
+        color: #212529;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .carrier-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .carrier-input-group {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .carrier-input-group label {
+        font-weight: 500;
+        color: #495057;
+        min-width: 90px;
+        margin: 0;
+    }
+
+    .carrier-input {
+        flex: 1;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+    }
+
+    .carrier-input:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .btn-modern.btn-info {
+        background: #0dcaf0;
+        color: #000;
+    }
+
+    .btn-modern.btn-info:hover {
+        background: #31d2f2;
+    }
 </style>
 
 <script>
@@ -700,6 +857,79 @@
 
         function resetTableOrder() {
             originalOrder.forEach(row => tbody.appendChild(row));
+        }
+
+        // TWDW Modal functionality
+        const twdwBtn = document.getElementById('twdwBtn');
+        const twdwModal = document.getElementById('twdwModal');
+        const closeTwdwModal = document.getElementById('closeTwdwModal');
+        const cancelTwdwBtn = document.getElementById('cancelTwdwBtn');
+        const searchCarriersBtn = document.getElementById('searchCarriersBtn');
+
+        // Open modal
+        twdwBtn.addEventListener('click', function() {
+            twdwModal.classList.add('show');
+            // Focus on first input
+            document.getElementById('carrierInput1').focus();
+        });
+
+        // Close modal
+        function closeModal() {
+            twdwModal.classList.remove('show');
+            // Clear all inputs
+            for (let i = 1; i <= 10; i++) {
+                document.getElementById('carrierInput' + i).value = '';
+            }
+        }
+
+        closeTwdwModal.addEventListener('click', closeModal);
+        cancelTwdwBtn.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside
+        twdwModal.addEventListener('click', function(e) {
+            if (e.target === twdwModal) {
+                closeModal();
+            }
+        });
+
+        // Search carriers
+        searchCarriersBtn.addEventListener('click', function() {
+            // Collect carrier numbers from inputs
+            const carrierNumbers = [];
+            for (let i = 1; i <= 10; i++) {
+                const value = document.getElementById('carrierInput' + i).value.trim();
+                if (value) {
+                    carrierNumbers.push(value);
+                }
+            }
+
+            if (carrierNumbers.length === 0) {
+                alert('少なくとも1つのキャリア番号を入力してください');
+                return;
+            }
+
+            // Build URL with carrier numbers as query parameter
+            const carrierNumbersParam = carrierNumbers.join(',');
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('CarrierNumbers', carrierNumbersParam);
+
+            // Reload page with carrier numbers parameter
+            window.location.href = currentUrl.toString();
+        });
+
+        // Allow Enter key to move to next input or search
+        for (let i = 1; i <= 10; i++) {
+            const input = document.getElementById('carrierInput' + i);
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (i < 10) {
+                        document.getElementById('carrierInput' + (i + 1)).focus();
+                    } else {
+                        searchCarriersBtn.click();
+                    }
+                }
+            });
         }
     });
 </script>
