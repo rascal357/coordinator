@@ -1,0 +1,337 @@
+@page
+@model DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- Header -->
+    <div class="page-header mb-4">
+        <div class="d-flex align-items-center">
+            <div class="header-icon me-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="page-title mb-0">Dashboard</h1>
+                <p class="page-subtitle mb-0">装置状態一覧</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0 fw-semibold d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                        <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                    フィルター
+                </h5>
+                <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="filterToggleIcon" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="collapse" id="filterCollapse">
+                <form method="get" class="row g-3 align-items-end" id="filterForm">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">TYPE (複数選択可)</label>
+                        <div class="filter-type-box">
+                            @foreach (var type in Model.Types)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="TypeFilter" value="@type" id="type-@type"
+                                           checked="@(Model.TypeFilter?.Contains(type) == true)"
+                                           onchange="document.getElementById('filterForm').submit()">
+                                    <label class="form-check-label" for="type-@type">@type</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="lineFilter" class="form-label fw-semibold">LINE</label>
+                        <select id="lineFilter" name="LineFilter" class="form-select modern-select" onchange="this.form.submit()">
+                            <option value="">すべて</option>
+                            @foreach (var line in Model.Lines)
+                            {
+                                <option value="@line" selected="@(Model.LineFilter == line)">@line</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5 d-flex align-items-end gap-2">
+                        <a asp-page="/Dashboard" class="btn btn-modern btn-secondary flex-fill">クリア</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipment Cards by TYPE -->
+    @foreach (var typeGroup in Model.EquipmentsByType)
+    {
+        <div class="mb-4">
+            <h4 class="fw-bold mb-3 type-header">@typeGroup.Key</h4>
+            <div class="row">
+                @foreach (var eqp in typeGroup.Value)
+                {
+                    <div class="col-md-3 mb-3">
+                        <div class="eqp-card">
+                            <div class="eqp-card-header @(eqp.InProcess.Any() ? "header-active" : "header-idle")">
+                                <span class="eqp-name">@eqp.EqpName</span>
+                            </div>
+                            @{
+                                var pPpid = eqp.InProcess.FirstOrDefault()?.PPID ?? "";
+                                var pQty = eqp.InProcess.Sum(i => i.Qty);
+                                var cPpid = eqp.Waiting.FirstOrDefault()?.PPID ?? "";
+                                var cQty = eqp.Waiting.Sum(i => i.Qty);
+                                var n1Ppid = eqp.Reserved1.FirstOrDefault()?.PPID ?? "";
+                                var n1Qty = eqp.Reserved1.Sum(i => i.Qty);
+                                var n2Ppid = eqp.Reserved2.FirstOrDefault()?.PPID ?? "";
+                                var n2Qty = eqp.Reserved2.Sum(i => i.Qty);
+                                var n3Ppid = eqp.Reserved3.FirstOrDefault()?.PPID ?? "";
+                                var n3Qty = eqp.Reserved3.Sum(i => i.Qty);
+                            }
+                            <table class="eqp-table">
+                                <thead>
+                                    <tr>
+                                        <th class="label-col"></th>
+                                        <th class="ppid-col">PPID</th>
+                                        <th class="qty-col">Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="row-p">
+                                        <td class="label-cell label-p">P</td>
+                                        <td class="ppid-cell">@pPpid</td>
+                                        <td class="qty-cell">@(pQty > 0 ? pQty.ToString() : "")</td>
+                                    </tr>
+                                    <tr class="row-c">
+                                        <td class="label-cell label-c">C</td>
+                                        <td class="ppid-cell">@cPpid</td>
+                                        <td class="qty-cell">@(cQty > 0 ? cQty.ToString() : "")</td>
+                                    </tr>
+                                    <tr class="row-n">
+                                        <td class="label-cell label-n">N1</td>
+                                        <td class="ppid-cell">@n1Ppid</td>
+                                        <td class="qty-cell">@(n1Qty > 0 ? n1Qty.ToString() : "")</td>
+                                    </tr>
+                                    <tr class="row-n">
+                                        <td class="label-cell label-n">N2</td>
+                                        <td class="ppid-cell">@n2Ppid</td>
+                                        <td class="qty-cell">@(n2Qty > 0 ? n2Qty.ToString() : "")</td>
+                                    </tr>
+                                    <tr class="row-n">
+                                        <td class="label-cell label-n">N3</td>
+                                        <td class="ppid-cell">@n3Ppid</td>
+                                        <td class="qty-cell">@(n3Qty > 0 ? n3Qty.ToString() : "")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    :root {
+        --primary-color: #0d6efd;
+        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        --transition-speed: 0.2s;
+    }
+
+    body {
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: #0d6efd;
+        border-radius: 8px;
+        padding: 1.5rem 2rem;
+        box-shadow: var(--card-shadow);
+        color: white;
+    }
+
+    .header-icon {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+
+    .page-subtitle {
+        opacity: 0.95;
+        font-size: 0.95rem;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .filter-type-box {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        max-height: 150px;
+        overflow-y: auto;
+        background: #f8f9fa;
+    }
+
+    .modern-select {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .btn-modern {
+        border-radius: 6px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        border: none;
+    }
+
+    .btn-modern.btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .type-header {
+        color: #333;
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 0.5rem;
+    }
+
+    /* Equipment Card - matches dashboard.png */
+    .eqp-card {
+        background: #fff;
+        border: none;
+        border-radius: 0;
+        padding: 10px;
+    }
+
+    .eqp-card-header {
+        padding: 6px 12px;
+        text-align: center;
+        border: 2px solid #555;
+        margin-bottom: 6px;
+    }
+
+    .eqp-card-header.header-active {
+        background: #a8d86e;
+    }
+
+    .eqp-card-header.header-idle {
+        background: #fff;
+    }
+
+    .eqp-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #000;
+    }
+
+    /* Equipment Table */
+    .eqp-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        border: 1px solid #555;
+    }
+
+    .eqp-table thead th {
+        background: #fff;
+        border: 1px solid #555;
+        padding: 3px 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .eqp-table tbody td {
+        border: 1px solid #555;
+        padding: 4px 8px;
+    }
+
+    .label-col {
+        width: 36px;
+    }
+
+    .ppid-col {
+        width: auto;
+    }
+
+    .qty-col {
+        width: 55px;
+        text-align: right;
+    }
+
+    .label-cell {
+        font-weight: 700;
+        text-align: center;
+        color: #000;
+    }
+
+    .label-p {
+        background: #c8f0a8;
+    }
+
+    .label-c {
+        background: #c8f0a8;
+    }
+
+    .label-n {
+        background: #fde68a;
+    }
+
+    .row-p .ppid-cell, .row-p .qty-cell {
+        background: #e0f5d0;
+    }
+
+    .row-c .ppid-cell, .row-c .qty-cell {
+        background: #e0f5d0;
+    }
+
+    .row-n .ppid-cell, .row-n .qty-cell {
+        background: #fef3c7;
+    }
+
+    .ppid-cell {
+        background: inherit;
+    }
+
+    .qty-cell {
+        text-align: right;
+        background: inherit;
+    }
+</style>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var filterCollapse = document.getElementById('filterCollapse');
+        var filterToggleIcon = document.getElementById('filterToggleIcon');
+        if (filterCollapse && filterToggleIcon) {
+            filterCollapse.addEventListener('show.bs.collapse', function() {
+                filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>';
+            });
+            filterCollapse.addEventListener('hide.bs.collapse', function() {
+                filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>';
+            });
+        }
+    });
+</script>
+}
