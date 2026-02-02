@@ -79,8 +79,8 @@
                 @foreach (var eqp in typeGroup.Value)
                 {
                     <div class="col-md-3 mb-3">
-                        <div class="eqp-card">
-                            <div class="eqp-card-header @(eqp.InProcess.Any() ? "header-active" : "header-idle")">
+                        <div class="eqp-card" data-eqp-name="@eqp.EqpName" data-eqp-type="@typeGroup.Key">
+                            <div class="eqp-card-header @(eqp.InProcess.Any() ? "header-active" : "header-idle")" id="header-@eqp.EqpName">
                                 <span class="eqp-name">@eqp.EqpName</span>
                             </div>
                             @{
@@ -106,28 +106,28 @@
                                 <tbody>
                                     <tr class="row-p">
                                         <td class="label-cell label-p">P</td>
-                                        <td class="ppid-cell">@pPpid</td>
-                                        <td class="qty-cell">@(pQty > 0 ? pQty.ToString() : "")</td>
+                                        <td class="ppid-cell" id="p-ppid-@eqp.EqpName">@pPpid</td>
+                                        <td class="qty-cell" id="p-qty-@eqp.EqpName">@(pQty > 0 ? pQty.ToString() : "")</td>
                                     </tr>
                                     <tr class="row-c">
                                         <td class="label-cell label-c">C</td>
-                                        <td class="ppid-cell">@cPpid</td>
-                                        <td class="qty-cell">@(cQty > 0 ? cQty.ToString() : "")</td>
+                                        <td class="ppid-cell" id="c-ppid-@eqp.EqpName">@cPpid</td>
+                                        <td class="qty-cell" id="c-qty-@eqp.EqpName">@(cQty > 0 ? cQty.ToString() : "")</td>
                                     </tr>
                                     <tr class="row-n">
                                         <td class="label-cell label-n">N1</td>
-                                        <td class="ppid-cell">@n1Ppid</td>
-                                        <td class="qty-cell">@(n1Qty > 0 ? n1Qty.ToString() : "")</td>
+                                        <td class="ppid-cell" id="n1-ppid-@eqp.EqpName">@n1Ppid</td>
+                                        <td class="qty-cell" id="n1-qty-@eqp.EqpName">@(n1Qty > 0 ? n1Qty.ToString() : "")</td>
                                     </tr>
                                     <tr class="row-n">
                                         <td class="label-cell label-n">N2</td>
-                                        <td class="ppid-cell">@n2Ppid</td>
-                                        <td class="qty-cell">@(n2Qty > 0 ? n2Qty.ToString() : "")</td>
+                                        <td class="ppid-cell" id="n2-ppid-@eqp.EqpName">@n2Ppid</td>
+                                        <td class="qty-cell" id="n2-qty-@eqp.EqpName">@(n2Qty > 0 ? n2Qty.ToString() : "")</td>
                                     </tr>
                                     <tr class="row-n">
                                         <td class="label-cell label-n">N3</td>
-                                        <td class="ppid-cell">@n3Ppid</td>
-                                        <td class="qty-cell">@(n3Qty > 0 ? n3Qty.ToString() : "")</td>
+                                        <td class="ppid-cell" id="n3-ppid-@eqp.EqpName">@n3Ppid</td>
+                                        <td class="qty-cell" id="n3-qty-@eqp.EqpName">@(n3Qty > 0 ? n3Qty.ToString() : "")</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -332,6 +332,114 @@
                 filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>';
             });
         }
+
+        // 自動更新開始
+        startAutoRefresh();
     });
+
+    const AUTO_REFRESH_INTERVAL = @ViewData["AutoRefreshIntervalSeconds"] * 1000;
+    let autoRefreshTimer;
+
+    function getCurrentFilters() {
+        const typeCheckboxes = document.querySelectorAll('input[name="TypeFilter"]:checked');
+        const typeFilters = Array.from(typeCheckboxes).map(cb => cb.value);
+        const lineFilter = document.getElementById('lineFilter')?.value || '';
+        return { typeFilters, lineFilter };
+    }
+
+    async function refreshData() {
+        try {
+            const filters = getCurrentFilters();
+            const params = new URLSearchParams();
+            filters.typeFilters.forEach(t => params.append('TypeFilter', t));
+            if (filters.lineFilter) {
+                params.append('LineFilter', filters.lineFilter);
+            }
+            params.append('handler', 'Refresh');
+
+            const refreshUrl = '@Url.Page("/Dashboard")';
+            const response = await fetch(`${refreshUrl}?${params.toString()}`);
+
+            if (!response.ok) {
+                console.error('データの取得に失敗しました:', response.statusText);
+                return;
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                updateUI(result.data);
+                logRefreshResult(result.data);
+            }
+        } catch (error) {
+            console.error('自動更新エラー:', error);
+        }
+    }
+
+    function updateUI(equipmentsByType) {
+        for (const [typeKey, equipments] of Object.entries(equipmentsByType)) {
+            for (const eqp of equipments) {
+                const name = eqp.eqpName;
+
+                // ヘッダーの状態更新
+                const header = document.getElementById('header-' + name);
+                if (header) {
+                    const hasInProcess = eqp.inProcess && eqp.inProcess.length > 0;
+                    header.classList.remove('header-active', 'header-idle');
+                    header.classList.add(hasInProcess ? 'header-active' : 'header-idle');
+                }
+
+                // 各行の値を更新
+                updateRow('p', name, eqp.inProcess);
+                updateRow('c', name, eqp.waiting);
+                updateRow('n1', name, eqp.reserved1);
+                updateRow('n2', name, eqp.reserved2);
+                updateRow('n3', name, eqp.reserved3);
+            }
+        }
+    }
+
+    function updateRow(prefix, eqpName, items) {
+        const ppidEl = document.getElementById(prefix + '-ppid-' + eqpName);
+        const qtyEl = document.getElementById(prefix + '-qty-' + eqpName);
+        if (!ppidEl || !qtyEl) return;
+
+        const ppid = (items && items.length > 0) ? (items[0].ppid || '') : '';
+        const qty = (items && items.length > 0) ? items.reduce((sum, i) => sum + (i.qty || 0), 0) : 0;
+
+        ppidEl.textContent = ppid;
+        qtyEl.textContent = qty > 0 ? qty.toString() : '';
+    }
+
+    function summarizeRow(items) {
+        if (!items || items.length === 0) return '-';
+        const ppid = items[0].ppid || '-';
+        const qty = items.reduce((s, i) => s + (i.qty || 0), 0);
+        return ppid + ' (' + qty + ')';
+    }
+
+    function logRefreshResult(equipmentsByType) {
+        const now = new Date().toLocaleTimeString();
+        console.log('[Dashboard] データ更新 ' + now);
+        for (const [typeKey, equipments] of Object.entries(equipmentsByType)) {
+            for (const eqp of equipments) {
+                console.log(
+                    '  ' + eqp.eqpName +
+                    ' | P: ' + summarizeRow(eqp.inProcess) +
+                    ' | C: ' + summarizeRow(eqp.waiting) +
+                    ' | N1: ' + summarizeRow(eqp.reserved1) +
+                    ' | N2: ' + summarizeRow(eqp.reserved2) +
+                    ' | N3: ' + summarizeRow(eqp.reserved3)
+                );
+            }
+        }
+    }
+
+    function startAutoRefresh() {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+        }
+        autoRefreshTimer = setInterval(refreshData, AUTO_REFRESH_INTERVAL);
+        console.log('自動更新を開始しました（' + (@ViewData["AutoRefreshIntervalSeconds"]) + '秒間隔）');
+    }
 </script>
 }

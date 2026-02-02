@@ -31,6 +31,7 @@ public class DashboardModel : PageModel
 
     public async Task OnGetAsync()
     {
+        ViewData["AutoRefreshIntervalSeconds"] = _configuration.GetValue<int>("Dashboard:AutoRefreshIntervalSeconds", 30);
         await LoadProgressData();
     }
 
