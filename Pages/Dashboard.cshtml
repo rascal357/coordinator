@@ -1,445 +1,476 @@
 @page
 @model DashboardModel
+@using Microsoft.AspNetCore.Html
 @{
     ViewData["Title"] = "Dashboard";
+
+    var eqpMap = Model.EquipmentByName;
+
+    // タイプ別装置名リスト (画像のレイアウト順)
+    var eqpHiTempPyro      = new[] { "DVETD05","DVETD30","DVETD31","DVETD41","DVETD42","DVETD43","DVETD44","DVETD45","DVETD60","DVETD65","DVETD70","DVETD85" };
+    var eqpVdfBaox         = new[] { "DVETD79" };
+    var eqpOnoOx           = new[] { "DVETD81" };
+    var eqpHiTempDryPre    = new[] { "DVETD48","DVETD55","DVETD56","DVETD57","DVETD71","DVETD73" };
+    var eqpHiTempDryPost   = new[] { "DVETD53","DVETD54","DVETD62","DVETD67","DVETD75","DVETD76","DVETD77","DVETD82" };
+    var eqpShiTempPyro     = new[] { "DVETD49","DVETD87","DVETD88","DVETV57" };
+    var eqpShiTempDryVhvic = new[] { "DVETD04","DVETD83" };
+    var eqpPyroGate        = new[] { "DVETD27","DVETD28","DVETD66","DVETD80","DVETD84" };
+    var eqpFramPyroGate    = new[] { "DVETD59" };
+    var eqpVcfDasiOn       = new[] { "DVETC07","DVETC27","DVETC33","DVETC35","DVETC36","DVETC38","DVETC51","DVETC52","DVETC68","DVETC74" };
+    var eqpIgbtDasi        = new[] { "DVETC77" };
+    var eqpVcfPoly         = new[] { "DVETC37","DVETC53","DVETC71" };
+    var eqpOnoSin          = new[] { "DVETC54","DVETC61","DVETC70" };
+    var eqpIsoSin          = new[] { "DVETC55","DVETC56" };
+    var eqpVcfHto          = new[] { "DVETC57","DVETC59" };
+    var eqpVcfHtoOno       = new[] { "DVETC63" };
+    var eqpGSio            = new[] { "DVETC25","DVETC28","DVETC40","DVETC60" };
+    var eqpVcfTeos         = new[] { "DVETC26","DVETC31","DVETC32","DVETC34","DVETC39" };
+
+    // 装置カードレンダリング関数
+    HtmlString Card(string n)
+    {
+        eqpMap.TryGetValue(n, out var e);
+        var ip = e?.InProcess.Count ?? 0;
+        var wt = e?.Waiting.Count ?? 0;
+        var r1 = e?.Reserved1.Count ?? 0;
+        var r2 = e?.Reserved2.Count ?? 0;
+        var r3 = e?.Reserved3.Count ?? 0;
+        var et = System.Net.WebUtility.HtmlEncode(e?.InProcess.FirstOrDefault()?.EndTime ?? "");
+        return new HtmlString(
+            "<div class=\"eqp-card\">" +
+            "<div class=\"eqp-top-row\">" +
+            "<div class=\"eqp-cell-a\" id=\"cell-a-" + n + "\">" + (ip > 0 ? ip.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
+            "</div>" +
+            "<div class=\"eqp-endtime-row\" id=\"cell-f-" + n + "\">" + et + "</div>" +
+            "<div class=\"eqp-reserve-row\">" +
+            "<div class=\"eqp-cell-g\"></div>" +
+            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
+            "</div>" +
+            "<div class=\"eqp-name-row\" id=\"cell-h-" + n + "\">" + n + "</div>" +
+            "</div>"
+        );
+    }
 }
 
-<div class="container-fluid px-4 py-3">
-    <!-- Header -->
-    <div class="page-header mb-4">
-        <div class="d-flex align-items-center">
-            <div class="header-icon me-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/>
-                </svg>
-            </div>
-            <div>
-                <h1 class="page-title mb-0">Dashboard</h1>
-                <p class="page-subtitle mb-0">装置状態一覧</p>
-            </div>
-        </div>
+<div class="dash-wrapper">
+    <!-- ヘッダー -->
+    <div class="dash-header">
+        <span class="dash-title">Dashboard</span>
+        <span class="dash-sub">装置状態一覧</span>
     </div>
 
-    <!-- Filters -->
-    <div class="filter-card mb-4">
-        <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="mb-0 fw-semibold d-flex align-items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                        <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
-                    </svg>
-                    フィルター
-                </h5>
-                <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" id="filterToggleIcon" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="collapse" id="filterCollapse">
-                <form method="get" class="row g-3 align-items-end" id="filterForm">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">TYPE (複数選択可)</label>
-                        <div class="filter-type-box">
-                            @foreach (var type in Model.Types)
-                            {
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="TypeFilter" value="@type" id="type-@type"
-                                           checked="@(Model.TypeFilter?.Contains(type) == true)"
-                                           onchange="document.getElementById('filterForm').submit()">
-                                    <label class="form-check-label" for="type-@type">@type</label>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="lineFilter" class="form-label fw-semibold">LINE</label>
-                        <select id="lineFilter" name="LineFilter" class="form-select modern-select" onchange="this.form.submit()">
-                            <option value="">すべて</option>
-                            @foreach (var line in Model.Lines)
-                            {
-                                <option value="@line" selected="@(Model.LineFilter == line)">@line</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-5 d-flex align-items-end gap-2">
-                        <a asp-page="/Dashboard" class="btn btn-modern btn-secondary flex-fill">クリア</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- メインエリア (グリッド + フィルターパネル) -->
+    <div class="dash-body">
 
-    <!-- Equipment Cards by TYPE -->
-    @foreach (var typeGroup in Model.EquipmentsByType)
-    {
-        <div class="mb-4">
-            <h4 class="fw-bold mb-3 type-header">@typeGroup.Key</h4>
-            <div class="row">
-                @foreach (var eqp in typeGroup.Value)
-                {
-                    <div class="col-md-3 mb-3">
-                        <div class="eqp-card" data-eqp-name="@eqp.EqpName" data-eqp-type="@typeGroup.Key">
-                            <div class="eqp-card-header @(eqp.InProcess.Any() ? "header-active" : "header-idle")" id="header-@eqp.EqpName">
-                                <span class="eqp-name">@eqp.EqpName</span>
-                            </div>
-                            @{
-                                var pPpid = eqp.InProcess.FirstOrDefault()?.PPID ?? "";
-                                var pQty = eqp.InProcess.Sum(i => i.Qty);
-                                var cPpid = eqp.Waiting.FirstOrDefault()?.PPID ?? "";
-                                var cQty = eqp.Waiting.Sum(i => i.Qty);
-                                var n1Ppid = eqp.Reserved1.FirstOrDefault()?.PPID ?? "";
-                                var n1Qty = eqp.Reserved1.Sum(i => i.Qty);
-                                var n2Ppid = eqp.Reserved2.FirstOrDefault()?.PPID ?? "";
-                                var n2Qty = eqp.Reserved2.Sum(i => i.Qty);
-                                var n3Ppid = eqp.Reserved3.FirstOrDefault()?.PPID ?? "";
-                                var n3Qty = eqp.Reserved3.Sum(i => i.Qty);
-                            }
-                            <table class="eqp-table">
-                                <thead>
-                                    <tr>
-                                        <th class="label-col"></th>
-                                        <th class="ppid-col">PPID</th>
-                                        <th class="qty-col">Qty</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="row-p">
-                                        <td class="label-cell label-p">P</td>
-                                        <td class="ppid-cell" id="p-ppid-@eqp.EqpName">@pPpid</td>
-                                        <td class="qty-cell" id="p-qty-@eqp.EqpName">@(pQty > 0 ? pQty.ToString() : "")</td>
-                                    </tr>
-                                    <tr class="row-c">
-                                        <td class="label-cell label-c">C</td>
-                                        <td class="ppid-cell" id="c-ppid-@eqp.EqpName">@cPpid</td>
-                                        <td class="qty-cell" id="c-qty-@eqp.EqpName">@(cQty > 0 ? cQty.ToString() : "")</td>
-                                    </tr>
-                                    <tr class="row-n">
-                                        <td class="label-cell label-n">N1</td>
-                                        <td class="ppid-cell" id="n1-ppid-@eqp.EqpName">@n1Ppid</td>
-                                        <td class="qty-cell" id="n1-qty-@eqp.EqpName">@(n1Qty > 0 ? n1Qty.ToString() : "")</td>
-                                    </tr>
-                                    <tr class="row-n">
-                                        <td class="label-cell label-n">N2</td>
-                                        <td class="ppid-cell" id="n2-ppid-@eqp.EqpName">@n2Ppid</td>
-                                        <td class="qty-cell" id="n2-qty-@eqp.EqpName">@(n2Qty > 0 ? n2Qty.ToString() : "")</td>
-                                    </tr>
-                                    <tr class="row-n">
-                                        <td class="label-cell label-n">N3</td>
-                                        <td class="ppid-cell" id="n3-ppid-@eqp.EqpName">@n3Ppid</td>
-                                        <td class="qty-cell" id="n3-qty-@eqp.EqpName">@(n3Qty > 0 ? n3Qty.ToString() : "")</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                }
+        <!-- 14列固定グリッド -->
+        <div class="type-grid">
+
+            <!-- ===== Row 1: Hi_temp_Pyro | VDF_BAOX | ONO_OX ===== -->
+
+            <div class="type-group" id="grp-HiTempPyro" data-line="A" style="grid-column:1/13;grid-row:1">
+                <div class="type-hdr"><span>Hi temp Pyro</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpHiTempPyro) { @Card(n) }</div>
             </div>
+
+            <div class="type-group" id="grp-VdfBaox" data-line="A" style="grid-column:13/14;grid-row:1">
+                <div class="type-hdr"><span>VDF_BAOX</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpVdfBaox) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-OnoOx" data-line="A" style="grid-column:14/15;grid-row:1">
+                <div class="type-hdr"><span>ONO_OX</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpOnoOx) { @Card(n) }</div>
+            </div>
+
+            <!-- ===== Row 2: Hi_Temp_Dry_Pre | Hi_temp_Dry_Post ===== -->
+
+            <div class="type-group" id="grp-HiTempDryPre" data-line="A" style="grid-column:1/7;grid-row:2">
+                <div class="type-hdr"><span>Hi Temp Dry Pre</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpHiTempDryPre) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-HiTempDryPost" data-line="A" style="grid-column:7/15;grid-row:2">
+                <div class="type-hdr"><span>Hi_temp Dry Post</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpHiTempDryPost) { @Card(n) }</div>
+            </div>
+
+            <!-- ===== Row 3: S_hi_temp_Pyro | S_hi_temp_Dry_VHVIC | Pyro_Gate | FRAM_Pyro_Gate ===== -->
+
+            <div class="type-group" id="grp-ShiTempPyro" data-line="A" style="grid-column:1/5;grid-row:3">
+                <div class="type-hdr"><span>S hi_temp Pyro</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpShiTempPyro) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-ShiTempDryVhvic" data-line="A" style="grid-column:5/7;grid-row:3">
+                <div class="type-hdr"><span>S hi_temp Dry VHVIC</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpShiTempDryVhvic) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-PyroGate" data-line="A" style="grid-column:7/12;grid-row:3">
+                <div class="type-hdr"><span>Pyro Gate</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpPyroGate) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-FramPyroGate" data-line="A" style="grid-column:12/13;grid-row:3">
+                <div class="type-hdr"><span>FRAM Pyro Gate</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpFramPyroGate) { @Card(n) }</div>
+            </div>
+
+            <!-- ===== Row 4: VCF_DASI_ON | IGBT_DASI ===== -->
+
+            <div class="type-group" id="grp-VcfDasiOn" data-line="B" style="grid-column:1/11;grid-row:4">
+                <div class="type-hdr"><span>VCF_DASI_ON</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpVcfDasiOn) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-IgbtDasi" data-line="B" style="grid-column:11/12;grid-row:4">
+                <div class="type-hdr"><span>IGBT/DASI</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpIgbtDasi) { @Card(n) }</div>
+            </div>
+
+            <!-- ===== Row 5: VCF_POLY | ONO_SIN | ISO_SIN | VCF_HTO | VCF_HTO_ONO ===== -->
+
+            <div class="type-group" id="grp-VcfPoly" data-line="B" style="grid-column:1/4;grid-row:5">
+                <div class="type-hdr"><span>VCF_POLY</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpVcfPoly) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-OnoSin" data-line="B" style="grid-column:4/7;grid-row:5">
+                <div class="type-hdr"><span>ONO_SIN</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpOnoSin) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-IsoSin" data-line="B" style="grid-column:7/9;grid-row:5">
+                <div class="type-hdr"><span>ISO_SIN</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpIsoSin) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-VcfHto" data-line="B" style="grid-column:9/11;grid-row:5">
+                <div class="type-hdr"><span>VCF_HTO</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpVcfHto) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-VcfHtoOno" data-line="B" style="grid-column:11/12;grid-row:5">
+                <div class="type-hdr"><span>VCF_HTO_ONO</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpVcfHtoOno) { @Card(n) }</div>
+            </div>
+
+            <!-- ===== Row 6: G_SIO | VCF_TEOS ===== -->
+
+            <div class="type-group" id="grp-GSio" data-line="B" style="grid-column:1/5;grid-row:6">
+                <div class="type-hdr"><span>G_SIO</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpGSio) { @Card(n) }</div>
+            </div>
+
+            <div class="type-group" id="grp-VcfTeos" data-line="B" style="grid-column:5/10;grid-row:6">
+                <div class="type-hdr"><span>VCF_TEOS</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
+                <div class="type-eqps">@foreach (var n in eqpVcfTeos) { @Card(n) }</div>
+            </div>
+
+        </div><!-- /type-grid -->
+
+        <!-- フィルターパネル -->
+        <div class="filter-panel">
+            <div class="fp-title">フィルター</div>
+            <label class="fp-item"><input type="checkbox" id="filterA" checked onchange="applyLineFilter()"> A-LINE</label>
+            <label class="fp-item"><input type="checkbox" id="filterB" checked onchange="applyLineFilter()"> B-LINE</label>
         </div>
-    }
+
+    </div><!-- /dash-body -->
 </div>
 
 <style>
-    :root {
-        --primary-color: #0d6efd;
-        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-        --transition-speed: 0.2s;
-    }
+    * { box-sizing: border-box; }
 
     body {
-        background: #f8f9fa;
-        min-height: 100vh;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
     }
 
-    .page-header {
-        background: #0d6efd;
-        border-radius: 8px;
-        padding: 1.5rem 2rem;
-        box-shadow: var(--card-shadow);
-        color: white;
+    .dash-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 4px;
+        gap: 4px;
     }
 
-    .header-icon {
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        padding: 0.5rem;
+    /* ヘッダー */
+    .dash-header {
+        background: #1565c0;
+        color: #fff;
+        padding: 3px 10px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .dash-title { font-size: 1rem; font-weight: 700; }
+    .dash-sub   { font-size: 0.75rem; opacity: 0.85; }
+
+    /* メインエリア */
+    .dash-body {
+        display: flex;
+        gap: 4px;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
     }
 
-    .page-title {
-        font-size: 1.75rem;
-        font-weight: 600;
+    /* 14列グリッド */
+    .type-grid {
+        display: grid;
+        grid-template-columns: repeat(14, 1fr);
+        grid-template-rows: repeat(6, auto);
+        gap: 3px;
+        flex: 1;
+        min-width: 0;
+        align-content: start;
     }
 
-    .page-subtitle {
-        opacity: 0.95;
-        font-size: 0.95rem;
+    /* タイプグループ (ボーダー囲み) */
+    .type-group {
+        border: 2px solid #444;
+        background: #fff;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .type-group.yuu-active {
+        border: 3px solid #e00000 !important;
+    }
+    .type-group.line-hidden {
+        visibility: hidden;
     }
 
-    .filter-card {
-        background: white;
-        border-radius: 8px;
-        box-shadow: var(--card-shadow);
-        padding: 1.5rem;
-        border: 1px solid #dee2e6;
+    /* タイプヘッダー */
+    .type-hdr {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1px 3px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        background: #ccc;
+        border-bottom: 1px solid #555;
+        white-space: nowrap;
+        overflow: hidden;
+        line-height: 1.3;
+    }
+    .type-hdr > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .filter-type-box {
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 1rem;
-        max-height: 150px;
-        overflow-y: auto;
-        background: #f8f9fa;
-    }
-
-    .modern-select {
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 0.5rem 0.75rem;
-    }
-
-    .btn-modern {
-        border-radius: 6px;
-        padding: 0.5rem 1.25rem;
-        font-weight: 500;
-        border: none;
-    }
-
-    .btn-modern.btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .type-header {
+    /* 優チェックボックスラベル */
+    .yuu-label {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-left: 2px;
         color: #333;
-        border-bottom: 2px solid #0d6efd;
-        padding-bottom: 0.5rem;
+    }
+    .yuu-chk {
+        width: 11px;
+        height: 11px;
+        cursor: pointer;
+        accent-color: #e00000;
     }
 
-    /* Equipment Card - matches dashboard.png */
+    /* 装置カード列 */
+    .type-eqps {
+        display: flex;
+        gap: 1px;
+        padding: 1px;
+        flex-wrap: nowrap;
+    }
+
+    /* 装置カード */
     .eqp-card {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid #444;
         background: #fff;
-        border: none;
-        border-radius: 0;
-        padding: 10px;
     }
 
-    .eqp-card-header {
-        padding: 6px 12px;
+    .eqp-top-row {
+        display: flex;
+        border-bottom: 1px solid #444;
+    }
+
+    .eqp-cell-a {
+        flex: 1;
+        background: #4CAF50;
         text-align: center;
-        border: 2px solid #555;
-        margin-bottom: 6px;
-    }
-
-    .eqp-card-header.header-active {
-        background: #a8d86e;
-    }
-
-    .eqp-card-header.header-idle {
-        background: #fff;
-    }
-
-    .eqp-name {
-        font-size: 1.15rem;
+        font-size: 0.85rem;
         font-weight: 700;
+        height: 28px;
+        line-height: 28px;
+        border-right: 1px solid #444;
+        color: #000;
+    }
+    .eqp-cell-b {
+        flex: 1;
+        background: #4CAF50;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        height: 28px;
+        line-height: 28px;
         color: #000;
     }
 
-    /* Equipment Table */
-    .eqp-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-        border: 1px solid #555;
-    }
-
-    .eqp-table thead th {
-        background: #fff;
-        border: 1px solid #555;
-        padding: 3px 8px;
-        font-weight: 600;
+    .eqp-endtime-row {
+        text-align: center;
+        font-size: 0.6rem;
+        border-bottom: 1px solid #444;
+        height: 14px;
+        line-height: 14px;
         color: #333;
+        overflow: hidden;
     }
 
-    .eqp-table tbody td {
-        border: 1px solid #555;
-        padding: 4px 8px;
+    .eqp-reserve-row {
+        display: flex;
+        border-bottom: 1px solid #444;
     }
-
-    .label-col {
-        width: 36px;
+    .eqp-cell-g {
+        flex: 1;
+        background: #fff;
+        border-right: 1px solid #444;
+        height: 20px;
+        line-height: 20px;
     }
-
-    .ppid-col {
-        width: auto;
-    }
-
-    .qty-col {
-        width: 55px;
-        text-align: right;
-    }
-
-    .label-cell {
-        font-weight: 700;
+    .eqp-cell-c,
+    .eqp-cell-d,
+    .eqp-cell-e {
+        flex: 1;
+        background: #FFC107;
         text-align: center;
+        font-weight: 700;
+        font-size: 0.75rem;
         color: #000;
+        border-right: 1px solid #444;
+        height: 20px;
+        line-height: 20px;
+    }
+    .eqp-cell-e { border-right: none; }
+
+    .eqp-name-row {
+        text-align: center;
+        padding: 0 1px;
+        font-weight: 700;
+        font-size: 0.55rem;
+        color: #000;
+        height: 14px;
+        line-height: 14px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
-    .label-p {
-        background: #c8f0a8;
+    /* フィルターパネル */
+    .filter-panel {
+        width: 90px;
+        flex-shrink: 0;
+        border: 2px solid #666;
+        background: #f5f5f5;
+        padding: 6px;
+        align-self: flex-start;
     }
-
-    .label-c {
-        background: #c8f0a8;
+    .fp-title {
+        font-weight: 700;
+        margin-bottom: 6px;
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 2px;
+        font-size: 0.75rem;
     }
-
-    .label-n {
-        background: #fde68a;
-    }
-
-    .row-p .ppid-cell, .row-p .qty-cell {
-        background: #e0f5d0;
-    }
-
-    .row-c .ppid-cell, .row-c .qty-cell {
-        background: #e0f5d0;
-    }
-
-    .row-n .ppid-cell, .row-n .qty-cell {
-        background: #fef3c7;
-    }
-
-    .ppid-cell {
-        background: inherit;
-    }
-
-    .qty-cell {
-        text-align: right;
-        background: inherit;
+    .fp-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        margin-bottom: 4px;
+        font-size: 0.75rem;
     }
 </style>
 
 @section Scripts {
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var filterCollapse = document.getElementById('filterCollapse');
-        var filterToggleIcon = document.getElementById('filterToggleIcon');
-        if (filterCollapse && filterToggleIcon) {
-            filterCollapse.addEventListener('show.bs.collapse', function() {
-                filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>';
-            });
-            filterCollapse.addEventListener('hide.bs.collapse', function() {
-                filterToggleIcon.innerHTML = '<path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>';
-            });
-        }
+    // 優チェックボックス: ONで赤ボーダー表示
+    function toggleYuu(checkbox) {
+        const grp = checkbox.closest('.type-group');
+        if (grp) grp.classList.toggle('yuu-active', checkbox.checked);
+    }
 
-        // 自動更新開始
-        startAutoRefresh();
-    });
+    // LINEフィルター: 非選択LINEのグループを非表示
+    function applyLineFilter() {
+        const showA = document.getElementById('filterA').checked;
+        const showB = document.getElementById('filterB').checked;
+        document.querySelectorAll('.type-group').forEach(grp => {
+            const line = grp.getAttribute('data-line');
+            const hidden = (line === 'A' && !showA) || (line === 'B' && !showB);
+            grp.classList.toggle('line-hidden', hidden);
+        });
+    }
+
+    // 自動更新
+    document.addEventListener('DOMContentLoaded', () => startAutoRefresh());
 
     const AUTO_REFRESH_INTERVAL = @ViewData["AutoRefreshIntervalSeconds"] * 1000;
     let autoRefreshTimer;
 
-    function getCurrentFilters() {
-        const typeCheckboxes = document.querySelectorAll('input[name="TypeFilter"]:checked');
-        const typeFilters = Array.from(typeCheckboxes).map(cb => cb.value);
-        const lineFilter = document.getElementById('lineFilter')?.value || '';
-        return { typeFilters, lineFilter };
-    }
-
     async function refreshData() {
         try {
-            const filters = getCurrentFilters();
-            const params = new URLSearchParams();
-            filters.typeFilters.forEach(t => params.append('TypeFilter', t));
-            if (filters.lineFilter) {
-                params.append('LineFilter', filters.lineFilter);
-            }
-            params.append('handler', 'Refresh');
-
-            const refreshUrl = '@Url.Page("/Dashboard")';
-            const response = await fetch(`${refreshUrl}?${params.toString()}`);
-
-            if (!response.ok) {
-                console.error('データの取得に失敗しました:', response.statusText);
-                return;
-            }
-
-            const result = await response.json();
-            if (result.success) {
-                updateUI(result.data);
-                logRefreshResult(result.data);
-            }
-        } catch (error) {
-            console.error('自動更新エラー:', error);
-        }
+            const params = new URLSearchParams({ handler: 'Refresh' });
+            const res = await fetch('@Url.Page("/Dashboard")?' + params.toString());
+            if (!res.ok) return;
+            const result = await res.json();
+            if (result.success) { updateUI(result.data); logRefreshResult(result.data); }
+        } catch (e) { console.error('自動更新エラー:', e); }
     }
+
+    function countItems(items) { return (items && items.length > 0) ? items.length : 0; }
 
     function updateUI(equipmentsByType) {
-        for (const [typeKey, equipments] of Object.entries(equipmentsByType)) {
+        for (const [, equipments] of Object.entries(equipmentsByType)) {
             for (const eqp of equipments) {
-                const name = eqp.eqpName;
-
-                // ヘッダーの状態更新
-                const header = document.getElementById('header-' + name);
-                if (header) {
-                    const hasInProcess = eqp.inProcess && eqp.inProcess.length > 0;
-                    header.classList.remove('header-active', 'header-idle');
-                    header.classList.add(hasInProcess ? 'header-active' : 'header-idle');
-                }
-
-                // 各行の値を更新
-                updateRow('p', name, eqp.inProcess);
-                updateRow('c', name, eqp.waiting);
-                updateRow('n1', name, eqp.reserved1);
-                updateRow('n2', name, eqp.reserved2);
-                updateRow('n3', name, eqp.reserved3);
+                const n = eqp.eqpName;
+                const set = (id, cnt) => { const el = document.getElementById(id); if (el) el.textContent = cnt > 0 ? cnt.toString() : ''; };
+                set('cell-a-' + n, countItems(eqp.inProcess));
+                set('cell-b-' + n, countItems(eqp.waiting));
+                set('cell-c-' + n, countItems(eqp.reserved1));
+                set('cell-d-' + n, countItems(eqp.reserved2));
+                set('cell-e-' + n, countItems(eqp.reserved3));
+                const ef = document.getElementById('cell-f-' + n);
+                if (ef) ef.textContent = (eqp.inProcess && eqp.inProcess.length > 0) ? (eqp.inProcess[0].endTime || '') : '';
             }
         }
-    }
-
-    function updateRow(prefix, eqpName, items) {
-        const ppidEl = document.getElementById(prefix + '-ppid-' + eqpName);
-        const qtyEl = document.getElementById(prefix + '-qty-' + eqpName);
-        if (!ppidEl || !qtyEl) return;
-
-        const ppid = (items && items.length > 0) ? (items[0].ppid || '') : '';
-        const qty = (items && items.length > 0) ? items.reduce((sum, i) => sum + (i.qty || 0), 0) : 0;
-
-        ppidEl.textContent = ppid;
-        qtyEl.textContent = qty > 0 ? qty.toString() : '';
-    }
-
-    function summarizeRow(items) {
-        if (!items || items.length === 0) return '-';
-        const ppid = items[0].ppid || '-';
-        const qty = items.reduce((s, i) => s + (i.qty || 0), 0);
-        return ppid + ' (' + qty + ')';
     }
 
     function logRefreshResult(equipmentsByType) {
         const now = new Date().toLocaleTimeString();
         console.log('[Dashboard] データ更新 ' + now);
-        for (const [typeKey, equipments] of Object.entries(equipmentsByType)) {
+        for (const [, equipments] of Object.entries(equipmentsByType)) {
             for (const eqp of equipments) {
-                console.log(
-                    '  ' + eqp.eqpName +
-                    ' | P: ' + summarizeRow(eqp.inProcess) +
-                    ' | C: ' + summarizeRow(eqp.waiting) +
-                    ' | N1: ' + summarizeRow(eqp.reserved1) +
-                    ' | N2: ' + summarizeRow(eqp.reserved2) +
-                    ' | N3: ' + summarizeRow(eqp.reserved3)
-                );
+                console.log('  ' + eqp.eqpName + ' A:' + countItems(eqp.inProcess) + ' B:' + countItems(eqp.waiting));
             }
         }
     }
 
     function startAutoRefresh() {
-        if (autoRefreshTimer) {
-            clearInterval(autoRefreshTimer);
-        }
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
         autoRefreshTimer = setInterval(refreshData, AUTO_REFRESH_INTERVAL);
-        console.log('自動更新を開始しました（' + (@ViewData["AutoRefreshIntervalSeconds"]) + '秒間隔）');
+        console.log('自動更新開始（' + (@ViewData["AutoRefreshIntervalSeconds"]) + '秒間隔）');
     }
 </script>
 }

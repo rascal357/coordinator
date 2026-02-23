@@ -20,6 +20,7 @@ public class DashboardModel : PageModel
     }
 
     public Dictionary<string, List<EquipmentProgressViewModel>> EquipmentsByType { get; set; } = new();
+    public Dictionary<string, EquipmentProgressViewModel> EquipmentByName { get; set; } = new();
     public List<string> Types { get; set; } = new();
     public List<string> Lines { get; set; } = new();
 
@@ -151,6 +152,10 @@ public class DashboardModel : PageModel
 
             EquipmentsByType[group.Key] = equipmentList;
         }
+
+        EquipmentByName = EquipmentsByType.Values
+            .SelectMany(v => v)
+            .ToDictionary(e => e.EqpName, e => e);
     }
 
     private List<List<DcActl>> GroupByTimeWindow(List<DcActl> actls, TimeSpan window)
