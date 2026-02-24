@@ -383,7 +383,6 @@
                                 <th colspan="2">Step 4</th>
                             </tr>
                             <tr>
-                                <th>PPID</th>
                                 <th>EqpId</th>
                                 <th>PPID</th>
                                 <th>EqpId</th>
@@ -391,6 +390,7 @@
                                 <th>EqpId</th>
                                 <th>PPID</th>
                                 <th>EqpId</th>
+                                <th>PPID</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -402,6 +402,17 @@
                                     <td id="qty-@index"><strong>@lotStep.Qty</strong></td>
                                     @for (int step = 1; step <= 4; step++)
                                     {
+                                        <td id="step@(step)-eqp-@index">
+                                            <select name="eqpid_@(lotStep.LotId)_@(step)"
+                                                    id="eqpid_@(lotStep.LotId)_@(step)"
+                                                    class="form-select eqpid-select"
+                                                    data-lotid="@lotStep.LotId"
+                                                    data-carrier="@lotStep.Carrier"
+                                                    data-step="@step"
+                                                    onchange="updatePpidOptions(this)">
+                                                <option value="">選択してください</option>
+                                            </select>
+                                        </td>
                                         <td id="step@(step)-ppid-@index">
                                             <select name="ppid_@(lotStep.LotId)_@(step)"
                                                     id="ppid_@(lotStep.LotId)_@(step)"
@@ -409,17 +420,7 @@
                                                     data-lotid="@lotStep.LotId"
                                                     data-carrier="@lotStep.Carrier"
                                                     data-step="@step"
-                                                    onchange="updateEqpIdOptions(this)">
-                                                <option value="">選択してください</option>
-                                            </select>
-                                        </td>
-                                        <td id="step@(step)-eqp-@index">
-                                            <select name="eqpid_@(lotStep.LotId)_@(step)"
-                                                    id="eqpid_@(lotStep.LotId)_@(step)"
-                                                    class="form-select eqpid-select"
-                                                    data-lotid="@lotStep.LotId"
-                                                    data-carrier="@lotStep.Carrier"
-                                                    data-step="@step">
+                                                    disabled>
                                                 <option value="">選択してください</option>
                                             </select>
                                         </td>
@@ -509,92 +510,98 @@
 
             // For each step (1-4)
             for (let step = 1; step <= 4; step++) {
-                const ppidSelect = document.getElementById(`ppid_${lotId}_${step}`);
                 const eqpIdSelect = document.getElementById(`eqpid_${lotId}_${step}`);
+                const ppidSelect = document.getElementById(`ppid_${lotId}_${step}`);
 
-                if (!ppidSelect || !eqpIdSelect) continue;
+                if (!eqpIdSelect || !ppidSelect) continue;
 
                 const stepData = lotData[step] || [];
 
                 if (stepData.length === 0) {
                     // No data for this step, disable both dropdowns
-                    ppidSelect.disabled = true;
                     eqpIdSelect.disabled = true;
+                    ppidSelect.disabled = true;
                     continue;
                 }
 
-                // Get unique PPIDs for this step
-                const uniquePPIDs = [...new Set(stepData.map(item => item.PPID))];
+                // Get unique EqpIds for this step
+                const uniqueEqpIds = [...new Set(stepData.map(item => item.EqpId))];
 
-                // Populate PPID dropdown
-                uniquePPIDs.forEach(ppid => {
+                // Populate EqpId dropdown
+                uniqueEqpIds.forEach(eqpId => {
                     const option = document.createElement('option');
-                    option.value = ppid;
-                    option.textContent = ppid;
-                    ppidSelect.appendChild(option);
+                    option.value = eqpId;
+                    option.textContent = eqpId;
+                    eqpIdSelect.appendChild(option);
                 });
 
                 // Store all step data as data attribute for later use
-                ppidSelect.setAttribute('data-step-options', JSON.stringify(stepData));
+                eqpIdSelect.setAttribute('data-step-options', JSON.stringify(stepData));
+
+                // PPID starts disabled until EqpId is selected
+                ppidSelect.disabled = true;
+
+                // Auto-select if only one EqpId option
+                if (uniqueEqpIds.length === 1) {
+                    eqpIdSelect.value = uniqueEqpIds[0];
+                    updatePpidOptions(eqpIdSelect);
+                }
             }
         });
     }
 
-    function updateEqpIdOptions(ppidSelect) {
-        const lotId = ppidSelect.getAttribute('data-lotid');
-        const carrier = ppidSelect.getAttribute('data-carrier');
-        const step = ppidSelect.getAttribute('data-step');
-        const selectedPPID = ppidSelect.value;
+    function updatePpidOptions(eqpIdSelect) {
+        const lotId = eqpIdSelect.getAttribute('data-lotid');
+        const step = eqpIdSelect.getAttribute('data-step');
+        const selectedEqpId = eqpIdSelect.value;
 
-        const eqpIdSelect = document.getElementById(`eqpid_${lotId}_${step}`);
+        const ppidSelect = document.getElementById(`ppid_${lotId}_${step}`);
 
-        if (!eqpIdSelect) return;
+        if (!ppidSelect) return;
 
         // Clear existing options
-        eqpIdSelect.innerHTML = '<option value="">選択してください</option>';
+        ppidSelect.innerHTML = '<option value="">選択してください</option>';
 
-        if (!selectedPPID) {
-            eqpIdSelect.disabled = true;
-            // Clear recipe info for this step
+        if (!selectedEqpId) {
+            ppidSelect.disabled = true;
             removeRecipeCard(lotId, step);
             return;
         }
 
         // Get step data
-        const stepDataStr = ppidSelect.getAttribute('data-step-options');
+        const stepDataStr = eqpIdSelect.getAttribute('data-step-options');
         if (!stepDataStr) return;
 
         const stepData = JSON.parse(stepDataStr);
 
-        // Filter EqpIds that match the selected PPID
-        const matchingEqpIds = stepData
-            .filter(item => item.PPID === selectedPPID)
-            .map(item => item.EqpId);
+        // Filter PPIDs that match the selected EqpId
+        const matchingPPIDs = stepData
+            .filter(item => item.EqpId === selectedEqpId)
+            .map(item => item.PPID);
 
-        // Get unique EqpIds
-        const uniqueEqpIds = [...new Set(matchingEqpIds)];
+        // Get unique PPIDs
+        const uniquePPIDs = [...new Set(matchingPPIDs)];
 
-        // Populate EqpId dropdown
-        uniqueEqpIds.forEach(eqpId => {
+        // Populate PPID dropdown
+        uniquePPIDs.forEach(ppid => {
             const option = document.createElement('option');
-            option.value = eqpId;
-            option.textContent = eqpId;
-            eqpIdSelect.appendChild(option);
+            option.value = ppid;
+            option.textContent = ppid;
+            ppidSelect.appendChild(option);
         });
 
-        eqpIdSelect.disabled = false;
+        ppidSelect.disabled = false;
 
-        // Auto-select if only one option
-        if (uniqueEqpIds.length === 1) {
-            eqpIdSelect.value = uniqueEqpIds[0];
-            // Fetch recipe info for auto-selected EqpId
-            fetchAndDisplayRecipeInfo(lotId, step, selectedPPID, uniqueEqpIds[0]);
+        // Auto-select if only one PPID option
+        if (uniquePPIDs.length === 1) {
+            ppidSelect.value = uniquePPIDs[0];
+            fetchAndDisplayRecipeInfo(lotId, step, uniquePPIDs[0], selectedEqpId);
         }
 
-        // Add event listener to EqpId select
-        eqpIdSelect.onchange = function() {
-            const selectedEqpId = this.value;
-            if (selectedEqpId && selectedEqpId !== '選択してください') {
+        // Add event listener to PPID select
+        ppidSelect.onchange = function() {
+            const selectedPPID = this.value;
+            if (selectedPPID) {
                 fetchAndDisplayRecipeInfo(lotId, step, selectedPPID, selectedEqpId);
             } else {
                 removeRecipeCard(lotId, step);
