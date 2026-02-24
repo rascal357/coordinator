@@ -36,24 +36,27 @@
         var r2 = e?.Reserved2.Count ?? 0;
         var r3 = e?.Reserved3.Count ?? 0;
         var et = System.Net.WebUtility.HtmlEncode(e?.InProcess.FirstOrDefault()?.EndTime ?? "");
+        var sc = System.Net.WebUtility.HtmlEncode(e?.Schedule ?? "");
         return new HtmlString(
             "<div class=\"eqp-card\">" +
             "<div class=\"eqp-top-row\">" +
-            "<div class=\"eqp-cell-a\" id=\"cell-a-" + n + "\">" + (ip > 0 ? ip.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-a\" id=\"cell-a-" + n + "\" onclick=\"showCarrierPopup('" + n + "','inProcess')\">" + (ip > 0 ? ip.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\" onclick=\"showCarrierPopup('" + n + "','waiting')\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
             "</div>" +
             "<div class=\"eqp-endtime-row\" id=\"cell-f-" + n + "\">" + et + "</div>" +
             "<div class=\"eqp-reserve-row\">" +
-            "<div class=\"eqp-cell-g\"></div>" +
-            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-g\" id=\"cell-g-" + n + "\">" + sc + "</div>" +
+            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved1')\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved2')\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved3')\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
             "</div>" +
-            "<div class=\"eqp-name-row\" id=\"cell-h-" + n + "\">" + n + "</div>" +
+            "<div class=\"eqp-name-row\" id=\"cell-h-" + n + "\" onclick=\"location.href='/WipLotList?EqpName=" + n + "'\">" + n + "</div>" +
             "</div>"
         );
     }
 }
+
+<form id="csrfForm" style="display:none;">@Html.AntiForgeryToken()</form>
 
 <div class="dash-wrapper">
     <!-- ヘッダー -->
@@ -180,6 +183,33 @@
         </div>
 
     </div><!-- /dash-body -->
+
+    <!-- キャリア詳細ポップアップ -->
+    <div class="cp-overlay" id="cp-overlay" onclick="closeCarrierPopup()"></div>
+    <div class="cp-modal" id="cp-modal">
+        <div class="cp-header">
+            <span class="cp-title" id="cp-title"></span>
+            <button class="cp-close" onclick="closeCarrierPopup()">×</button>
+        </div>
+        <div class="cp-body">
+            <table class="cp-table" id="cp-table">
+                <thead>
+                    <tr>
+                        <th>Carrier</th>
+                        <th>Lot</th>
+                        <th style="text-align:right;">Qty</th>
+                        <th>PPID</th>
+                        <th>Next</th>
+                        <th>Loc</th>
+                        <th>End</th>
+                    </tr>
+                </thead>
+                <tbody id="cp-tbody"></tbody>
+            </table>
+            <div class="cp-empty" id="cp-empty" style="display:none;">データなし</div>
+        </div>
+    </div>
+
 </div>
 
 <style>
@@ -216,8 +246,6 @@
 
     /* メインエリア */
     .dash-body {
-        display: flex;
-        gap: 4px;
         flex: 1;
         min-height: 0;
         overflow: hidden;
@@ -229,8 +257,7 @@
         grid-template-columns: repeat(14, 1fr);
         grid-template-rows: repeat(6, auto);
         gap: 3px;
-        flex: 1;
-        min-width: 0;
+        width: 100%;
         align-content: start;
     }
 
@@ -254,7 +281,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 1px 3px;
-        font-size: 0.6rem;
+        font-size: 0.7rem;
         font-weight: 700;
         background: #ccc;
         border-bottom: 1px solid #555;
@@ -272,7 +299,7 @@
         display: flex;
         align-items: center;
         gap: 1px;
-        font-size: 0.6rem;
+        font-size: 0.7rem;
         font-weight: 700;
         cursor: pointer;
         flex-shrink: 0;
@@ -289,8 +316,8 @@
     /* 装置カード列 */
     .type-eqps {
         display: flex;
-        gap: 1px;
-        padding: 1px;
+        gap: 4px;
+        padding: 3px;
         flex-wrap: nowrap;
     }
 
@@ -311,30 +338,32 @@
         flex: 1;
         background: #4CAF50;
         text-align: center;
-        font-size: 0.85rem;
+        font-size: 1rem;
         font-weight: 700;
-        height: 28px;
-        line-height: 28px;
+        height: 32px;
+        line-height: 32px;
         border-right: 1px solid #444;
         color: #000;
+        cursor: pointer;
     }
     .eqp-cell-b {
         flex: 1;
         background: #4CAF50;
         text-align: center;
-        font-size: 0.85rem;
+        font-size: 1rem;
         font-weight: 700;
-        height: 28px;
-        line-height: 28px;
+        height: 32px;
+        line-height: 32px;
         color: #000;
+        cursor: pointer;
     }
 
     .eqp-endtime-row {
         text-align: center;
-        font-size: 0.6rem;
+        font-size: 0.7rem;
         border-bottom: 1px solid #444;
-        height: 14px;
-        line-height: 14px;
+        height: 16px;
+        line-height: 16px;
         color: #333;
         overflow: hidden;
     }
@@ -347,8 +376,16 @@
         flex: 1;
         background: #fff;
         border-right: 1px solid #444;
-        height: 20px;
-        line-height: 20px;
+        height: 24px;
+        line-height: 24px;
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #fff;
+        overflow: hidden;
+    }
+    .eqp-cell-g:not(:empty) {
+        background: #e67e22;
     }
     .eqp-cell-c,
     .eqp-cell-d,
@@ -357,11 +394,12 @@
         background: #FFC107;
         text-align: center;
         font-weight: 700;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
         color: #000;
         border-right: 1px solid #444;
-        height: 20px;
-        line-height: 20px;
+        height: 24px;
+        line-height: 24px;
+        cursor: pointer;
     }
     .eqp-cell-e { border-right: none; }
 
@@ -369,23 +407,104 @@
         text-align: center;
         padding: 0 1px;
         font-weight: 700;
-        font-size: 0.55rem;
+        font-size: 0.65rem;
         color: #000;
-        height: 14px;
-        line-height: 14px;
+        height: 16px;
+        line-height: 16px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+        cursor: pointer;
+    }
+    .eqp-name-row:hover {
+        background: #ddd;
+        text-decoration: underline;
+    }
+
+    /* キャリア詳細ポップアップ */
+    .cp-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.45);
+        z-index: 1000;
+    }
+    .cp-modal {
+        display: none;
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        border: 2px solid #444;
+        border-radius: 4px;
+        z-index: 1001;
+        min-width: 520px;
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+    }
+    .cp-header {
+        background: #1565c0;
+        color: #fff;
+        padding: 5px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .cp-title { font-weight: 700; font-size: 0.9rem; }
+    .cp-close {
+        background: none; border: none; color: #fff;
+        font-size: 1.2rem; cursor: pointer; padding: 0 4px; line-height: 1;
+    }
+    .cp-body {
+        overflow-y: auto;
+        padding: 8px;
+    }
+    .cp-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+    }
+    .cp-table th {
+        background: #e0e0e0;
+        border: 1px solid #aaa;
+        padding: 3px 6px;
+        white-space: nowrap;
+    }
+    .cp-table td {
+        border: 1px solid #ddd;
+        padding: 2px 6px;
+        white-space: nowrap;
+    }
+    .cp-table tr:nth-child(even) td { background: #f9f9f9; }
+    .cp-empty {
+        text-align: center;
+        color: #999;
+        padding: 20px;
+        font-size: 0.8rem;
     }
 
     /* フィルターパネル */
     .filter-panel {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
         width: 90px;
-        flex-shrink: 0;
         border: 2px solid #666;
         background: #f5f5f5;
-        padding: 6px;
-        align-self: flex-start;
+        padding: 8px;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        border-radius: 4px;
+    }
+
+    /* グリッド下部がフィルターに隠れないよう余白 */
+    .type-grid {
+        padding-bottom: 90px;
     }
     .fp-title {
         font-weight: 700;
@@ -406,11 +525,47 @@
 
 @section Scripts {
 <script>
-    // 優チェックボックス: ONで赤ボーダー表示
+    // DB から読み込んだ優フラグ (grp-XXX の XXX 部分をキーとして使用)
+    const yuuTypes = new Set(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.YuuTypes)));
+
+    // 優チェックボックス: ONで赤ボーダー表示 + DBへ保存
     function toggleYuu(checkbox) {
         const grp = checkbox.closest('.type-group');
-        if (grp) grp.classList.toggle('yuu-active', checkbox.checked);
+        if (!grp) return;
+        grp.classList.toggle('yuu-active', checkbox.checked);
+        const typeName = grp.id.replace('grp-', '');
+        saveYuu(typeName, checkbox.checked ? 1 : 0);
     }
+
+    async function saveYuu(typeName, yuu) {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('typeName', typeName);
+            formData.append('yuu', yuu);
+            formData.append('__RequestVerificationToken', token);
+            await fetch('@Url.Page("/Dashboard", new { handler = "ToggleYuu" })', {
+                method: 'POST',
+                body: formData
+            });
+        } catch (e) {
+            console.error('優保存エラー:', e);
+        }
+    }
+
+    // ページロード時: DBの優フラグを反映
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.yuu-chk').forEach(chk => {
+            const grp = chk.closest('.type-group');
+            if (!grp) return;
+            const typeName = grp.id.replace('grp-', '');
+            if (yuuTypes.has(typeName)) {
+                chk.checked = true;
+                grp.classList.add('yuu-active');
+            }
+        });
+        startAutoRefresh();
+    });
 
     // LINEフィルター: 非選択LINEのグループを非表示
     function applyLineFilter() {
@@ -423,8 +578,71 @@
         });
     }
 
+    // 装置データキャッシュ (eqpName → EquipmentProgressViewModel)
+    let eqpData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.EquipmentByName,
+        new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+    ));
+
+    // キャリア詳細ポップアップ
+    const statusLabels = {
+        inProcess: 'In Process',
+        waiting:   'Waiting',
+        reserved1: 'Reserved 1',
+        reserved2: 'Reserved 2',
+        reserved3: 'Reserved 3'
+    };
+
+    function showCarrierPopup(eqpName, statusKey) {
+        const eqp = eqpData[eqpName];
+        const items = (eqp && eqp[statusKey]) ? eqp[statusKey] : [];
+
+        document.getElementById('cp-title').textContent = eqpName + '  ―  ' + (statusLabels[statusKey] || statusKey);
+
+        const tbody = document.getElementById('cp-tbody');
+        const empty = document.getElementById('cp-empty');
+        const table = document.getElementById('cp-table');
+        tbody.innerHTML = '';
+
+        if (items.length === 0) {
+            table.style.display = 'none';
+            empty.style.display = 'block';
+        } else {
+            table.style.display = '';
+            empty.style.display = 'none';
+            for (const item of items) {
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(item.carrier)     + '</td>' +
+                    '<td>' + esc(item.lot)          + '</td>' +
+                    '<td style="text-align:right;">' + (item.qty ?? 0) + '</td>' +
+                    '<td>' + esc(item.pPID)         + '</td>' +
+                    '<td>' + esc(item.nextFurnace)  + '</td>' +
+                    '<td>' + esc(item.location)     + '</td>' +
+                    '<td>' + esc(item.endTime)      + '</td>';
+                tbody.appendChild(tr);
+            }
+        }
+
+        document.getElementById('cp-overlay').style.display = 'block';
+        const modal = document.getElementById('cp-modal');
+        modal.style.display = 'flex';
+    }
+
+    function closeCarrierPopup() {
+        document.getElementById('cp-overlay').style.display = 'none';
+        document.getElementById('cp-modal').style.display = 'none';
+    }
+
+    function esc(v) {
+        if (v == null) return '';
+        return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Escapeキーで閉じる
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCarrierPopup(); });
+
     // 自動更新
-    document.addEventListener('DOMContentLoaded', () => startAutoRefresh());
 
     const AUTO_REFRESH_INTERVAL = @ViewData["AutoRefreshIntervalSeconds"] * 1000;
     let autoRefreshTimer;
@@ -453,6 +671,10 @@
                 set('cell-e-' + n, countItems(eqp.reserved3));
                 const ef = document.getElementById('cell-f-' + n);
                 if (ef) ef.textContent = (eqp.inProcess && eqp.inProcess.length > 0) ? (eqp.inProcess[0].endTime || '') : '';
+                const eg = document.getElementById('cell-g-' + n);
+                if (eg) eg.textContent = eqp.schedule || '';
+                // ポップアップ用データキャッシュを更新
+                eqpData[n] = eqp;
             }
         }
     }

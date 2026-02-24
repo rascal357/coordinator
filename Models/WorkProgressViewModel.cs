@@ -5,6 +5,7 @@ public class EquipmentProgressViewModel
     public string EqpName { get; set; } = string.Empty;
     public string Line { get; set; } = string.Empty;
     public string? Note { get; set; }
+    public string? Schedule { get; set; }
     public List<ProcessItem> InProcess { get; set; } = new();
     public List<ProcessItem> Waiting { get; set; } = new();
     public List<ProcessItem> Reserved1 { get; set; } = new();

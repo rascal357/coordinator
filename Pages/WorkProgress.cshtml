@@ -201,7 +201,7 @@
                                             }
                                         </div>
                                         <div class="text-muted"><small>LINE: @eqp.Line</small></div>
-                                        <div class="mt-2">
+                                        <div class="mt-2 d-flex align-items-center gap-1">
                                             <button type="button" class="btn-edit-note"
                                                     data-eqp-name="@eqp.EqpName"
                                                     data-note="@eqp.Note"
@@ -212,6 +212,16 @@
                                                     <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
                                                 </svg>
                                             </button>
+                                        </div>
+                                        <div class="mt-1 d-flex align-items-center gap-1">
+                                            <button type="button" class="btn-schedule"
+                                                    id="schedule-btn-@typeGroup.Key-@eqpIndex"
+                                                    data-eqp-name="@eqp.EqpName"
+                                                    data-schedule="@(eqp.Schedule ?? "")"
+                                                    data-type-key="@typeGroup.Key"
+                                                    data-eqp-index="@eqpIndex"
+                                                    onclick="openScheduleModal(this)" title="予定設定">予定</button>
+                                            <span class="schedule-badge" id="schedule-@typeGroup.Key-@eqpIndex">@eqp.Schedule</span>
                                         </div>
                                     </td>
 
@@ -371,6 +381,55 @@
                         }
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modern-modal">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="scheduleModalLabel">予定設定</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <input type="hidden" id="scheduleEqpName" />
+                    <input type="hidden" id="scheduleTypeKey" />
+                    <input type="hidden" id="scheduleEqpIndex" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">装置名</label>
+                        <input type="text" class="form-control form-control-modern" id="scheduleEqpNameDisplay" readonly />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">予定を選択</label>
+                        <div class="schedule-options">
+                            @foreach (var opt in new[] {
+                                ("LS",  "LS リーダースタート"),
+                                ("SD",  "SD Side-Dummy交換"),
+                                ("ED",  "ED Extra-Dummy交換"),
+                                ("FM",  "FM Full-Monitor交換"),
+                                ("EM",  "EM EM投入"),
+                                ("N2",  "N2 N2AN620またはN2O"),
+                                ("払出","払出 払い出し中"),
+                                ("投入","投入 投入中"),
+                                ("PD",  "PD PD投入中")
+                            })
+                            {
+                                <div class="form-check schedule-check-item">
+                                    <input class="form-check-input" type="radio" name="scheduleOption"
+                                           id="sch-@opt.Item1" value="@opt.Item1">
+                                    <label class="form-check-label" for="sch-@opt.Item1">@opt.Item2</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-modern btn-outline-danger me-auto" onclick="clearScheduleSelection()">クリア</button>
+                    <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-modern btn-primary" onclick="saveSchedule()">保存</button>
+                </div>
             </div>
         </div>
     </div>
@@ -786,6 +845,73 @@
         min-width: 100px;
         white-space: nowrap;
     }
+
+    /* Schedule Button */
+    .btn-schedule {
+        background: #e67e22;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: background 0.2s;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-schedule:hover { background: #d35400; }
+
+    /* Schedule Badge */
+    .schedule-badge {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        background: #e67e22;
+        border-radius: 4px;
+        padding: 1px 6px;
+        min-width: 2em;
+        display: inline-block;
+        text-align: center;
+        letter-spacing: 0.03em;
+    }
+    .schedule-badge:empty {
+        display: none;
+    }
+
+    /* Schedule Options */
+    .schedule-options {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        background: #f8f9fa;
+    }
+    /* Bootstrap form-check の float/padding を無効化してflexで揃える */
+    .schedule-options .form-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 4px;
+        padding-left: 4px;
+        margin-bottom: 0;
+        min-height: unset;
+    }
+    .schedule-options .form-check:not(:last-child) {
+        border-bottom: 1px solid #e9ecef;
+    }
+    .schedule-options .form-check-input {
+        float: none;
+        margin-top: 0;
+        margin-left: 0;
+        flex-shrink: 0;
+        width: 1rem;
+        height: 1rem;
+        cursor: pointer;
+    }
+    .schedule-options .form-check-label {
+        margin-bottom: 0;
+        cursor: pointer;
+        line-height: 1.4;
+    }
 </style>
 
 @section Scripts {
@@ -861,6 +987,68 @@
 
                 // Show success message
                 alert('メモを更新しました');
+            } else {
+                alert('更新に失敗しました: ' + result.message);
+            }
+        } catch (error) {
+            console.error('更新エラー:', error);
+            alert('更新中にエラーが発生しました');
+        }
+    }
+
+    // Schedule Modal functions
+    function openScheduleModal(element) {
+        var eqpName = element.dataset.eqpName;
+        var currentSchedule = element.dataset.schedule || '';
+        var typeKey = element.dataset.typeKey;
+        var eqpIndex = element.dataset.eqpIndex;
+
+        document.getElementById('scheduleEqpName').value = eqpName;
+        document.getElementById('scheduleEqpNameDisplay').value = eqpName;
+        document.getElementById('scheduleTypeKey').value = typeKey;
+        document.getElementById('scheduleEqpIndex').value = eqpIndex;
+
+        // Reset and set current radio
+        document.querySelectorAll('input[name="scheduleOption"]').forEach(r => r.checked = false);
+        if (currentSchedule) {
+            const radio = document.querySelector(`input[name="scheduleOption"][value="${currentSchedule}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        new bootstrap.Modal(document.getElementById('scheduleModal')).show();
+    }
+
+    function clearScheduleSelection() {
+        document.querySelectorAll('input[name="scheduleOption"]').forEach(r => r.checked = false);
+    }
+
+    async function saveSchedule() {
+        var eqpName = document.getElementById('scheduleEqpName').value;
+        var typeKey = document.getElementById('scheduleTypeKey').value;
+        var eqpIndex = document.getElementById('scheduleEqpIndex').value;
+        var selectedRadio = document.querySelector('input[name="scheduleOption"]:checked');
+        var schedule = selectedRadio ? selectedRadio.value : '';
+
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('eqpName', eqpName);
+            formData.append('schedule', schedule);
+            formData.append('__RequestVerificationToken', token);
+
+            const url = '@Url.Page("/WorkProgress", new { handler = "UpdateSchedule" })';
+            const response = await fetch(url, { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.success) {
+                // バッジ更新
+                const badge = document.getElementById('schedule-' + typeKey + '-' + eqpIndex);
+                if (badge) badge.textContent = schedule;
+                // ボタンのdata属性更新
+                const btn = document.getElementById('schedule-btn-' + typeKey + '-' + eqpIndex);
+                if (btn) btn.dataset.schedule = schedule;
+
+                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
             } else {
                 alert('更新に失敗しました: ' + result.message);
             }
@@ -1026,6 +1214,8 @@
 
                 // メモを更新
                 updateNote(typeKey, eqpIndex, eqp.note);
+                // 予定を更新
+                updateScheduleBadge(typeKey, eqpIndex, eqp.schedule);
 
                 // データを更新する前にクリア
                 clearProcessItems('inprocess', typeKey, eqpIndex);
@@ -1046,6 +1236,14 @@
                 updateReservedItems('reserved3', typeKey, eqpIndex, eqp.reserved3, eqp.reserved3BatchId);
             });
         }
+    }
+
+    // 予定バッジを更新
+    function updateScheduleBadge(typeKey, eqpIndex, schedule) {
+        const badge = document.getElementById(`schedule-${typeKey}-${eqpIndex}`);
+        if (badge) badge.textContent = schedule || '';
+        const btn = document.getElementById(`schedule-btn-${typeKey}-${eqpIndex}`);
+        if (btn) btn.dataset.schedule = schedule || '';
     }
 
     // メモを更新

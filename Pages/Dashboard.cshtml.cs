@@ -23,6 +23,7 @@ public class DashboardModel : PageModel
     public Dictionary<string, EquipmentProgressViewModel> EquipmentByName { get; set; } = new();
     public List<string> Types { get; set; } = new();
     public List<string> Lines { get; set; } = new();
+    public HashSet<string> YuuTypes { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
     public List<string>? TypeFilter { get; set; }
@@ -34,12 +35,39 @@ public class DashboardModel : PageModel
     {
         ViewData["AutoRefreshIntervalSeconds"] = _configuration.GetValue<int>("Dashboard:AutoRefreshIntervalSeconds", 30);
         await LoadProgressData();
+        var yuuList = await _context.DcEqpTypes.Where(t => t.Yuu == 1).Select(t => t.Type).ToListAsync();
+        YuuTypes = new HashSet<string>(yuuList);
     }
 
     public async Task<IActionResult> OnGetRefreshAsync()
     {
         await LoadProgressData();
         return new JsonResult(new { success = true, data = EquipmentsByType });
+    }
+
+    public async Task<IActionResult> OnPostToggleYuuAsync([FromForm] string typeName, [FromForm] int yuu)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return new JsonResult(new { success = false, message = "Type name is required" });
+
+        try
+        {
+            var record = await _context.DcEqpTypes.FindAsync(typeName);
+            if (record == null)
+            {
+                _context.DcEqpTypes.Add(new DcEqpType { Type = typeName, Yuu = yuu });
+            }
+            else
+            {
+                record.Yuu = yuu;
+            }
+            await _context.SaveChangesAsync();
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
     }
 
     private async Task LoadProgressData()
@@ -94,7 +122,8 @@ public class DashboardModel : PageModel
                 {
                     EqpName = eqp.Name,
                     Line = eqp.Line,
-                    Note = eqp.Note
+                    Note = eqp.Note,
+                    Schedule = eqp.Schedule
                 };
 
                 var actls = actlsByEquipment.ContainsKey(eqp.Name)

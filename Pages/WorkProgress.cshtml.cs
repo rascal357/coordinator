@@ -75,6 +75,35 @@ public class WorkProgressModel : PageModel
         }
     }
 
+    public async Task<IActionResult> OnPostUpdateScheduleAsync([FromForm] string eqpName, [FromForm] string schedule)
+    {
+        if (string.IsNullOrEmpty(eqpName))
+        {
+            return new JsonResult(new { success = false, message = "Equipment name is required" });
+        }
+
+        try
+        {
+            var equipment = await _context.DcEqps
+                .Where(e => e.Name == eqpName)
+                .FirstOrDefaultAsync();
+
+            if (equipment == null)
+            {
+                return new JsonResult(new { success = false, message = "Equipment not found" });
+            }
+
+            equipment.Schedule = string.IsNullOrWhiteSpace(schedule) ? null : schedule;
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true, message = "Schedule updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = $"Error updating schedule: {ex.Message}" });
+        }
+    }
+
     public async Task<IActionResult> OnPostDeleteBatchAsync(string batchId)
     {
         if (string.IsNullOrEmpty(batchId))
@@ -219,7 +248,8 @@ public class WorkProgressModel : PageModel
                 {
                     EqpName = eqp.Name,
                     Line = eqp.Line,
-                    Note = eqp.Note
+                    Note = eqp.Note,
+                    Schedule = eqp.Schedule
                 };
 
                 // Get actual processing data from in-memory dictionary

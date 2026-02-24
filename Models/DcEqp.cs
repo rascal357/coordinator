@@ -34,4 +34,7 @@ public class DcEqp
 
     [StringLength(200)]
     public string? Note { get; set; }
+
+    [StringLength(10)]
+    public string? Schedule { get; set; }
 }

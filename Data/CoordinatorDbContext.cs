@@ -11,6 +11,7 @@ public class CoordinatorDbContext : DbContext
     }
 
     public DbSet<DcEqp> DcEqps { get; set; } = null!;
+    public DbSet<DcEqpType> DcEqpTypes { get; set; } = null!;
     public DbSet<DcWip> DcWips { get; set; } = null!;
     public DbSet<DcCarrierStep> DcCarrierSteps { get; set; } = null!;
     public DbSet<DcLotStep> DcLotSteps { get; set; } = null!;
