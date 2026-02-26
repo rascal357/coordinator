@@ -409,7 +409,7 @@
                                                     data-lotid="@lotStep.LotId"
                                                     data-carrier="@lotStep.Carrier"
                                                     data-step="@step"
-                                                    onchange="updatePpidOptions(this)">
+                                                    onchange="onEqpIdChange(this)">
                                                 <option value="">選択してください</option>
                                             </select>
                                         </td>
@@ -488,6 +488,13 @@
     // Parse step options from server
     const stepOptions = @Html.Raw(Model.StepOptionsJson);
 
+    // EqpName selected at WipLotList (used to pre-select Step 1)
+    const eqpName = '@Model.EqpName';
+
+    // Track whether first-change propagation has occurred for each step (2, 3, 4)
+    // Once a user makes the first selection for a step, propagation is locked
+    const stepFirstChangeDone = { 2: false, 3: false, 4: false };
+
     // Initialize dropdowns on page load
     document.addEventListener('DOMContentLoaded', function() {
         initializeDropdowns();
@@ -541,13 +548,50 @@
                 // PPID starts disabled until EqpId is selected
                 ppidSelect.disabled = true;
 
-                // Auto-select if only one EqpId option
-                if (uniqueEqpIds.length === 1) {
-                    eqpIdSelect.value = uniqueEqpIds[0];
-                    updatePpidOptions(eqpIdSelect);
+                if (step === 1) {
+                    // Step 1: Pre-select EqpName if available in options, otherwise auto-select if only one option
+                    if (eqpName && uniqueEqpIds.includes(eqpName)) {
+                        eqpIdSelect.value = eqpName;
+                        updatePpidOptions(eqpIdSelect);
+                    } else if (uniqueEqpIds.length === 1) {
+                        eqpIdSelect.value = uniqueEqpIds[0];
+                        updatePpidOptions(eqpIdSelect);
+                    }
+                } else {
+                    // Steps 2/3/4: Auto-select if only one EqpId option
+                    if (uniqueEqpIds.length === 1) {
+                        eqpIdSelect.value = uniqueEqpIds[0];
+                        updatePpidOptions(eqpIdSelect);
+                    }
                 }
             }
         });
+    }
+
+    // Handle EqpId change - propagates to other lots on first change for steps 2/3/4
+    function onEqpIdChange(eqpIdSelect) {
+        const step = parseInt(eqpIdSelect.getAttribute('data-step'));
+        const selectedEqpId = eqpIdSelect.value;
+
+        if (step >= 2 && selectedEqpId && !stepFirstChangeDone[step]) {
+            // First real selection for this step: propagate same EqpId to other lots if available
+            stepFirstChangeDone[step] = true;
+
+            const allEqpSelects = document.querySelectorAll(`.eqpid-select[data-step="${step}"]`);
+            allEqpSelects.forEach(otherSelect => {
+                if (otherSelect === eqpIdSelect) return; // Skip the changed select itself
+
+                // Check if the selectedEqpId exists as an option in this other lot's select
+                const availableOptions = Array.from(otherSelect.options).map(o => o.value);
+                if (availableOptions.includes(selectedEqpId)) {
+                    otherSelect.value = selectedEqpId;
+                    updatePpidOptions(otherSelect);
+                }
+            });
+        }
+
+        // Always update PPID for the changed lot
+        updatePpidOptions(eqpIdSelect);
     }
 
     function updatePpidOptions(eqpIdSelect) {
