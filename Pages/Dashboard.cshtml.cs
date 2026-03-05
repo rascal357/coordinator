@@ -42,7 +42,9 @@ public class DashboardModel : PageModel
     public async Task<IActionResult> OnGetRefreshAsync()
     {
         await LoadProgressData();
-        return new JsonResult(new { success = true, data = EquipmentsByType });
+        var yuuList = await _context.DcEqpTypes.Where(t => t.Yuu == 1).Select(t => t.Type).ToListAsync();
+        YuuTypes = new HashSet<string>(yuuList);
+        return new JsonResult(new { success = true, data = EquipmentsByType, yuuTypes = YuuTypes });
     }
 
     public async Task<IActionResult> OnPostToggleYuuAsync([FromForm] string typeName, [FromForm] int yuu)

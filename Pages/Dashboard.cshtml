@@ -658,7 +658,7 @@
             const res = await fetch('@Url.Page("/Dashboard")?' + params.toString());
             if (!res.ok) return;
             const result = await res.json();
-            if (result.success) { updateUI(result.data); logRefreshResult(result.data); }
+            if (result.success) { updateUI(result.data); updateYuu(result.yuuTypes); logRefreshResult(result.data); }
         } catch (e) { console.error('自動更新エラー:', e); }
     }
 
@@ -692,6 +692,19 @@
                 console.log('  ' + eqp.eqpName + ' A:' + countItems(eqp.inProcess) + ' B:' + countItems(eqp.waiting));
             }
         }
+    }
+
+    function updateYuu(yuuTypesList) {
+        if (!yuuTypesList) return;
+        const latest = new Set(yuuTypesList);
+        document.querySelectorAll('.yuu-chk').forEach(chk => {
+            const grp = chk.closest('.type-group');
+            if (!grp) return;
+            const typeName = grp.id.replace('grp-', '');
+            const active = latest.has(typeName);
+            chk.checked = active;
+            grp.classList.toggle('yuu-active', active);
+        });
     }
 
     function startAutoRefresh() {
