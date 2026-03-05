@@ -187,6 +187,20 @@
             <label class="fp-item"><input type="checkbox" id="filterB" checked onchange="applyLineFilter()"> B-LINE</label>
         </div>
 
+        <!-- 強調表示パネル -->
+        <div class="highlight-panel">
+            <div class="fp-title">強調表示</div>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="LS" onchange="applyScheduleHighlight()"> リーダースタート</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="SD" onchange="applyScheduleHighlight()"> Side-Dummy交換</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="ED" onchange="applyScheduleHighlight()"> Extra-Dummy交換</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="FM" onchange="applyScheduleHighlight()"> Full-Monitor交換</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="EM" onchange="applyScheduleHighlight()"> EM投入</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="N2" onchange="applyScheduleHighlight()"> N2AN620またはN2O</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="払出" onchange="applyScheduleHighlight()"> 払い出し中</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="投入" onchange="applyScheduleHighlight()"> 投入中</label>
+            <label class="fp-item"><input type="checkbox" class="hl-chk" value="PD" onchange="applyScheduleHighlight()"> PD投入中</label>
+        </div>
+
     </div><!-- /dash-body -->
 
     <!-- メモポップアップ -->
@@ -568,6 +582,22 @@
         border-radius: 4px;
     }
 
+    /* 強調表示パネル */
+    .highlight-panel {
+        position: fixed;
+        bottom: 20px;
+        right: 120px;
+        width: 140px;
+        border: 2px solid #666;
+        background: #f5f5f5;
+        padding: 8px;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        border-radius: 4px;
+    }
+
+    /* スケジュール強調: JSで直接背景色を設定 */
+
     /* グリッド下部がフィルターに隠れないよう余白 */
     .type-grid {
         padding-bottom: 90px;
@@ -776,6 +806,7 @@
                 eqpData[n] = eqp;
             }
         }
+        applyScheduleHighlight();
     }
 
     function logRefreshResult(equipmentsByType) {
@@ -786,6 +817,21 @@
                 console.log('  ' + eqp.eqpName + ' A:' + countItems(eqp.inProcess) + ' B:' + countItems(eqp.waiting));
             }
         }
+    }
+
+    // スケジュール強調表示
+    function applyScheduleHighlight() {
+        const selected = Array.from(document.querySelectorAll('.hl-chk:checked')).map(c => c.value);
+        document.querySelectorAll('.eqp-card').forEach(card => {
+            const eqpName = card.querySelector('.eqp-name-row > span')?.textContent?.trim();
+            if (!eqpName) return;
+            const el = document.getElementById('cell-g-' + eqpName);
+            if (!el) return;
+            const schedule = el.textContent.trim();
+            const match = selected.length > 0 && selected.some(s => schedule === s);
+            el.style.background = match ? '#e53935' : '';
+            el.style.color      = match ? '#fff'     : '';
+        });
     }
 
     function updateYuu(yuuTypesList) {
