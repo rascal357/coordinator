@@ -37,8 +37,9 @@
         var r3 = e?.Reserved3.Count ?? 0;
         var et = System.Net.WebUtility.HtmlEncode(e?.InProcess.FirstOrDefault()?.EndTime ?? "");
         var sc = System.Net.WebUtility.HtmlEncode(e?.Schedule ?? "");
+        var line = System.Net.WebUtility.HtmlEncode(e?.Line ?? "");
         return new HtmlString(
-            "<div class=\"eqp-card\">" +
+            "<div class=\"eqp-card\" data-line=\"" + line + "\">" +
             "<div class=\"eqp-top-row\">" +
             "<div class=\"eqp-cell-a\" id=\"cell-a-" + n + "\" onclick=\"showCarrierPopup('" + n + "','inProcess')\">" + (ip > 0 ? ip.ToString() : "") + "</div>" +
             "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\" onclick=\"showCarrierPopup('" + n + "','waiting')\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
@@ -73,102 +74,102 @@
 
             <!-- ===== Row 1: Hi_temp_Pyro | VDF_BAOX | ONO_OX ===== -->
 
-            <div class="type-group" id="grp-HiTempPyro" data-line="A" style="grid-column:1/13;grid-row:1">
+            <div class="type-group" id="grp-HiTempPyro" style="grid-column:1/13;grid-row:1">
                 <div class="type-hdr"><span>Hi temp Pyro</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpHiTempPyro) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-VdfBaox" data-line="A" style="grid-column:13/14;grid-row:1">
+            <div class="type-group" id="grp-VdfBaox" style="grid-column:13/14;grid-row:1">
                 <div class="type-hdr"><span>VDF_BAOX</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpVdfBaox) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-OnoOx" data-line="A" style="grid-column:14/15;grid-row:1">
+            <div class="type-group" id="grp-OnoOx" style="grid-column:14/15;grid-row:1">
                 <div class="type-hdr"><span>ONO_OX</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpOnoOx) { @Card(n) }</div>
             </div>
 
             <!-- ===== Row 2: Hi_Temp_Dry_Pre | Hi_temp_Dry_Post ===== -->
 
-            <div class="type-group" id="grp-HiTempDryPre" data-line="A" style="grid-column:1/7;grid-row:2">
+            <div class="type-group" id="grp-HiTempDryPre" style="grid-column:1/7;grid-row:2">
                 <div class="type-hdr"><span>Hi Temp Dry Pre</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpHiTempDryPre) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-HiTempDryPost" data-line="A" style="grid-column:7/15;grid-row:2">
+            <div class="type-group" id="grp-HiTempDryPost" style="grid-column:7/15;grid-row:2">
                 <div class="type-hdr"><span>Hi_temp Dry Post</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpHiTempDryPost) { @Card(n) }</div>
             </div>
 
             <!-- ===== Row 3: S_hi_temp_Pyro | S_hi_temp_Dry_VHVIC | Pyro_Gate | FRAM_Pyro_Gate ===== -->
 
-            <div class="type-group" id="grp-ShiTempPyro" data-line="A" style="grid-column:1/5;grid-row:3">
+            <div class="type-group" id="grp-ShiTempPyro" style="grid-column:1/5;grid-row:3">
                 <div class="type-hdr"><span>S hi_temp Pyro</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpShiTempPyro) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-ShiTempDryVhvic" data-line="A" style="grid-column:5/7;grid-row:3">
+            <div class="type-group" id="grp-ShiTempDryVhvic" style="grid-column:5/7;grid-row:3">
                 <div class="type-hdr"><span>S hi_temp Dry VHVIC</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpShiTempDryVhvic) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-PyroGate" data-line="A" style="grid-column:7/12;grid-row:3">
+            <div class="type-group" id="grp-PyroGate" style="grid-column:7/12;grid-row:3">
                 <div class="type-hdr"><span>Pyro Gate</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpPyroGate) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-FramPyroGate" data-line="A" style="grid-column:12/13;grid-row:3">
+            <div class="type-group" id="grp-FramPyroGate" style="grid-column:12/13;grid-row:3">
                 <div class="type-hdr"><span>FRAM Pyro Gate</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpFramPyroGate) { @Card(n) }</div>
             </div>
 
             <!-- ===== Row 4: VCF_DASI_ON | IGBT_DASI ===== -->
 
-            <div class="type-group" id="grp-VcfDasiOn" data-line="B" style="grid-column:1/11;grid-row:4">
+            <div class="type-group" id="grp-VcfDasiOn" style="grid-column:1/11;grid-row:4">
                 <div class="type-hdr"><span>VCF_DASI_ON</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpVcfDasiOn) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-IgbtDasi" data-line="B" style="grid-column:11/12;grid-row:4">
+            <div class="type-group" id="grp-IgbtDasi" style="grid-column:11/12;grid-row:4">
                 <div class="type-hdr"><span>IGBT/DASI</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpIgbtDasi) { @Card(n) }</div>
             </div>
 
             <!-- ===== Row 5: VCF_POLY | ONO_SIN | ISO_SIN | VCF_HTO | VCF_HTO_ONO ===== -->
 
-            <div class="type-group" id="grp-VcfPoly" data-line="B" style="grid-column:1/4;grid-row:5">
+            <div class="type-group" id="grp-VcfPoly" style="grid-column:1/4;grid-row:5">
                 <div class="type-hdr"><span>VCF_POLY</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpVcfPoly) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-OnoSin" data-line="B" style="grid-column:4/7;grid-row:5">
+            <div class="type-group" id="grp-OnoSin" style="grid-column:4/7;grid-row:5">
                 <div class="type-hdr"><span>ONO_SIN</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpOnoSin) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-IsoSin" data-line="B" style="grid-column:7/9;grid-row:5">
+            <div class="type-group" id="grp-IsoSin" style="grid-column:7/9;grid-row:5">
                 <div class="type-hdr"><span>ISO_SIN</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpIsoSin) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-VcfHto" data-line="B" style="grid-column:9/11;grid-row:5">
+            <div class="type-group" id="grp-VcfHto" style="grid-column:9/11;grid-row:5">
                 <div class="type-hdr"><span>VCF_HTO</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpVcfHto) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-VcfHtoOno" data-line="B" style="grid-column:11/12;grid-row:5">
+            <div class="type-group" id="grp-VcfHtoOno" style="grid-column:11/12;grid-row:5">
                 <div class="type-hdr"><span>VCF_HTO_ONO</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpVcfHtoOno) { @Card(n) }</div>
             </div>
 
             <!-- ===== Row 6: G_SIO | VCF_TEOS ===== -->
 
-            <div class="type-group" id="grp-GSio" data-line="B" style="grid-column:1/5;grid-row:6">
+            <div class="type-group" id="grp-GSio" style="grid-column:1/5;grid-row:6">
                 <div class="type-hdr"><span>G_SIO</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpGSio) { @Card(n) }</div>
             </div>
 
-            <div class="type-group" id="grp-VcfTeos" data-line="B" style="grid-column:5/10;grid-row:6">
+            <div class="type-group" id="grp-VcfTeos" style="grid-column:5/10;grid-row:6">
                 <div class="type-hdr"><span>VCF_TEOS</span><label class="yuu-label"><input type="checkbox" class="yuu-chk" onchange="toggleYuu(this)"> 優</label></div>
                 <div class="type-eqps">@foreach (var n in eqpVcfTeos) { @Card(n) }</div>
             </div>
@@ -271,9 +272,7 @@
     .type-group.yuu-active {
         border: 3px solid #e00000 !important;
     }
-    .type-group.line-hidden {
-        visibility: hidden;
-    }
+
 
     /* タイプヘッダー */
     .type-hdr {
@@ -573,14 +572,14 @@
         startAutoRefresh();
     });
 
-    // LINEフィルター: 非選択LINEのグループを非表示
+    // LINEフィルター: 非選択LINEの装置カードを非表示
     function applyLineFilter() {
         const showA = document.getElementById('filterA').checked;
         const showB = document.getElementById('filterB').checked;
-        document.querySelectorAll('.type-group').forEach(grp => {
-            const line = grp.getAttribute('data-line');
+        document.querySelectorAll('.eqp-card').forEach(card => {
+            const line = card.getAttribute('data-line');
             const hidden = (line === 'A' && !showA) || (line === 'B' && !showB);
-            grp.classList.toggle('line-hidden', hidden);
+            card.style.display = hidden ? 'none' : '';
         });
     }
 
