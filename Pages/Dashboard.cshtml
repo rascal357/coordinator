@@ -38,6 +38,7 @@
         var et = System.Net.WebUtility.HtmlEncode(e?.InProcess.FirstOrDefault()?.EndTime ?? "");
         var sc = System.Net.WebUtility.HtmlEncode(e?.Schedule ?? "");
         var line = System.Net.WebUtility.HtmlEncode(e?.Line ?? "");
+        var note = System.Net.WebUtility.HtmlEncode(e?.Note ?? "").Replace("'", "&#39;");
         return new HtmlString(
             "<div class=\"eqp-card\" data-line=\"" + line + "\">" +
             "<div class=\"eqp-top-row\">" +
@@ -51,7 +52,10 @@
             "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved2')\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
             "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved3')\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
             "</div>" +
-            "<div class=\"eqp-name-row\" id=\"cell-h-" + n + "\" onclick=\"location.href='/WipLotList?EqpName=" + n + "'\">" + n + "</div>" +
+            "<div class=\"eqp-name-row\">" +
+            "<span id=\"cell-h-" + n + "\" onclick=\"location.href='/WipLotList?EqpName=" + n + "'\">" + n + "</span>" +
+            "<button class=\"memo-btn\" id=\"memo-btn-" + n + "\" onclick=\"showMemoPopup('" + n + "',this)\" title=\"メモ\">📝</button>" +
+            "</div>" +
             "</div>"
         );
     }
@@ -184,6 +188,15 @@
         </div>
 
     </div><!-- /dash-body -->
+
+    <!-- メモポップアップ -->
+    <div class="memo-popup" id="memo-popup">
+        <div class="memo-popup-header">
+            <span class="memo-popup-title" id="memo-popup-title"></span>
+            <button class="cp-close" onclick="closeMemoPopup()">×</button>
+        </div>
+        <div class="memo-popup-body" id="memo-popup-body"></div>
+    </div>
 
     <!-- キャリア詳細ポップアップ -->
     <div class="cp-overlay" id="cp-overlay" onclick="closeCarrierPopup()"></div>
@@ -409,21 +422,69 @@
     .eqp-cell-e { border-right: none; }
 
     .eqp-name-row {
-        text-align: center;
+        display: flex;
+        align-items: center;
         padding: 0 1px;
+        height: 16px;
+        overflow: hidden;
+    }
+    .eqp-name-row > span {
+        flex: 1;
         font-weight: 700;
         font-size: 0.65rem;
         color: #000;
-        height: 16px;
         line-height: 16px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
         cursor: pointer;
     }
-    .eqp-name-row:hover {
+    .eqp-name-row > span:hover {
         background: #ddd;
         text-decoration: underline;
+    }
+    .memo-btn {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 0.6rem;
+        line-height: 1;
+        cursor: pointer;
+        opacity: 0.5;
+        height: 14px;
+    }
+    .memo-btn:hover { opacity: 1; }
+
+    /* メモポップアップ */
+    .memo-popup {
+        display: none;
+        position: fixed;
+        background: #fffde7;
+        border: 1px solid #f9a825;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        z-index: 2000;
+        min-width: 180px;
+        max-width: 320px;
+    }
+    .memo-popup-header {
+        background: #f9a825;
+        color: #fff;
+        padding: 3px 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .memo-popup-title { font-weight: 700; font-size: 0.8rem; }
+    .memo-popup-body {
+        padding: 8px;
+        font-size: 0.8rem;
+        color: #333;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 200px;
+        overflow-y: auto;
     }
 
     /* キャリア詳細ポップアップ */
@@ -645,7 +706,40 @@
     }
 
     // Escapeキーで閉じる
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCarrierPopup(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCarrierPopup(); closeMemoPopup(); } });
+
+    // メモポップアップ
+    function showMemoPopup(eqpName, btn) {
+        const eqp = eqpData[eqpName];
+        const note = (eqp && eqp.note) ? eqp.note : '';
+        const popup = document.getElementById('memo-popup');
+        document.getElementById('memo-popup-title').textContent = eqpName + ' メモ';
+        document.getElementById('memo-popup-body').textContent = note || '（メモなし）';
+
+        // ボタン位置に合わせて表示
+        popup.style.display = 'block';
+        const rect = btn.getBoundingClientRect();
+        let left = rect.left;
+        let top = rect.bottom + 4;
+        const pw = popup.offsetWidth;
+        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+        if (top + popup.offsetHeight > window.innerHeight - 8) top = rect.top - popup.offsetHeight - 4;
+        popup.style.left = left + 'px';
+        popup.style.top  = top  + 'px';
+
+        // 他クリックで閉じる
+        setTimeout(() => document.addEventListener('click', closeMemoOnOutside), 0);
+    }
+
+    function closeMemoPopup() {
+        document.getElementById('memo-popup').style.display = 'none';
+        document.removeEventListener('click', closeMemoOnOutside);
+    }
+
+    function closeMemoOnOutside(e) {
+        const popup = document.getElementById('memo-popup');
+        if (!popup.contains(e.target)) closeMemoPopup();
+    }
 
     // 自動更新
 
