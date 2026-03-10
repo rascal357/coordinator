@@ -261,6 +261,14 @@
     }
     else
     {
+        <div class="action-bar mb-3">
+            <button type="button" class="btn btn-modern btn-info btn-lg" id="twdwBtnNoWip">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                TWDW
+            </button>
+        </div>
         <div class="modern-alert alert-info">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
@@ -667,11 +675,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('wipForm');
         const table = document.getElementById('wipTable');
-        const tbody = table.querySelector('tbody');
+        const tbody = table ? table.querySelector('tbody') : null;
         let currentSort = { column: null, direction: null };
 
         // Form submission handler
-        form.addEventListener('submit', function(e) {
+        if (form) form.addEventListener('submit', function(e) {
             const container = document.getElementById('selectedWipDataContainer');
             container.innerHTML = ''; // Clear existing hidden fields
 
@@ -746,6 +754,7 @@
                 }
             });
 
+            if (!tbody) return;
             const rows = tbody.querySelectorAll('.table-row-modern');
             rows.forEach(row => {
                 let shouldShow = true;
@@ -844,9 +853,10 @@
         });
 
         // Store original order
-        const originalOrder = Array.from(tbody.querySelectorAll('.table-row-modern'));
+        const originalOrder = tbody ? Array.from(tbody.querySelectorAll('.table-row-modern')) : [];
 
         function sortTable(columnIndex, direction) {
+            if (!tbody) return;
             const rows = Array.from(tbody.querySelectorAll('.table-row-modern'));
 
             rows.sort((a, b) => {
@@ -876,24 +886,23 @@
         }
 
         // TWDW Modal functionality
-        const twdwBtn = document.getElementById('twdwBtn');
         const twdwModal = document.getElementById('twdwModal');
         const closeTwdwModal = document.getElementById('closeTwdwModal');
         const cancelTwdwBtn = document.getElementById('cancelTwdwBtn');
         const searchCarriersBtn = document.getElementById('searchCarriersBtn');
 
-        // Open modal (both top and bottom TWDW buttons)
+        // Open modal (all TWDW buttons)
         function openTwdwModal() {
             twdwModal.classList.add('show');
             document.getElementById('carrierInput1').focus();
         }
 
-        twdwBtn.addEventListener('click', openTwdwModal);
-
-        const twdwBtnTop = document.getElementById('twdwBtnTop');
-        if (twdwBtnTop) {
-            twdwBtnTop.addEventListener('click', openTwdwModal);
-        }
+        ['twdwBtn', 'twdwBtnTop', 'twdwBtnNoWip'].forEach(function(id) {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', openTwdwModal);
+            }
+        });
 
         // Close modal
         function closeModal() {
