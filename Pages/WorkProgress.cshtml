@@ -204,7 +204,7 @@
                                         <div class="mt-2 d-flex align-items-center gap-1">
                                             <button type="button" class="btn-edit-note"
                                                     data-eqp-name="@eqp.EqpName"
-                                                    data-note="@eqp.Note"
+                                                    data-note="@Html.Raw(System.Net.WebUtility.HtmlEncode(eqp.Note ?? "").Replace("\r\n", "&#10;").Replace("\n", "&#10;").Replace("\r", "&#10;"))"
                                                     data-type-key="@typeGroup.Key"
                                                     data-eqp-index="@eqpIndex"
                                                     onclick="openEditNoteModalFromElement(this)" title="メモ編集">
@@ -980,6 +980,14 @@
                         noteElement.innerHTML = '<small>(メモなし)</small>';
                         noteElement.className = 'text-muted';
                     }
+                }
+
+                // Update the button's data-note attribute so re-opening reflects latest value
+                var editBtn = document.querySelector(
+                    '.btn-edit-note[data-type-key="' + typeKey + '"][data-eqp-index="' + eqpIndex + '"]'
+                );
+                if (editBtn) {
+                    editBtn.dataset.note = noteText;
                 }
 
                 // Close modal
