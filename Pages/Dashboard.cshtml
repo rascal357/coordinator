@@ -54,7 +54,7 @@
             "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved3')\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
             "</div>" +
             "<div class=\"eqp-name-row\">" +
-            "<span id=\"cell-h-" + n + "\" onclick=\"location.href='" + wipUrl + "'\">" + n + "</span>" +
+            "<span id=\"cell-h-" + n + "\" onclick=\"location.href='" + wipUrl + "'\" onmouseenter=\"showNoteOnHover(event,'" + n + "')\" onmouseleave=\"hideNoteOnHover()\">" + n + "</span>" +
             "<button class=\"memo-btn\" id=\"memo-btn-" + n + "\" onclick=\"showMemoPopup('" + n + "',this)\" title=\"メモ\">📝</button>" +
             "</div>" +
             "</div>"
@@ -738,6 +738,36 @@
 
     // Escapeキーで閉じる
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCarrierPopup(); closeMemoPopup(); } });
+
+    // 装置名ホバーでメモ表示
+    let noteHoverTimer = null;
+
+    function showNoteOnHover(event, eqpName) {
+        const eqp = eqpData[eqpName];
+        const note = (eqp && eqp.note) ? eqp.note : '';
+        if (!note) return;
+
+        clearTimeout(noteHoverTimer);
+        const popup = document.getElementById('memo-popup');
+        document.getElementById('memo-popup-title').textContent = eqpName + ' メモ';
+        document.getElementById('memo-popup-body').textContent = note;
+
+        popup.style.display = 'block';
+        let left = event.clientX + 12;
+        let top  = event.clientY + 12;
+        const pw = popup.offsetWidth;
+        const ph = popup.offsetHeight;
+        if (left + pw > window.innerWidth  - 8) left = window.innerWidth  - pw - 8;
+        if (top  + ph > window.innerHeight - 8) top  = event.clientY - ph - 4;
+        popup.style.left = left + 'px';
+        popup.style.top  = top  + 'px';
+    }
+
+    function hideNoteOnHover() {
+        noteHoverTimer = setTimeout(() => {
+            document.getElementById('memo-popup').style.display = 'none';
+        }, 150);
+    }
 
     // メモポップアップ
     function showMemoPopup(eqpName, btn) {
