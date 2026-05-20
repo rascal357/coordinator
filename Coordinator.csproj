@@ -11,6 +11,10 @@
     <Compile Remove="Tests/**/*.cs" />
     <EmbeddedResource Remove="Tests/**/*" />
     <None Remove="Tests/**/*" />
+    <!-- Exclude BatchProcessorCli directory from main project -->
+    <Compile Remove="BatchProcessorCli/**/*.cs" />
+    <EmbeddedResource Remove="BatchProcessorCli/**/*" />
+    <None Remove="BatchProcessorCli/**/*" />
   </ItemGroup>
 
   <ItemGroup>

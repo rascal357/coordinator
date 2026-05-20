@@ -355,6 +355,7 @@
             @* Hidden fields for lot data *@
             @foreach (var (lotStep, index) in Model.LotSteps.Select((ls, i) => (ls, i)))
             {
+                <input type="hidden" name="CarrierData[@index].Priority" value="@lotStep.Priority" />
                 <input type="hidden" name="CarrierData[@index].Carrier" value="@lotStep.Carrier" />
                 <input type="hidden" name="CarrierData[@index].LotId" value="@lotStep.LotId" />
                 <input type="hidden" name="CarrierData[@index].Technology" value="@lotStep.Technology" />

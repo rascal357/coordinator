@@ -5,6 +5,7 @@ namespace Coordinator.Models;
 /// </summary>
 public class WipDataItem
 {
+    public int Priority { get; set; }
     public string Carrier { get; set; } = "";
     public string LotId { get; set; } = "";
     public string Technology { get; set; } = "";

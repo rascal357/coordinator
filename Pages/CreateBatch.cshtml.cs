@@ -79,6 +79,7 @@ public class CreateBatchModel : PageModel
                 {
                     LotId = lotId,
                     Carrier = carrier,
+                    Priority = wipData.Priority,
                     Qty = wipData.Qty,
                     Technology = wipData.Technology,
                     State = wipData.State,
@@ -286,6 +287,7 @@ public class CreateBatchModel : PageModel
             string carrier = "";
             string technology = "";
             int qty = 0;
+            int priority = 0;
 
             if (carrierDataDict.ContainsKey(lotId))
             {
@@ -294,6 +296,7 @@ public class CreateBatchModel : PageModel
                 carrier = data.Carrier;
                 technology = data.Technology;
                 qty = data.Qty;
+                priority = data.Priority;
             }
             else
             {
@@ -307,6 +310,7 @@ public class CreateBatchModel : PageModel
                 carrier = wipInfo.Carrier;
                 technology = wipInfo.Technology;
                 qty = wipInfo.Qty;
+                priority = wipInfo.Priority;
             }
 
             // Process each step (1-4)
@@ -350,6 +354,7 @@ public class CreateBatchModel : PageModel
                         LotId = lotId,
                         Qty = qty,
                         Technology = technology,
+                        Priority = priority,
                         EqpId = eqpId,
                         PPID = ppid,
                         NextEqpId = nextEqpId,

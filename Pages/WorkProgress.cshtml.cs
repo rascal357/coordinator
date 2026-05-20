@@ -436,6 +436,7 @@ public class WorkProgressModel : PageModel
                 Carrier = batchItem.CarrierId,
                 Lot = batchItem.LotId ?? "",
                 Qty = batchItem.Qty,
+                Priority = batchItem.Priority,
                 PPID = batchItem.PPID,
                 NextFurnace = batchItem.NextEqpId,
                 Location = "",

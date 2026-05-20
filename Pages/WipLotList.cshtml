@@ -190,6 +190,7 @@
                                 @foreach (var (wip, index) in Model.WipLots.Select((w, i) => (w, i)))
                                 {
                                     <tr class="table-row-modern"
+                                        data-priority="@wip.Priority"
                                         data-carrier="@wip.Carrier"
                                         data-lotid="@wip.LotId"
                                         data-technology="@wip.Technology"
@@ -688,6 +689,7 @@
             checkboxes.forEach((checkbox, index) => {
                 const row = checkbox.closest('tr');
                 const wipData = {
+                    Priority: row.dataset.priority,
                     Carrier: row.dataset.carrier,
                     LotId: row.dataset.lotid,
                     Technology: row.dataset.technology,

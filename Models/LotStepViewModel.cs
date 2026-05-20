@@ -4,6 +4,7 @@ public class LotStepViewModel
 {
     public string LotId { get; set; } = string.Empty;
     public string Carrier { get; set; } = string.Empty;
+    public int Priority { get; set; }
     public int Qty { get; set; }
     public string Technology { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;

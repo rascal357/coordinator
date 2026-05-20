@@ -38,6 +38,8 @@ public class DcBatch
     [StringLength(50)]
     public string NextEqpId { get; set; } = string.Empty;
 
+    public int Priority { get; set; }
+
     public int IsProcessed { get; set; } = 0;
 
     public DateTime CreatedAt { get; set; }

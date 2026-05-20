@@ -236,6 +236,17 @@ using (var scope = app.Services.CreateScope())
         // context.Database.ExecuteSqlRaw("ALTER TABLE DC_BATCH ADD TECHNOLOGY NVARCHAR2(50)");
     }
 
+    // Add Priority column to DC_Batch table if it doesn't exist
+    var priorityColumnExists = context.Database.SqlQueryRaw<int>(
+        "SELECT COUNT(*) as Value FROM pragma_table_info('DC_Batch') WHERE name = 'Priority'")
+        .AsEnumerable()
+        .FirstOrDefault();
+
+    if (priorityColumnExists == 0)
+    {
+        context.Database.ExecuteSqlRaw("ALTER TABLE DC_Batch ADD COLUMN Priority INTEGER NOT NULL DEFAULT 0");
+    }
+
     // Create DC_LotSteps table if it doesn't exist
     // SQLite用のテーブル存在チェック（現在使用中）
     var lotStepsTableExists = context.Database.SqlQueryRaw<int>(
