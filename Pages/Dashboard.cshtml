@@ -47,15 +47,15 @@
             "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\" onclick=\"showCarrierPopup('" + n + "','waiting')\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
             "</div>" +
             "<div class=\"eqp-endtime-row\" id=\"cell-f-" + n + "\">" + et + "</div>" +
-            "<div class=\"eqp-reserve-row\">" +
+            "<div class=\"eqp-reserve-row\" data-eqp-name=\"" + n + "\" onclick=\"openScheduleModal(this)\" style=\"cursor:pointer;\">" +
             "<div class=\"eqp-cell-g\" id=\"cell-g-" + n + "\">" + sc + "</div>" +
-            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved1')\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved2')\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"showCarrierPopup('" + n + "','reserved3')\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved1')\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved2')\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved3')\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
             "</div>" +
             "<div class=\"eqp-name-row\">" +
             "<span id=\"cell-h-" + n + "\" onclick=\"location.href='" + wipUrl + "'\" onmouseenter=\"showNoteOnHover(event,'" + n + "')\" onmouseleave=\"hideNoteOnHover()\">" + n + "</span>" +
-            "<button class=\"memo-btn\" id=\"memo-btn-" + n + "\" onclick=\"showMemoPopup('" + n + "',this)\" title=\"メモ\">📝</button>" +
+            "<button class=\"memo-btn\" id=\"memo-btn-" + n + "\" data-eqp-name=\"" + n + "\" onclick=\"openNoteEditModal(this)\" title=\"メモ編集\">📝</button>" +
             "</div>" +
             "</div>"
         );
@@ -211,6 +211,72 @@
             <button class="cp-close" onclick="closeMemoPopup()">×</button>
         </div>
         <div class="memo-popup-body" id="memo-popup-body"></div>
+    </div>
+
+    <!-- Note Edit Modal -->
+    <div class="modal fade" id="dashNoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">装置メモ編集</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="dashNoteEqpName" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">装置名</label>
+                        <input type="text" class="form-control" id="dashNoteEqpDisplay" readonly />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">メモ</label>
+                        <textarea class="form-control" id="dashNoteText" rows="4" maxlength="200" placeholder="装置に関するメモを入力してください（最大200文字）"></textarea>
+                        <div class="form-text"><span id="dashNoteCharCount">0</span> / 200 文字</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDashNote()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Edit Modal -->
+    <div class="modal fade" id="dashScheduleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">予定設定</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="dashSchEqpName" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">装置名</label>
+                        <input type="text" class="form-control" id="dashSchEqpDisplay" readonly />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">予定を選択</label>
+                        <div class="dash-schedule-options">
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-LS"  value="LS"> <label class="form-check-label" for="dsch-LS">LS リーダースタート</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-SD"  value="SD"> <label class="form-check-label" for="dsch-SD">SD Side-Dummy交換</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-ED"  value="ED"> <label class="form-check-label" for="dsch-ED">ED Extra-Dummy交換</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-FM"  value="FM"> <label class="form-check-label" for="dsch-FM">FM Full-Monitor交換</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-EM"  value="EM"> <label class="form-check-label" for="dsch-EM">EM EM投入</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-N2"  value="N2"> <label class="form-check-label" for="dsch-N2">N2 N2AN620またはN2O</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-払出" value="払出"><label class="form-check-label" for="dsch-払出">払出 払い出し中</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-投入" value="投入"><label class="form-check-label" for="dsch-投入">投入 投入中</label></div>
+                            <div class="form-check dash-sch-item"><input class="form-check-input" type="radio" name="dashSchOption" id="dsch-PD"  value="PD"> <label class="form-check-label" for="dsch-PD">PD PD投入中</label></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger me-auto" onclick="clearDashScheduleSelection()">クリア</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" onclick="saveDashSchedule()">保存</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- キャリア詳細ポップアップ -->
@@ -618,6 +684,9 @@
         margin-bottom: 4px;
         font-size: 0.75rem;
     }
+    .dash-schedule-options { display: flex; flex-direction: column; gap: 3px; }
+    .dash-sch-item { padding: 3px 8px; border: 1px solid #dee2e6; border-radius: 4px; }
+    .dash-sch-item:hover { background: #f0f0f0; cursor: pointer; }
 </style>
 
 @section Scripts {
@@ -882,6 +951,100 @@
         if (autoRefreshTimer) clearInterval(autoRefreshTimer);
         autoRefreshTimer = setInterval(refreshData, AUTO_REFRESH_INTERVAL);
         console.log('自動更新開始（' + (@ViewData["AutoRefreshIntervalSeconds"]) + '秒間隔）');
+    }
+
+    // Note Edit Modal
+    function openNoteEditModal(element) {
+        var eqpName = element.dataset.eqpName;
+        var eqp = eqpData[eqpName];
+        var note = (eqp && eqp.note) ? eqp.note : '';
+        document.getElementById('dashNoteEqpName').value = eqpName;
+        document.getElementById('dashNoteEqpDisplay').value = eqpName;
+        document.getElementById('dashNoteText').value = note;
+        updateDashNoteCharCount();
+        new bootstrap.Modal(document.getElementById('dashNoteModal')).show();
+    }
+
+    function updateDashNoteCharCount() {
+        document.getElementById('dashNoteCharCount').textContent =
+            document.getElementById('dashNoteText').value.length;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var ta = document.getElementById('dashNoteText');
+        if (ta) ta.addEventListener('input', updateDashNoteCharCount);
+    });
+
+    async function saveDashNote() {
+        var eqpName = document.getElementById('dashNoteEqpName').value;
+        var noteText = document.getElementById('dashNoteText').value;
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('eqpName', eqpName);
+            formData.append('note', noteText);
+            formData.append('__RequestVerificationToken', token);
+            const res = await fetch('@Url.Page("/Dashboard", new { handler = "UpdateNote" })', {
+                method: 'POST', body: formData
+            });
+            const result = await res.json();
+            if (result.success) {
+                if (eqpData[eqpName]) eqpData[eqpName].note = noteText;
+                bootstrap.Modal.getInstance(document.getElementById('dashNoteModal')).hide();
+                alert('メモを更新しました');
+            } else {
+                alert('更新に失敗しました: ' + result.message);
+            }
+        } catch (e) { alert('更新中にエラーが発生しました'); }
+    }
+
+    // Schedule Edit Modal
+    function openScheduleModal(element) {
+        var eqpName = element.dataset.eqpName;
+        var eqp = eqpData[eqpName];
+        var schedule = (eqp && eqp.schedule) ? eqp.schedule : '';
+        document.getElementById('dashSchEqpName').value = eqpName;
+        document.getElementById('dashSchEqpDisplay').value = eqpName;
+        document.querySelectorAll('input[name="dashSchOption"]').forEach(r => r.checked = false);
+        if (schedule) {
+            var radio = document.querySelector('input[name="dashSchOption"][value="' + schedule + '"]');
+            if (radio) radio.checked = true;
+        }
+        new bootstrap.Modal(document.getElementById('dashScheduleModal')).show();
+    }
+
+    function clearDashScheduleSelection() {
+        document.querySelectorAll('input[name="dashSchOption"]').forEach(r => r.checked = false);
+    }
+
+    async function saveDashSchedule() {
+        var eqpName = document.getElementById('dashSchEqpName').value;
+        var selectedRadio = document.querySelector('input[name="dashSchOption"]:checked');
+        var schedule = selectedRadio ? selectedRadio.value : '';
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const formData = new FormData();
+            formData.append('eqpName', eqpName);
+            formData.append('schedule', schedule);
+            formData.append('__RequestVerificationToken', token);
+            const res = await fetch('@Url.Page("/Dashboard", new { handler = "UpdateSchedule" })', {
+                method: 'POST', body: formData
+            });
+            const result = await res.json();
+            if (result.success) {
+                var el = document.getElementById('cell-g-' + eqpName);
+                if (el) {
+                    el.textContent = schedule;
+                    var row = el.closest('.eqp-reserve-row');
+                    if (row) row.dataset.eqpName = eqpName;
+                }
+                if (eqpData[eqpName]) eqpData[eqpName].schedule = schedule;
+                bootstrap.Modal.getInstance(document.getElementById('dashScheduleModal')).hide();
+                applyScheduleHighlight();
+            } else {
+                alert('更新に失敗しました: ' + result.message);
+            }
+        } catch (e) { alert('更新中にエラーが発生しました'); }
     }
 </script>
 }

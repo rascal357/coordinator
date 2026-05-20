@@ -47,6 +47,44 @@ public class DashboardModel : PageModel
         return new JsonResult(new { success = true, data = EquipmentsByType, yuuTypes = YuuTypes });
     }
 
+    public async Task<IActionResult> OnPostUpdateNoteAsync([FromForm] string eqpName, [FromForm] string note)
+    {
+        if (string.IsNullOrEmpty(eqpName))
+            return new JsonResult(new { success = false, message = "Equipment name is required" });
+        try
+        {
+            var equipment = await _context.DcEqps.Where(e => e.Name == eqpName).FirstOrDefaultAsync();
+            if (equipment == null)
+                return new JsonResult(new { success = false, message = "Equipment not found" });
+            equipment.Note = string.IsNullOrWhiteSpace(note) ? null : note;
+            await _context.SaveChangesAsync();
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
+    }
+
+    public async Task<IActionResult> OnPostUpdateScheduleAsync([FromForm] string eqpName, [FromForm] string schedule)
+    {
+        if (string.IsNullOrEmpty(eqpName))
+            return new JsonResult(new { success = false, message = "Equipment name is required" });
+        try
+        {
+            var equipment = await _context.DcEqps.Where(e => e.Name == eqpName).FirstOrDefaultAsync();
+            if (equipment == null)
+                return new JsonResult(new { success = false, message = "Equipment not found" });
+            equipment.Schedule = string.IsNullOrWhiteSpace(schedule) ? null : schedule;
+            await _context.SaveChangesAsync();
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
+    }
+
     public async Task<IActionResult> OnPostToggleYuuAsync([FromForm] string typeName, [FromForm] int yuu)
     {
         if (string.IsNullOrEmpty(typeName))
