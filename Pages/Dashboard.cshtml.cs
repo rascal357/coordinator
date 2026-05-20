@@ -296,19 +296,33 @@ public class DashboardModel : PageModel
     {
         var items = new List<ProcessItem>();
 
-        var batches = await _context.DcBatches
-            .Where(b => b.BatchId == batch.BatchId && b.EqpId == eqpId)
-            .GroupBy(b => new { b.LotId, b.CarrierId, b.Qty, b.Technology })
-            .Select(g => g.First())
+        var allSteps = await _context.DcBatches
+            .Where(b => b.BatchId == batch.BatchId)
             .ToListAsync();
+
+        var batches = allSteps
+            .Where(b => b.EqpId == eqpId)
+            .GroupBy(b => new { b.LotId, b.CarrierId, b.Qty, b.Technology })
+            .Select(g => g.OrderBy(b => b.Step).First())
+            .ToList();
 
         foreach (var batchItem in batches)
         {
+            var prevEqpId = "";
+            if (batchItem.Step > 1)
+            {
+                var prevStep = allSteps
+                    .FirstOrDefault(b => b.LotId == batchItem.LotId && b.Step == batchItem.Step - 1);
+                prevEqpId = prevStep?.EqpId ?? "";
+            }
+
             items.Add(new ProcessItem
             {
                 Carrier = batchItem.CarrierId,
                 Lot = batchItem.LotId ?? "",
                 Qty = batchItem.Qty,
+                Priority = batchItem.Priority,
+                PrevEqpId = prevEqpId,
                 PPID = batchItem.PPID,
                 NextFurnace = batchItem.NextEqpId,
                 Location = "",

@@ -23,6 +23,7 @@ public class ProcessItem
     public int Qty { get; set; }
     public int Priority { get; set; }
     public string PPID { get; set; } = string.Empty;
+    public string PrevEqpId { get; set; } = string.Empty;
     public string NextFurnace { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string EndTime { get; set; } = string.Empty;

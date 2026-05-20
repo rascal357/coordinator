@@ -294,6 +294,7 @@
                         <th>Lot</th>
                         <th style="text-align:right;">Qty</th>
                         <th>PPID</th>
+                        <th>From</th>
                         <th>Next</th>
                         <th>Loc</th>
                         <th>End</th>
@@ -783,6 +784,7 @@
                     '<td>' + esc(item.lot)          + '</td>' +
                     '<td style="text-align:right;">' + (item.qty ?? 0) + '</td>' +
                     '<td>' + esc(item.pPID)         + '</td>' +
+                    '<td>' + esc(item.prevEqpId)    + '</td>' +
                     '<td>' + esc(item.nextFurnace)  + '</td>' +
                     '<td>' + esc(item.location)     + '</td>' +
                     '<td>' + esc(item.endTime)      + '</td>';
