@@ -278,9 +278,17 @@ public class DashboardModel : PageModel
                 .Where(b => b.EqpId == actl.EqpId && b.LotId == actl.LotId && b.ProcessedAt == actl.TrackInTime)
                 .FirstOrDefaultAsync();
 
+            var prevEqpId = "";
             if (latestBatch != null)
             {
                 nextFurnace = latestBatch.NextEqpId;
+                if (latestBatch.Step > 1)
+                {
+                    var prevBatch = await _context.DcBatches
+                        .Where(b => b.BatchId == latestBatch.BatchId && b.LotId == actl.LotId && b.Step == latestBatch.Step - 1)
+                        .FirstOrDefaultAsync();
+                    prevEqpId = prevBatch?.EqpId ?? "";
+                }
             }
 
             items.Add(new ProcessItem
@@ -290,6 +298,7 @@ public class DashboardModel : PageModel
                 Qty = actl.Qty ?? 0,
                 Priority = actl.LotId != null && wipPriorities.TryGetValue(actl.LotId, out var p) ? p : 0,
                 PPID = actl.PPID ?? string.Empty,
+                PrevEqpId = prevEqpId,
                 NextFurnace = nextFurnace ?? string.Empty,
                 Location = actl.Location ?? string.Empty,
                 EndTime = actl.EndTime ?? string.Empty

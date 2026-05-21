@@ -132,11 +132,11 @@
                         <tr>
                             <th rowspan="2" class="align-middle">TYPE</th>
                             <th rowspan="2" class="align-middle">装置名</th>
-                            <th colspan="8" class="table-success text-center col-inprocess-header">処理中</th>
-                            <th colspan="7" class="table-warning text-center col-waiting-header">処理待ち</th>
-                            <th colspan="7" class="table-info text-center col-reserved-header">予約1</th>
-                            <th colspan="7" class="table-info text-center col-reserved-header">予約2</th>
-                            <th colspan="7" class="table-info text-center col-reserved-header">予約3</th>
+                            <th colspan="9" class="table-success text-center col-inprocess-header">処理中</th>
+                            <th colspan="8" class="table-warning text-center col-waiting-header">処理待ち</th>
+                            <th colspan="8" class="table-info text-center col-reserved-header">予約1</th>
+                            <th colspan="8" class="table-info text-center col-reserved-header">予約2</th>
+                            <th colspan="8" class="table-info text-center col-reserved-header">予約3</th>
                         </tr>
                         <tr>
                             <!-- In Process sub-headers -->
@@ -145,6 +145,7 @@
                             <th class="table-success col-inprocess">Lot</th>
                             <th class="table-success col-inprocess">Qty</th>
                             <th class="table-success col-inprocess">PPID</th>
+                            <th class="table-success col-inprocess">From</th>
                             <th class="table-success col-inprocess">Next</th>
                             <th class="table-success col-inprocess">Loc</th>
                             <th class="table-success col-inprocess">End</th>
@@ -154,6 +155,7 @@
                             <th class="table-warning col-waiting">Lot</th>
                             <th class="table-warning col-waiting">Qty</th>
                             <th class="table-warning col-waiting">PPID</th>
+                            <th class="table-warning col-waiting">From</th>
                             <th class="table-warning col-waiting">Next</th>
                             <th class="table-warning col-waiting">Loc</th>
                             <!-- Reserved 1 sub-headers -->
@@ -162,6 +164,7 @@
                             <th class="table-info col-reserved">Lot</th>
                             <th class="table-info col-reserved">Qty</th>
                             <th class="table-info col-reserved">PPID</th>
+                            <th class="table-info col-reserved">From</th>
                             <th class="table-info col-reserved">Next</th>
                             <th class="table-info col-reserved">Loc</th>
                             <!-- Reserved 2 sub-headers -->
@@ -170,6 +173,7 @@
                             <th class="table-info col-reserved">Lot</th>
                             <th class="table-info col-reserved">Qty</th>
                             <th class="table-info col-reserved">PPID</th>
+                            <th class="table-info col-reserved">From</th>
                             <th class="table-info col-reserved">Next</th>
                             <th class="table-info col-reserved">Loc</th>
                             <!-- Reserved 3 sub-headers -->
@@ -178,6 +182,7 @@
                             <th class="table-info col-reserved">Lot</th>
                             <th class="table-info col-reserved">Qty</th>
                             <th class="table-info col-reserved">PPID</th>
+                            <th class="table-info col-reserved">From</th>
                             <th class="table-info col-reserved">Next</th>
                             <th class="table-info col-reserved">Loc</th>
                         </tr>
@@ -231,7 +236,7 @@
                                     </td>
 
                                     <!-- In Process -->
-                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location", "EndTime" })
+                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "PrevEqpId", "NextFurnace", "Location", "EndTime" })
                                     {
                                         <td class="align-top col-inprocess" id="inprocess-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -247,6 +252,7 @@
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
                                                         "PPID" => item.PPID,
+                                                        "PrevEqpId" => item.PrevEqpId,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
                                                         "EndTime" => item.EndTime,
@@ -264,7 +270,7 @@
                                     }
 
                                     <!-- Waiting -->
-                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
+                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "PrevEqpId", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-waiting" id="waiting-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -280,6 +286,7 @@
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
                                                         "PPID" => item.PPID,
+                                                        "PrevEqpId" => item.PrevEqpId,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
                                                         _ => ""
@@ -296,7 +303,7 @@
                                     }
 
                                     <!-- Reserved 1 -->
-                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
+                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "PrevEqpId", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-reserved" id="reserved1-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -307,11 +314,12 @@
                                                 {
                                                     var item = eqp.Reserved1[idx];
                                                     value = field switch {
-                                                        "Priority" => item.Priority.ToString(),
+                                                        "Priority" => item.Priority > 0 ? item.Priority.ToString() : "",
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
                                                         "PPID" => item.PPID,
+                                                        "PrevEqpId" => item.PrevEqpId,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
                                                         _ => ""
@@ -335,7 +343,7 @@
                                     }
 
                                     <!-- Reserved 2 -->
-                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
+                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "PrevEqpId", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-reserved" id="reserved2-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -346,11 +354,12 @@
                                                 {
                                                     var item = eqp.Reserved2[idx];
                                                     value = field switch {
-                                                        "Priority" => item.Priority.ToString(),
+                                                        "Priority" => item.Priority > 0 ? item.Priority.ToString() : "",
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
                                                         "PPID" => item.PPID,
+                                                        "PrevEqpId" => item.PrevEqpId,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
                                                         _ => ""
@@ -374,7 +383,7 @@
                                     }
 
                                     <!-- Reserved 3 -->
-                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "NextFurnace", "Location" })
+                                    @foreach (var field in new[] { "Priority", "Carrier", "Lot", "Qty", "PPID", "PrevEqpId", "NextFurnace", "Location" })
                                     {
                                         <td class="align-top col-reserved" id="reserved3-@field.ToLower()-@typeGroup.Key-@eqpIndex">
                                             @for (int idx = 0; idx < 10; idx++)
@@ -385,11 +394,12 @@
                                                 {
                                                     var item = eqp.Reserved3[idx];
                                                     value = field switch {
-                                                        "Priority" => item.Priority.ToString(),
+                                                        "Priority" => item.Priority > 0 ? item.Priority.ToString() : "",
                                                         "Carrier" => item.Carrier,
                                                         "Lot" => item.Lot,
                                                         "Qty" => item.Qty.ToString(),
                                                         "PPID" => item.PPID,
+                                                        "PrevEqpId" => item.PrevEqpId,
                                                         "NextFurnace" => item.NextFurnace,
                                                         "Location" => item.Location,
                                                         _ => ""
@@ -861,23 +871,23 @@
     }
 
     /* Location Column Styling - Prevent line breaks */
-    .compact-table th:nth-child(9),
-    .compact-table td:nth-child(9),
-    .compact-table th:nth-child(17),
-    .compact-table td:nth-child(17),
-    .compact-table th:nth-child(24),
-    .compact-table td:nth-child(24),
-    .compact-table th:nth-child(31),
-    .compact-table td:nth-child(31),
-    .compact-table th:nth-child(38),
-    .compact-table td:nth-child(38) {
+    .compact-table th:nth-child(10),
+    .compact-table td:nth-child(10),
+    .compact-table th:nth-child(19),
+    .compact-table td:nth-child(19),
+    .compact-table th:nth-child(27),
+    .compact-table td:nth-child(27),
+    .compact-table th:nth-child(35),
+    .compact-table td:nth-child(35),
+    .compact-table th:nth-child(43),
+    .compact-table td:nth-child(43) {
         min-width: 150px;
         white-space: nowrap;
     }
 
     /* EndTime Column Styling - Prevent line breaks for M/d H:mm format */
-    .compact-table th:nth-child(10),
-    .compact-table td:nth-child(10) {
+    .compact-table th:nth-child(11),
+    .compact-table td:nth-child(11) {
         min-width: 100px;
         white-space: nowrap;
     }
@@ -1325,8 +1335,8 @@
     function clearProcessItems(prefix, typeKey, eqpIndex) {
         // 処理中はendtimeを含む、処理待ちはendtimeを含まない
         const fields = prefix === 'inprocess'
-            ? ['priority', 'carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location', 'endtime']
-            : ['priority', 'carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location'];
+            ? ['priority', 'carrier', 'lot', 'qty', 'ppid', 'preveqpid', 'nextfurnace', 'location', 'endtime']
+            : ['priority', 'carrier', 'lot', 'qty', 'ppid', 'preveqpid', 'nextfurnace', 'location'];
 
         // 最大10個のアイテムをクリア（念のため多めに）
         for (let idx = 0; idx < 10; idx++) {
@@ -1355,6 +1365,7 @@
             updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.lot);
             updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.qty);
             updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.ppid);
+            updateElement(`${prefix}-preveqpid-${typeKey}-${eqpIndex}-${idx}`, item.prevEqpId);
             updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
             updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
             // 処理中のみendtimeを更新
@@ -1366,7 +1377,7 @@
 
     // 予約アイテムをクリア
     function clearReservedItems(prefix, typeKey, eqpIndex) {
-        const fields = ['carrier', 'lot', 'qty', 'ppid', 'nextfurnace', 'location'];
+        const fields = ['priority', 'carrier', 'lot', 'qty', 'ppid', 'preveqpid', 'nextfurnace', 'location'];
 
         // 最大10個のアイテムをクリア（念のため多めに）
         for (let idx = 0; idx < 10; idx++) {
@@ -1395,10 +1406,12 @@
         }
 
         items.forEach((item, idx) => {
+            updatePriorityElement(`${prefix}-priority-${typeKey}-${eqpIndex}-${idx}`, item.priority);
             updateElement(`${prefix}-carrier-${typeKey}-${eqpIndex}-${idx}`, item.carrier);
             updateElement(`${prefix}-lot-${typeKey}-${eqpIndex}-${idx}`, item.lot);
             updateElement(`${prefix}-qty-${typeKey}-${eqpIndex}-${idx}`, item.qty);
             updateElement(`${prefix}-ppid-${typeKey}-${eqpIndex}-${idx}`, item.ppid);
+            updateElement(`${prefix}-preveqpid-${typeKey}-${eqpIndex}-${idx}`, item.prevEqpId);
             updateElement(`${prefix}-nextfurnace-${typeKey}-${eqpIndex}-${idx}`, item.nextFurnace);
             updateElement(`${prefix}-location-${typeKey}-${eqpIndex}-${idx}`, item.location);
         });
