@@ -264,6 +264,12 @@ public class DashboardModel : PageModel
     {
         var items = new List<ProcessItem>();
 
+        var lotIds = actls.Select(a => a.LotId).Where(l => l != null).Distinct().ToList();
+        var wipList = await _context.DcWips.Where(w => lotIds.Contains(w.LotId)).ToListAsync();
+        var wipPriorities = new Dictionary<string, int>();
+        foreach (var wip in wipList)
+            wipPriorities.TryAdd(wip.LotId, wip.Priority);
+
         foreach (var actl in actls)
         {
             string? nextFurnace = actl.Next;
@@ -282,6 +288,7 @@ public class DashboardModel : PageModel
                 Carrier = actl.Carrier ?? string.Empty,
                 Lot = actl.LotId ?? string.Empty,
                 Qty = actl.Qty ?? 0,
+                Priority = actl.LotId != null && wipPriorities.TryGetValue(actl.LotId, out var p) ? p : 0,
                 PPID = actl.PPID ?? string.Empty,
                 NextFurnace = nextFurnace ?? string.Empty,
                 Location = actl.Location ?? string.Empty,

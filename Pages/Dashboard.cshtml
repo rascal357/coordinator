@@ -290,6 +290,7 @@
             <table class="cp-table" id="cp-table">
                 <thead>
                     <tr>
+                        <th>Priority</th>
                         <th>Carrier</th>
                         <th>Lot</th>
                         <th style="text-align:right;">Qty</th>
@@ -688,6 +689,8 @@
     .dash-schedule-options { display: flex; flex-direction: column; gap: 3px; }
     .dash-sch-item { padding: 3px 8px; border: 1px solid #dee2e6; border-radius: 4px; }
     .dash-sch-item:hover { background: #f0f0f0; cursor: pointer; }
+    .priority-1 { background-color: #f8d7da; color: #842029; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
+    .priority-2 { background-color: #fff3cd; color: #664d03; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
 </style>
 
 @section Scripts {
@@ -779,7 +782,11 @@
             empty.style.display = 'none';
             for (const item of items) {
                 const tr = document.createElement('tr');
+                const prio = item.priority ?? 0;
+                const prioClass = prio === 1 ? 'priority-1' : (prio === 2 ? 'priority-2' : '');
+                const prioText = prio > 0 ? esc(String(prio)) : '';
                 tr.innerHTML =
+                    '<td class="' + prioClass + '">' + prioText + '</td>' +
                     '<td>' + esc(item.carrier)     + '</td>' +
                     '<td>' + esc(item.lot)          + '</td>' +
                     '<td style="text-align:right;">' + (item.qty ?? 0) + '</td>' +
