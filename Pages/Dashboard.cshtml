@@ -39,21 +39,23 @@
         var sc = System.Net.WebUtility.HtmlEncode(e?.Schedule ?? "");
         var line = System.Net.WebUtility.HtmlEncode(e?.Line ?? "");
         var note = System.Net.WebUtility.HtmlEncode(e?.Note ?? "").Replace("'", "&#39;");
+        var hasNote = !string.IsNullOrEmpty(e?.Note);
         var wipUrl = Url.Page("/WipLotList", new { EqpName = n });
         return new HtmlString(
             "<div class=\"eqp-card\" data-line=\"" + line + "\">" +
             "<div class=\"eqp-top-row\">" +
-            "<div class=\"eqp-cell-a\" id=\"cell-a-" + n + "\" onclick=\"showCarrierPopup('" + n + "','inProcess')\">" + (ip > 0 ? ip.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\" onclick=\"showCarrierPopup('" + n + "','waiting')\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-a\" id=\"cell-a-" + n + "\" onclick=\"showCarrierPopup('" + n + "','inProcess')\" onmouseenter=\"showStatusTooltip(event,'" + n + "','inProcess')\" onmouseleave=\"hideStatusTooltip()\">" + (ip > 0 ? ip.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-b\" id=\"cell-b-" + n + "\" onclick=\"showCarrierPopup('" + n + "','waiting')\" onmouseenter=\"showStatusTooltip(event,'" + n + "','waiting')\" onmouseleave=\"hideStatusTooltip()\">" + (wt > 0 ? wt.ToString() : "") + "</div>" +
             "</div>" +
             "<div class=\"eqp-endtime-row\" id=\"cell-f-" + n + "\">" + et + "</div>" +
             "<div class=\"eqp-reserve-row\" data-eqp-name=\"" + n + "\" onclick=\"openScheduleModal(this)\" style=\"cursor:pointer;\">" +
             "<div class=\"eqp-cell-g\" id=\"cell-g-" + n + "\">" + sc + "</div>" +
-            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved1')\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved2')\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
-            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved3')\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-c\" id=\"cell-c-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved1')\" onmouseenter=\"showStatusTooltip(event,'" + n + "','reserved1')\" onmouseleave=\"hideStatusTooltip()\">" + (r1 > 0 ? r1.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-d\" id=\"cell-d-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved2')\" onmouseenter=\"showStatusTooltip(event,'" + n + "','reserved2')\" onmouseleave=\"hideStatusTooltip()\">" + (r2 > 0 ? r2.ToString() : "") + "</div>" +
+            "<div class=\"eqp-cell-e\" id=\"cell-e-" + n + "\" onclick=\"event.stopPropagation();showCarrierPopup('" + n + "','reserved3')\" onmouseenter=\"showStatusTooltip(event,'" + n + "','reserved3')\" onmouseleave=\"hideStatusTooltip()\">" + (r3 > 0 ? r3.ToString() : "") + "</div>" +
             "</div>" +
             "<div class=\"eqp-name-row\">" +
+            "<i class=\"note-dot" + (hasNote ? " note-dot-on" : "") + "\" id=\"note-dot-" + n + "\"></i>" +
             "<span id=\"cell-h-" + n + "\" onclick=\"location.href='" + wipUrl + "'\" onmouseenter=\"showNoteOnHover(event,'" + n + "')\" onmouseleave=\"hideNoteOnHover()\">" + n + "</span>" +
             "<button class=\"memo-btn\" id=\"memo-btn-" + n + "\" data-eqp-name=\"" + n + "\" onclick=\"openNoteEditModal(this)\" title=\"メモ編集\">📝</button>" +
             "</div>" +
@@ -211,6 +213,15 @@
             <button class="cp-close" onclick="closeMemoPopup()">×</button>
         </div>
         <div class="memo-popup-body" id="memo-popup-body"></div>
+    </div>
+
+    <!-- ステータスツールチップ -->
+    <div class="status-tooltip" id="status-tooltip" onmouseenter="clearTimeout(statusTooltipTimer)" onmouseleave="hideStatusTooltip()">
+        <div class="status-tooltip-header">
+            <span class="status-tooltip-title" id="status-tooltip-title"></span>
+            <button class="cp-close" onclick="document.getElementById('status-tooltip').style.display='none'">×</button>
+        </div>
+        <div class="status-tooltip-body" id="status-tooltip-body"></div>
     </div>
 
     <!-- Note Edit Modal -->
@@ -526,6 +537,19 @@
         background: #ddd;
         text-decoration: underline;
     }
+    .note-dot {
+        width: 7px;
+        height: 7px;
+        min-width: 7px;
+        border-radius: 50%;
+        background: #f9a825;
+        flex: none;
+        display: none;
+        align-self: center;
+        margin-right: 2px;
+    }
+    .note-dot-on { display: block; }
+
     .memo-btn {
         flex-shrink: 0;
         background: none;
@@ -693,6 +717,51 @@
     .dash-sch-item:hover { background: #f0f0f0; cursor: pointer; }
     .priority-1 { background-color: #f8d7da; color: #842029; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
     .priority-2 { background-color: #fff3cd; color: #664d03; font-weight: bold; padding: 1px 4px; border-radius: 3px; }
+
+    /* ステータスツールチップ */
+    .status-tooltip {
+        display: none;
+        position: fixed;
+        background: #fff;
+        border: 1px solid #444;
+        border-radius: 4px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+        z-index: 1500;
+        min-width: 420px;
+        max-width: 720px;
+    }
+    .status-tooltip-header {
+        background: #1565c0;
+        color: #fff;
+        padding: 4px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 3px 3px 0 0;
+    }
+    .status-tooltip-title { font-weight: 700; font-size: 0.82rem; }
+    .status-tooltip-body {
+        padding: 6px;
+        overflow-y: auto;
+        max-height: 260px;
+    }
+    .st-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.72rem;
+    }
+    .st-table th {
+        background: #e0e0e0;
+        border: 1px solid #aaa;
+        padding: 2px 5px;
+        white-space: nowrap;
+    }
+    .st-table td {
+        border: 1px solid #ddd;
+        padding: 2px 5px;
+        white-space: nowrap;
+    }
+    .st-table tr:nth-child(even) td { background: #f9f9f9; }
 </style>
 
 @section Scripts {
@@ -817,7 +886,71 @@
     }
 
     // Escapeキーで閉じる
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCarrierPopup(); closeMemoPopup(); } });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeCarrierPopup();
+            closeMemoPopup();
+            document.getElementById('status-tooltip').style.display = 'none';
+        }
+    });
+
+    // ステータスセルホバーでキャリア情報表示
+    let statusTooltipTimer = null;
+    const statusTooltipLabels = {
+        inProcess: 'In Process', waiting: 'Waiting',
+        reserved1: 'Reserved 1', reserved2: 'Reserved 2', reserved3: 'Reserved 3'
+    };
+
+    function showStatusTooltip(event, eqpName, statusKey) {
+        const eqp = eqpData[eqpName];
+        const items = (eqp && eqp[statusKey]) ? eqp[statusKey] : [];
+        if (items.length === 0) return;
+
+        clearTimeout(statusTooltipTimer);
+        const popup = document.getElementById('status-tooltip');
+        document.getElementById('status-tooltip-title').textContent =
+            eqpName + '  —  ' + (statusTooltipLabels[statusKey] || statusKey);
+
+        const hasEnd = statusKey === 'inProcess';
+        let html = '<table class="st-table"><thead><tr>' +
+            '<th>Priority</th><th>Carrier</th><th>Lot</th><th>Qty</th>' +
+            '<th>PPID</th><th>From</th><th>Next</th><th>Loc</th>' +
+            (hasEnd ? '<th>End</th>' : '') +
+            '</tr></thead><tbody>';
+        for (const item of items) {
+            const prio = item.priority ?? 0;
+            const prioClass = prio === 1 ? 'priority-1' : (prio === 2 ? 'priority-2' : '');
+            html += '<tr>' +
+                '<td class="' + prioClass + '">' + esc(prio > 0 ? String(prio) : '') + '</td>' +
+                '<td>' + esc(item.carrier)    + '</td>' +
+                '<td>' + esc(item.lot)         + '</td>' +
+                '<td style="text-align:right;">' + (item.qty ?? 0) + '</td>' +
+                '<td>' + esc(item.ppid)        + '</td>' +
+                '<td>' + esc(item.prevEqpId)   + '</td>' +
+                '<td>' + esc(item.nextFurnace) + '</td>' +
+                '<td>' + esc(item.location)    + '</td>' +
+                (hasEnd ? '<td>' + esc(item.endTime) + '</td>' : '') +
+                '</tr>';
+        }
+        html += '</tbody></table>';
+        document.getElementById('status-tooltip-body').innerHTML = html;
+
+        popup.style.display = 'block';
+        let left = event.clientX + 14;
+        let top  = event.clientY + 14;
+        const pw = popup.offsetWidth;
+        const ph = popup.offsetHeight;
+        if (left + pw > window.innerWidth  - 8) left = window.innerWidth  - pw - 8;
+        if (top  + ph > window.innerHeight - 8) top  = event.clientY - ph - 4;
+        popup.style.left = left + 'px';
+        popup.style.top  = top  + 'px';
+    }
+
+    function hideStatusTooltip() {
+        statusTooltipTimer = setTimeout(() => {
+            document.getElementById('status-tooltip').style.display = 'none';
+        }, 150);
+    }
 
     // 装置名ホバーでメモ表示
     let noteHoverTimer = null;
@@ -913,6 +1046,8 @@
                 if (ef) ef.textContent = (eqp.inProcess && eqp.inProcess.length > 0) ? (eqp.inProcess[0].endTime || '') : '';
                 const eg = document.getElementById('cell-g-' + n);
                 if (eg) eg.textContent = eqp.schedule || '';
+                const dot = document.getElementById('note-dot-' + n);
+                if (dot) dot.style.display = eqp.note ? 'inline-block' : 'none';
                 // ポップアップ用データキャッシュを更新
                 eqpData[n] = eqp;
             }
@@ -1001,6 +1136,8 @@
             const result = await res.json();
             if (result.success) {
                 if (eqpData[eqpName]) eqpData[eqpName].note = noteText;
+                const dot = document.getElementById('note-dot-' + eqpName);
+                if (dot) dot.style.display = noteText ? 'inline-block' : 'none';
                 bootstrap.Modal.getInstance(document.getElementById('dashNoteModal')).hide();
                 alert('メモを更新しました');
             } else {
